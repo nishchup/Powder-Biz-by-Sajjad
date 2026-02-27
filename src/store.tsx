@@ -118,6 +118,7 @@ export interface AppState {
   notes: Note[];
   loans: Loan[];
   productDeliveries: ProductDelivery[];
+  password: string;
   language: 'en' | 'bn';
 }
 
@@ -140,6 +141,7 @@ const initialState: AppState = {
   notes: [],
   loans: [],
   productDeliveries: [],
+  password: '09816366Ss',
   language: 'en',
 };
 
@@ -182,6 +184,7 @@ interface AppContextType {
   deleteLoan: (id: string) => void;
   addProductDelivery: (d: Omit<ProductDelivery, 'id'>) => void;
   deleteProductDelivery: (id: string) => void;
+  updatePassword: (newPassword: string) => void;
   resetState: () => void;
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
@@ -212,6 +215,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           notes: Array.isArray(parsed.notes) ? parsed.notes : [],
           loans: Array.isArray(parsed.loans) ? parsed.loans : [],
           productDeliveries: Array.isArray(parsed.productDeliveries) ? parsed.productDeliveries : [],
+          password: parsed.password || initialState.password,
           language: parsed.language || 'en',
         };
       }
@@ -375,6 +379,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, productDeliveries: s.productDeliveries.filter(d => d.id !== id) }));
   };
 
+  const updatePassword = (newPassword: string) => {
+    setState(s => ({ ...s, password: newPassword }));
+  };
+
   const resetState = () => {
     setState(initialState);
   };
@@ -434,6 +442,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteLoan,
       addProductDelivery,
       deleteProductDelivery,
+      updatePassword,
       resetState,
       importState,
       setLanguage,

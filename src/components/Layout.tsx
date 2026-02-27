@@ -7,9 +7,10 @@ interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onLock: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onLock }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { dryStock, state, setLanguage } = useAppStore();
   const t = useTranslation(state.language);
@@ -109,6 +110,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
               {state.language === 'en' ? 'বাংলা' : 'EN'}
             </button>
             <button 
+              onClick={onLock}
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <Lock size={20} />
+            </button>
+            <button 
               onClick={() => setIsMobileMenuOpen(true)} 
               className="p-2 -mr-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             >
@@ -129,6 +136,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             >
               <Globe size={18} className="mr-2" />
               {state.language === 'en' ? 'বাংলা' : 'English'}
+            </button>
+            <button 
+              onClick={onLock}
+              className="flex items-center text-slate-600 hover:text-red-600 font-medium text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
+              title="Lock Application"
+            >
+              <Lock size={18} className="mr-2" />
+              Lock
             </button>
           </div>
         </header>
