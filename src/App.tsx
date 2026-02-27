@@ -16,15 +16,9 @@ import { Contacts } from './components/Contacts';
 import { Payments } from './components/Payments';
 import { Notes } from './components/Notes';
 import { ProductDelivery } from './components/ProductDelivery';
-import { LockScreen } from './components/LockScreen';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLocked, setIsLocked] = useState(true);
-
-  if (isLocked) {
-    return <LockScreen onUnlock={() => setIsLocked(false)} />;
-  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -43,7 +37,7 @@ function AppContent() {
   };
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} onLock={() => setIsLocked(true)}>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
       {renderContent()}
     </Layout>
   );
