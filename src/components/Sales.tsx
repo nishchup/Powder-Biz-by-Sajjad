@@ -85,18 +85,27 @@ export const Sales: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="sales-content">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dry Powder Sales</h2>
-        {!isFormOpen && (
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto print:hidden">
           <button 
-            onClick={() => setIsFormOpen(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium w-full sm:w-auto"
+            onClick={() => exportToPDF('sales-content', 'sales-report.pdf')}
+            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
           >
-            <Plus size={20} className="mr-2" />
-            Add Sale
+            <Printer size={18} className="mr-2" />
+            Print
           </button>
-        )}
+          {!isFormOpen && (
+            <button 
+              onClick={() => setIsFormOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
+            >
+              <Plus size={20} className="mr-2" />
+              Add Sale
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center justify-between shadow-sm">

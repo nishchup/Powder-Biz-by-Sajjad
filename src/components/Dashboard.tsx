@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store';
-import { Package, Sun, TrendingUp, Wallet, DollarSign } from 'lucide-react';
+import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer } from 'lucide-react';
+import { exportToPDF } from '../services/pdfService';
 
 export const Dashboard: React.FC = () => {
   const { state, wetStock, dryStock } = useAppStore();
@@ -19,8 +20,17 @@ export const Dashboard: React.FC = () => {
   const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+    <div className="space-y-6" id="dashboard-content">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+        <button 
+          onClick={() => exportToPDF('dashboard-content', 'dashboard-report.pdf')}
+          className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium print:hidden w-full sm:w-auto"
+        >
+          <Printer size={18} className="mr-2" />
+          Print Dashboard
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 

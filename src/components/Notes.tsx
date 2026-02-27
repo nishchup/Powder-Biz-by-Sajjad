@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, Pencil, X, StickyNote, Calendar } from 'lucide-react';
+import { Plus, Trash2, Pencil, X, StickyNote, Calendar, Printer } from 'lucide-react';
 import { useTranslation } from '../translations';
+import { exportToPDF } from '../services/pdfService';
 
 export const Notes: React.FC = () => {
   const { state, addNote, editNote, deleteNote } = useAppStore();
@@ -51,18 +52,27 @@ export const Notes: React.FC = () => {
   const sortedNotes = [...state.notes].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="notes-content">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{t('notes')}</h2>
-        {!isFormOpen && (
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto print:hidden">
           <button 
-            onClick={() => setIsFormOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium w-full sm:w-auto"
+            onClick={() => exportToPDF('notes-content', 'notes-report.pdf')}
+            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
           >
-            <Plus size={20} className="mr-2" />
-            {t('addNote')}
+            <Printer size={18} className="mr-2" />
+            Print
           </button>
-        )}
+          {!isFormOpen && (
+            <button 
+              onClick={() => setIsFormOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
+            >
+              <Plus size={20} className="mr-2" />
+              {t('addNote')}
+            </button>
+          )}
+        </div>
       </div>
 
       {isFormOpen && (
