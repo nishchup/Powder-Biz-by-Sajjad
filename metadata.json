@@ -1,0 +1,5 @@
+{
+  "name": "Dry Powder Business Manager",
+  "description": "Business management app for wet to dry powder processing, tracking purchases, labor, sales, and auto stock maintenance.",
+  "requestFramePermissions": []
+}
