@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, Pencil, X, Users, Tags, Database, Download, Upload, AlertTriangle, Settings } from 'lucide-react';
+import { Plus, Trash2, Pencil, X, Users, Tags, Database, Download, Upload, AlertTriangle, Settings, Lock } from 'lucide-react';
 
 export const Contacts: React.FC = () => {
   const { 
@@ -8,7 +8,7 @@ export const Contacts: React.FC = () => {
     addSupplier, addCustomer, addExpenseCategory, 
     editSupplier, editCustomer, editExpenseCategory,
     deleteSupplier, deleteCustomer, deleteExpenseCategory,
-    setInitialCapital, setCompanyInfo,
+    setInitialCapital, setCompanyInfo, updatePassword,
     resetState, importState
   } = useAppStore();
   
@@ -16,6 +16,8 @@ export const Contacts: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetError, setResetError] = useState(false);
   const [message, setMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
   const [importData, setImportData] = useState<any>(null);
   
@@ -26,6 +28,11 @@ export const Contacts: React.FC = () => {
 
   const [companyData, setCompanyData] = useState(state.companyInfo);
   const [capitalData, setCapitalData] = useState(state.initialCapital.toString());
+  const [passwordData, setPasswordData] = useState({
+    current: '',
+    new: '',
+    confirm: ''
+  });
 
   const handleEdit = (item: any) => {
     setFormData({
@@ -124,9 +131,16 @@ export const Contacts: React.FC = () => {
   };
 
   const handleReset = () => {
-    resetState();
-    setIsResetConfirmOpen(false);
-    showMessage("All data has been reset.", 'success');
+    if (resetPassword === state.password) {
+      resetState();
+      setIsResetConfirmOpen(false);
+      setResetPassword('');
+      setResetError(false);
+      showMessage("All data has been reset.", 'success');
+    } else {
+      setResetError(true);
+      setTimeout(() => setResetError(false), 2000);
+    }
   };
 
   const handleSaveGeneral = (e: React.FormEvent) => {
@@ -134,6 +148,25 @@ export const Contacts: React.FC = () => {
     setCompanyInfo(companyData);
     setInitialCapital(parseFloat(capitalData) || 0);
     showMessage("Settings saved successfully!", 'success');
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordData.current !== state.password) {
+      showMessage("Current password is incorrect!", 'error');
+      return;
+    }
+    if (passwordData.new !== passwordData.confirm) {
+      showMessage("New passwords do not match!", 'error');
+      return;
+    }
+    if (passwordData.new.length < 4) {
+      showMessage("Password must be at least 4 characters!", 'error');
+      return;
+    }
+    updatePassword(passwordData.new);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    showMessage("Password updated successfully!", 'success');
   };
 
   const currentList = activeTab === 'suppliers' ? state.suppliers : 
@@ -358,6 +391,50 @@ export const Contacts: React.FC = () => {
               </button>
             </div>
           </form>
+
+          <div className="mt-12 pt-8 border-t border-slate-200">
+            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+              <Lock className="mr-2 text-blue-600" size={20} /> Change Password
+            </h3>
+            <form onSubmit={handleChangePassword} className="space-y-5 max-w-md">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Current Password</label>
+                <input 
+                  type="password" 
+                  required
+                  value={passwordData.current}
+                  onChange={e => setPasswordData({...passwordData, current: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Password</label>
+                <input 
+                  type="password" 
+                  required
+                  value={passwordData.new}
+                  onChange={e => setPasswordData({...passwordData, new: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
+                <input 
+                  type="password" 
+                  required
+                  value={passwordData.confirm}
+                  onChange={e => setPasswordData({...passwordData, confirm: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                />
+              </div>
+              <button 
+                type="submit"
+                className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                Update Password
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
@@ -439,8 +516,21 @@ export const Contacts: React.FC = () => {
               <h3 className="text-xl font-bold">Confirm Reset</h3>
             </div>
             <p className="text-slate-600 mb-6">
-              WARNING: This will delete ALL your data permanently. This action cannot be undone unless you have a backup. Are you absolutely sure?
+              WARNING: This will delete ALL your data permanently. This action cannot be undone unless you have a backup.
             </p>
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Enter Password to Confirm</label>
+              <input 
+                type="password" 
+                placeholder="Enter app password"
+                value={resetPassword}
+                onChange={e => setResetPassword(e.target.value)}
+                className={`w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all ${
+                  resetError ? 'border-red-500 bg-red-50' : 'border-slate-300'
+                }`}
+              />
+              {resetError && <p className="text-red-600 text-xs font-bold mt-1">Incorrect password!</p>}
+            </div>
             <div className="flex justify-end space-x-3">
               <button 
                 onClick={() => setIsResetConfirmOpen(false)}

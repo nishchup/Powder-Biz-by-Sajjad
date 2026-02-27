@@ -20,11 +20,19 @@ export const ProductDelivery: React.FC = () => {
   const summary = useMemo(() => {
     if (!formData.startDate || !formData.endDate) return null;
 
-    const filteredPurchases = state.purchases.filter(p => p.date >= formData.startDate && p.date <= formData.endDate);
+    // 1. Cost of wet powder from Drying Process (Conversions)
+    const filteredConversions = state.conversions.filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
+    const wetPowderCost = filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0);
+
+    // 2. Cost of dry powder from Purchases
+    const filteredDryPurchases = state.purchases.filter(p => p.type === 'dry' && p.date >= formData.startDate && p.date <= formData.endDate);
+    const dryPowderCost = filteredDryPurchases.reduce((sum, p) => sum + p.totalCost, 0);
+
+    const totalPurchases = wetPowderCost + dryPowderCost;
+
     const filteredSales = state.sales.filter(s => s.date >= formData.startDate && s.date <= formData.endDate);
     const filteredExpenses = state.expenses.filter(e => e.date >= formData.startDate && e.date <= formData.endDate);
 
-    const totalPurchases = filteredPurchases.reduce((sum, p) => sum + p.totalCost, 0);
     const totalSales = filteredSales.reduce((sum, s) => sum + s.totalRevenue, 0);
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = totalSales - (totalPurchases + totalExpenses);
@@ -33,9 +41,11 @@ export const ProductDelivery: React.FC = () => {
       totalPurchases,
       totalSales,
       totalExpenses,
-      netProfit
+      netProfit,
+      wetPowderCost,
+      dryPowderCost
     };
-  }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses]);
+  }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses, state.conversions]);
 
   const handleCancel = () => {
     setIsFormOpen(false);
@@ -55,6 +65,8 @@ export const ProductDelivery: React.FC = () => {
         startDate: formData.startDate,
         endDate: formData.endDate,
         totalPurchases: summary.totalPurchases,
+        wetPowderCost: summary.wetPowderCost,
+        dryPowderCost: summary.dryPowderCost,
         totalSales: summary.totalSales,
         totalExpenses: summary.totalExpenses,
         netProfit: summary.netProfit,
@@ -125,8 +137,12 @@ export const ProductDelivery: React.FC = () => {
             {summary && (
               <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Purchases</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Purchases/Cost</p>
                   <p className="text-xl font-bold text-slate-900">৳{summary.totalPurchases.toLocaleString()}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Wet (Drying): ৳{summary.wetPowderCost.toLocaleString()}<br/>
+                    Dry (Direct): ৳{summary.dryPowderCost.toLocaleString()}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Sales</p>
@@ -185,7 +201,7 @@ export const ProductDelivery: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Period</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Purchases</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Purchases/Cost</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Sales</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Expenses</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Net Profit</th>
@@ -296,7 +312,14 @@ export const ProductDelivery: React.FC = () => {
                     <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
                       <ShoppingCart className="text-blue-600" size={20} />
                     </div>
-                    <span className="font-semibold text-slate-700">Total Purchases</span>
+                    <div>
+                      <span className="font-semibold text-slate-700">Total Purchases/Cost</span>
+                      {(selectedDelivery.wetPowderCost !== undefined || selectedDelivery.dryPowderCost !== undefined) && (
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Wet (Drying): ৳{(selectedDelivery.wetPowderCost || 0).toLocaleString()} | Dry (Direct): ৳{(selectedDelivery.dryPowderCost || 0).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <span className="text-lg font-bold text-slate-900">৳{selectedDelivery.totalPurchases.toLocaleString()}</span>
                 </div>

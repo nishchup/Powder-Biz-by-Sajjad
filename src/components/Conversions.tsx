@@ -15,6 +15,7 @@ export const Conversions: React.FC = () => {
     date: new Date().toISOString().split('T')[0],
     wetQuantityUsed: '',
     dryQuantityProduced: '',
+    purchasePrice: '',
   });
 
   const handleEdit = (c: any) => {
@@ -22,6 +23,7 @@ export const Conversions: React.FC = () => {
       date: c.date,
       wetQuantityUsed: c.wetQuantityUsed.toString(),
       dryQuantityProduced: c.dryQuantityProduced.toString(),
+      purchasePrice: c.purchasePrice ? c.purchasePrice.toString() : '',
     });
     setEditingId(c.id);
     setIsFormOpen(true);
@@ -31,7 +33,7 @@ export const Conversions: React.FC = () => {
     setIsFormOpen(false);
     setEditingId(null);
     setError(null);
-    setFormData({ date: new Date().toISOString().split('T')[0], wetQuantityUsed: '', dryQuantityProduced: '' });
+    setFormData({ date: new Date().toISOString().split('T')[0], wetQuantityUsed: '', dryQuantityProduced: '', purchasePrice: '' });
   };
 
   const handleWetQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,6 +75,7 @@ export const Conversions: React.FC = () => {
         date: formData.date,
         wetQuantityUsed: wetQty,
         dryQuantityProduced: dryQty,
+        purchasePrice: parseFloat(formData.purchasePrice) || 0,
       };
 
       if (editingId) {
@@ -133,7 +136,7 @@ export const Conversions: React.FC = () => {
             </div>
           )}
           
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Date</label>
               <input 
@@ -158,6 +161,19 @@ export const Conversions: React.FC = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Purchase Price (per kg)</label>
+              <input 
+                type="number" 
+                required
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.purchasePrice}
+                onChange={e => setFormData({...formData, purchasePrice: e.target.value})}
+                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Dry Powder Produced (kg)</label>
               <input 
                 type="number" 
@@ -169,9 +185,9 @@ export const Conversions: React.FC = () => {
                 onChange={e => setFormData({...formData, dryQuantityProduced: e.target.value})}
                 className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
               />
-              <p className="text-xs text-slate-500 mt-1.5">Auto-calculated at 80% yield, but can be adjusted.</p>
+              <p className="text-xs text-slate-500 mt-1.5">Auto-calculated at 80% yield.</p>
             </div>
-            <div className="sm:col-span-3 flex justify-end space-x-3 mt-2 pt-4 border-t border-slate-100">
+            <div className="sm:col-span-2 lg:col-span-4 flex justify-end space-x-3 mt-2 pt-4 border-t border-slate-100">
               <button 
                 type="button" 
                 onClick={handleCancel}
@@ -197,6 +213,7 @@ export const Conversions: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Wet Used (kg)</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Purchase Price</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Dry Produced (kg)</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Yield %</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center print:hidden">Actions</th>
@@ -205,7 +222,7 @@ export const Conversions: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {state.conversions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center">
                       <Sun className="text-slate-300 mb-3" size={48} />
                       <p className="text-base font-medium">No drying batches recorded yet.</p>
@@ -220,6 +237,11 @@ export const Conversions: React.FC = () => {
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-6 py-4 text-sm text-slate-700">{c.date}</td>
                       <td className="px-6 py-4 text-sm text-blue-600 font-semibold text-right">{(c.wetQuantityUsed || 0).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-medium text-right">
+                        ৳{((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <br/>
+                        <span className="text-xs text-slate-400">@ ৳{c.purchasePrice || 0}/kg</span>
+                      </td>
                       <td className="px-6 py-4 text-sm text-yellow-600 font-semibold text-right">{(c.dryQuantityProduced || 0).toFixed(2)}</td>
                       <td className="px-6 py-4 text-sm text-slate-700 text-center">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${

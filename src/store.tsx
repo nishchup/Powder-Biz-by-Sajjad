@@ -45,6 +45,7 @@ export interface Conversion {
   id: string;
   date: string;
   wetQuantityUsed: number;
+  purchasePrice?: number;
   dryQuantityProduced: number;
 }
 
@@ -97,6 +98,8 @@ export interface ProductDelivery {
   startDate: string;
   endDate: string;
   totalPurchases: number;
+  wetPowderCost?: number;
+  dryPowderCost?: number;
   totalSales: number;
   totalExpenses: number;
   netProfit: number;
