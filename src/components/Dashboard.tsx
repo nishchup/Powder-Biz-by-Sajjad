@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store';
-import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle } from 'lucide-react';
+import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 
 export const Dashboard: React.FC = () => {
@@ -16,9 +16,6 @@ export const Dashboard: React.FC = () => {
   const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
   const totalCustomerPayments = state.customerPayments.reduce((sum, p) => sum + p.amount, 0);
   const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
-
-  const totalCustomerDue = totalSales - (totalSalesPaid + totalCustomerPayments);
-  const totalSupplierDue = totalPurchases - (totalPurchasesPaid + totalSupplierPayments);
 
   const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans;
 
@@ -65,24 +62,6 @@ export const Dashboard: React.FC = () => {
           value={`৳${(netProfit || 0).toLocaleString()}`} 
           icon={Wallet} 
           color={(netProfit || 0) >= 0 ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"} 
-        />
-        <StatCard 
-          title="Total Loan" 
-          value={`৳${(totalLoans || 0).toLocaleString()}`} 
-          icon={Landmark} 
-          color="bg-purple-100 text-purple-600" 
-        />
-        <StatCard 
-          title="Customer Due" 
-          value={`৳${(totalCustomerDue || 0).toLocaleString()}`} 
-          icon={AlertCircle} 
-          color="bg-orange-100 text-orange-600" 
-        />
-        <StatCard 
-          title="Supplier Due" 
-          value={`৳${(totalSupplierDue || 0).toLocaleString()}`} 
-          icon={CreditCard} 
-          color="bg-rose-100 text-rose-600" 
         />
       </div>
 
