@@ -109,18 +109,18 @@ export const ProductDelivery: React.FC = () => {
   };
 
   const openWithdrawModal = (delivery: any) => {
+    setWithdrawDelivery(delivery);
+    setWithdrawData({ ...withdrawData, amount: delivery.netProfit > 0 ? delivery.netProfit.toString() : '' });
+    setWithdrawModalOpen(true);
+
     const existingWithdrawal = state.profitWithdrawals.find(pw => pw.deliveryId === delivery.id);
     if (existingWithdrawal) {
-      alert('Profit has already been withdrawn for this delivery.');
-      return;
+      setWithdrawError('Profit has already been withdrawn for this delivery.');
+    } else if (delivery.netProfit <= 0) {
+      setWithdrawError('No profit to withdraw for this delivery.');
+    } else {
+      setWithdrawError(null);
     }
-    if (delivery.netProfit <= 0) {
-      alert('No profit to withdraw for this delivery.');
-      return;
-    }
-    setWithdrawDelivery(delivery);
-    setWithdrawData({ ...withdrawData, amount: delivery.netProfit.toString() });
-    setWithdrawModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -507,9 +507,10 @@ export const ProductDelivery: React.FC = () => {
                 <input 
                   type="date" 
                   required
+                  disabled={!!withdrawError}
                   value={withdrawData.date}
                   onChange={e => setWithdrawData({...withdrawData, date: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500"
                 />
               </div>
 
@@ -518,12 +519,13 @@ export const ProductDelivery: React.FC = () => {
                 <input 
                   type="number" 
                   required
+                  disabled={!!withdrawError}
                   min="1"
-                  max={withdrawDelivery.netProfit}
+                  max={withdrawDelivery.netProfit > 0 ? withdrawDelivery.netProfit : 1}
                   step="0.01"
                   value={withdrawData.amount}
                   onChange={e => setWithdrawData({...withdrawData, amount: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500"
                 />
               </div>
 
@@ -531,9 +533,10 @@ export const ProductDelivery: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
                 <textarea 
                   rows={2}
+                  disabled={!!withdrawError}
                   value={withdrawData.notes}
                   onChange={e => setWithdrawData({...withdrawData, notes: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500"
                   placeholder="E.g. Monthly dividend, owner draw..."
                 />
               </div>
@@ -548,7 +551,8 @@ export const ProductDelivery: React.FC = () => {
                 </button>
                 <button 
                   type="submit" 
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
+                  disabled={!!withdrawError}
+                  className={`font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm ${!!withdrawError ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
                 >
                   Confirm Withdrawal
                 </button>
