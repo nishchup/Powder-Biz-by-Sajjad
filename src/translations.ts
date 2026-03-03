@@ -1,8 +1,9 @@
 export const translations = {
   en: {
     dashboard: 'Dashboard',
+    inventory: 'Inventory & Stock',
     contactsSettings: 'Contacts & Settings',
-    purchases: 'Purchases (Wet)',
+    purchases: 'Purchases',
     dryingProcess: 'Drying Process',
     sales: 'Sales (Dry)',
     expenses: 'Expenses',
@@ -55,7 +56,7 @@ export const translations = {
   bn: {
     dashboard: 'ড্যাশবোর্ড',
     contactsSettings: 'যোগাযোগ ও সেটিংস',
-    purchases: 'ক্রয় (কাঁচা)',
+    purchases: 'ক্রয়',
     dryingProcess: 'শুকানো প্রক্রিয়া',
     sales: 'বিক্রয় (শুকনো)',
     expenses: 'খরচ',

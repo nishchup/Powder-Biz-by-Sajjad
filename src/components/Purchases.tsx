@@ -87,7 +87,7 @@ export const Purchases: React.FC = () => {
   return (
     <div className="space-y-6" id="purchases-content">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Wet Powder Purchases</h2>
+        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Purchases</h2>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto print:hidden">
           <button 
             onClick={() => exportToPDF('purchases-content', 'purchases-report.pdf')}

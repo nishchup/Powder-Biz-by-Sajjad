@@ -16,13 +16,21 @@ import { Contacts } from './components/Contacts';
 import { Payments } from './components/Payments';
 import { Notes } from './components/Notes';
 import { ProductDelivery } from './components/ProductDelivery';
+import { LockScreen } from './components/LockScreen';
+import { Inventory } from './components/Inventory';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isLocked, setIsLocked] = useState(true);
+
+  if (isLocked) {
+    return <LockScreen onUnlock={() => setIsLocked(false)} />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
+      case 'inventory': return <Inventory />;
       case 'contacts': return <Contacts />;
       case 'purchases': return <Purchases />;
       case 'drying': return <Conversions />;
@@ -37,7 +45,7 @@ function AppContent() {
   };
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} onLock={() => setIsLocked(true)}>
       {renderContent()}
     </Layout>
   );

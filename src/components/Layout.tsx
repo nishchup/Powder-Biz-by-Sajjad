@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 
@@ -7,15 +7,17 @@ interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onLock: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onLock }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { dryStock, state, setLanguage } = useAppStore();
   const t = useTranslation(state.language);
 
   const navItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'inventory', label: t('inventory'), icon: Package },
     { id: 'contacts', label: t('contactsSettings'), icon: Users },
     { id: 'purchases', label: t('purchases'), icon: ShoppingCart },
     { id: 'drying', label: t('dryingProcess'), icon: Sun },
@@ -109,6 +111,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
               {state.language === 'en' ? 'বাংলা' : 'EN'}
             </button>
             <button 
+              onClick={onLock}
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <Lock size={20} />
+            </button>
+            <button 
               onClick={() => setIsMobileMenuOpen(true)} 
               className="p-2 -mr-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             >
@@ -129,6 +137,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             >
               <Globe size={18} className="mr-2" />
               {state.language === 'en' ? 'বাংলা' : 'English'}
+            </button>
+            <button 
+              onClick={onLock}
+              className="flex items-center text-slate-600 hover:text-red-600 font-medium text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
+              title="Lock Application"
+            >
+              <Lock size={18} className="mr-2" />
+              Lock
             </button>
           </div>
         </header>

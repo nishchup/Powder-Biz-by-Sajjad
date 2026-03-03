@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, Pencil, X, Receipt, Printer, TrendingUp, Share2 } from 'lucide-react';
+import { Plus, Trash2, Pencil, X, Receipt, Printer, TrendingUp, Share2, Download } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 
 export const Sales: React.FC = () => {
@@ -93,8 +93,8 @@ export const Sales: React.FC = () => {
             onClick={() => exportToPDF('sales-content', 'sales-report.pdf')}
             className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
           >
-            <Printer size={18} className="mr-2" />
-            Print
+            <Download size={18} className="mr-2" />
+            Download PDF
           </button>
           {!isFormOpen && (
             <button 
@@ -320,7 +320,7 @@ export const Sales: React.FC = () => {
                 onClick={() => exportToPDF('challan-content', `sales-challan-${selectedChallan.id.substring(0, 8)}.pdf`)} 
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center font-medium transition-colors"
               >
-                <Printer size={18} className="mr-2"/> Print
+                <Download size={18} className="mr-2"/> Download PDF
               </button>
               <button 
                 onClick={() => setSelectedChallan(null)} 
