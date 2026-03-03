@@ -163,6 +163,7 @@ const initialState: AppState = {
   loans: [],
   companyAdvances: [],
   productDeliveries: [],
+  profitWithdrawals: [],
   language: 'en',
 };
 

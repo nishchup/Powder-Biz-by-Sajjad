@@ -59,7 +59,13 @@ export const Reports: React.FC = () => {
     return true;
   }).reduce((sum, a) => sum + a.amount, 0);
   
-  const netProfit = totalSales + totalCompanyAdvances - (totalPurchases + totalExpenses + totalLoans);
+  const totalProfitWithdrawals = state.profitWithdrawals.filter(pw => {
+    if (startDate && pw.date < startDate) return false;
+    if (endDate && pw.date > endDate) return false;
+    return true;
+  }).reduce((sum, pw) => sum + pw.amount, 0);
+
+  const netProfit = totalSales + totalCompanyAdvances - (totalPurchases + totalExpenses + totalLoans + totalProfitWithdrawals);
 
   return (
     <div className="space-y-6" id="reports-content">
@@ -159,9 +165,13 @@ export const Reports: React.FC = () => {
                   <span className="text-gray-600">Total Loans</span>
                   <span className="font-semibold text-red-500">৳{(totalLoans || 0).toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Profit Withdrawals</span>
+                  <span className="font-semibold text-red-500">৳{(totalProfitWithdrawals || 0).toLocaleString()}</span>
+                </div>
                 <div className="flex justify-between text-sm mt-2 pt-2 border-t border-gray-100">
                   <span className="font-medium text-gray-800">Total Outflow</span>
-                  <span className="font-bold text-red-600">৳{((totalPurchases || 0) + (totalExpenses || 0) + (totalLoans || 0)).toLocaleString()}</span>
+                  <span className="font-bold text-red-600">৳{((totalPurchases || 0) + (totalExpenses || 0) + (totalLoans || 0) + (totalProfitWithdrawals || 0)).toLocaleString()}</span>
                 </div>
               </div>
             </div>

@@ -309,6 +309,11 @@ export const ProductDelivery: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-red-500 text-right font-medium">৳{d.totalExpenses.toLocaleString()}</td>
                     <td className={`px-6 py-4 text-sm text-right font-bold ${d.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                       ৳{d.netProfit.toLocaleString()}
+                      {state.profitWithdrawals.find(pw => pw.deliveryId === d.id) && (
+                        <div className="text-xs text-slate-500 font-normal mt-1">
+                          Withdrawn: ৳{state.profitWithdrawals.find(pw => pw.deliveryId === d.id)?.amount.toLocaleString()}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-center">
                       <div className="flex items-center justify-center space-x-2">
@@ -433,9 +438,16 @@ export const ProductDelivery: React.FC = () => {
                       <p className="text-xs text-slate-500 font-medium">Calculated for the selected period</p>
                     </div>
                   </div>
-                  <span className={`text-2xl font-black ${selectedDelivery.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    ৳{selectedDelivery.netProfit.toLocaleString()}
-                  </span>
+                  <div className="text-right">
+                    <span className={`text-2xl font-black ${selectedDelivery.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      ৳{selectedDelivery.netProfit.toLocaleString()}
+                    </span>
+                    {state.profitWithdrawals.find(pw => pw.deliveryId === selectedDelivery.id) && (
+                      <p className="text-sm text-slate-600 mt-1 font-medium">
+                        Withdrawn: ৳{state.profitWithdrawals.find(pw => pw.deliveryId === selectedDelivery.id)?.amount.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -459,6 +471,89 @@ export const ProductDelivery: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Withdraw Profit Modal */}
+      {withdrawModalOpen && withdrawDelivery && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center">
+                <Banknote className="mr-2 text-emerald-600" /> Withdraw Profit
+              </h3>
+              <button 
+                onClick={handleWithdrawCancel}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleWithdrawSubmit} className="p-6 space-y-5">
+              {withdrawError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                  {withdrawError}
+                </div>
+              )}
+              
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-2">
+                <p className="text-sm text-slate-500 mb-1">Available Profit to Withdraw</p>
+                <p className="text-2xl font-bold text-emerald-600">৳{withdrawDelivery.netProfit.toLocaleString()}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Withdrawal Date</label>
+                <input 
+                  type="date" 
+                  required
+                  value={withdrawData.date}
+                  onChange={e => setWithdrawData({...withdrawData, date: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Amount (৳)</label>
+                <input 
+                  type="number" 
+                  required
+                  min="1"
+                  max={withdrawDelivery.netProfit}
+                  step="0.01"
+                  value={withdrawData.amount}
+                  onChange={e => setWithdrawData({...withdrawData, amount: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
+                <textarea 
+                  rows={2}
+                  value={withdrawData.notes}
+                  onChange={e => setWithdrawData({...withdrawData, notes: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  placeholder="E.g. Monthly dividend, owner draw..."
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={handleWithdrawCancel}
+                  className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
+                >
+                  Confirm Withdrawal
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
