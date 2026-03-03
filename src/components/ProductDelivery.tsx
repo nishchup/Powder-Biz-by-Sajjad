@@ -117,14 +117,8 @@ export const ProductDelivery: React.FC = () => {
     setEditingWithdrawalId(null);
     setWithdrawError(null);
     
-    const newTotalWithdrawn = totalWithdrawn + amount;
-    const newRemainingProfit = withdrawDelivery.netProfit - newTotalWithdrawn;
-    
-    setWithdrawData({
-      date: new Date().toISOString().split('T')[0],
-      amount: newRemainingProfit > 0 ? newRemainingProfit.toString() : '',
-      notes: '',
-    });
+    // Close modal after successful withdrawal
+    handleWithdrawCancel();
   };
 
   const handleEditWithdrawal = (pw: any) => {
@@ -523,8 +517,8 @@ export const ProductDelivery: React.FC = () => {
       {/* Withdraw Profit Modal */}
       {withdrawModalOpen && withdrawDelivery && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h3 className="text-xl font-bold text-slate-800 flex items-center">
                 <Banknote className="mr-2 text-emerald-600" /> Withdraw Profit
               </h3>
@@ -536,94 +530,96 @@ export const ProductDelivery: React.FC = () => {
               </button>
             </div>
             
-            <form onSubmit={handleWithdrawSubmit} className="p-6 space-y-5">
-              {withdrawError && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
-                  {withdrawError}
+            <form onSubmit={handleWithdrawSubmit} className="flex flex-col overflow-hidden">
+              <div className="p-6 space-y-5 overflow-y-auto">
+                {withdrawError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                    {withdrawError}
+                  </div>
+                )}
+                
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+                  <div className="flex justify-between items-center mb-1">
+                    <p className="text-sm text-slate-500">Total Net Profit</p>
+                    <p className="font-semibold text-slate-700">৳{withdrawDelivery.netProfit.toLocaleString()}</p>
+                  </div>
+                  <div className="flex justify-between items-center mb-1">
+                    <p className="text-sm text-slate-500">Total Withdrawn</p>
+                    <p className="font-semibold text-slate-700">৳{state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}</p>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-200 mt-2">
+                    <p className="text-sm font-bold text-slate-700">Remaining Profit</p>
+                    <p className="text-lg font-bold text-emerald-600">৳{(withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}</p>
+                  </div>
                 </div>
-              )}
-              
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <p className="text-sm text-slate-500">Total Net Profit</p>
-                  <p className="font-semibold text-slate-700">৳{withdrawDelivery.netProfit.toLocaleString()}</p>
-                </div>
-                <div className="flex justify-between items-center mb-1">
-                  <p className="text-sm text-slate-500">Total Withdrawn</p>
-                  <p className="font-semibold text-slate-700">৳{state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}</p>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-slate-200 mt-2">
-                  <p className="text-sm font-bold text-slate-700">Remaining Profit</p>
-                  <p className="text-lg font-bold text-emerald-600">৳{(withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}</p>
-                </div>
+
+                {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Previous Withdrawals</h4>
+                    <div className="space-y-2">
+                      {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).map(pw => (
+                        <div key={pw.id} className={`flex justify-between items-center p-3 border rounded-lg transition-colors ${editingWithdrawalId === pw.id ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'}`}>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">৳{pw.amount.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500">{pw.date} {pw.notes && `- ${pw.notes}`}</p>
+                          </div>
+                          <div className="flex space-x-1">
+                            <button type="button" onClick={() => handleEditWithdrawal(pw)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+                              <Edit2 size={14} />
+                            </button>
+                            <button type="button" onClick={() => handleDeleteWithdrawal(pw.id)} className="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition-colors">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
+                  <div className="space-y-4 border-t border-slate-100 pt-4">
+                    <h4 className="text-sm font-semibold text-slate-700">{editingWithdrawalId ? 'Edit Withdrawal' : 'New Withdrawal'}</h4>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Withdrawal Date</label>
+                      <input 
+                        type="date" 
+                        required
+                        value={withdrawData.date}
+                        onChange={e => setWithdrawData({...withdrawData, date: e.target.value})}
+                        className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Amount (৳)</label>
+                      <input 
+                        type="number" 
+                        required
+                        min="1"
+                        max={withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== editingWithdrawalId).reduce((sum, pw) => sum + pw.amount, 0)}
+                        step="0.01"
+                        value={withdrawData.amount}
+                        onChange={e => setWithdrawData({...withdrawData, amount: e.target.value})}
+                        className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
+                      <textarea 
+                        rows={2}
+                        value={withdrawData.notes}
+                        onChange={e => setWithdrawData({...withdrawData, notes: e.target.value})}
+                        className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                        placeholder="E.g. Monthly dividend, owner draw..."
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Previous Withdrawals</h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                    {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).map(pw => (
-                      <div key={pw.id} className={`flex justify-between items-center p-3 border rounded-lg transition-colors ${editingWithdrawalId === pw.id ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'}`}>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">৳{pw.amount.toLocaleString()}</p>
-                          <p className="text-xs text-slate-500">{pw.date} {pw.notes && `- ${pw.notes}`}</p>
-                        </div>
-                        <div className="flex space-x-1">
-                          <button type="button" onClick={() => handleEditWithdrawal(pw)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
-                            <Edit2 size={14} />
-                          </button>
-                          <button type="button" onClick={() => handleDeleteWithdrawal(pw.id)} className="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition-colors">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
-                <div className="space-y-4 border-t border-slate-100 pt-4">
-                  <h4 className="text-sm font-semibold text-slate-700">{editingWithdrawalId ? 'Edit Withdrawal' : 'New Withdrawal'}</h4>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Withdrawal Date</label>
-                    <input 
-                      type="date" 
-                      required
-                      value={withdrawData.date}
-                      onChange={e => setWithdrawData({...withdrawData, date: e.target.value})}
-                      className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Amount (৳)</label>
-                    <input 
-                      type="number" 
-                      required
-                      min="1"
-                      max={withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== editingWithdrawalId).reduce((sum, pw) => sum + pw.amount, 0)}
-                      step="0.01"
-                      value={withdrawData.amount}
-                      onChange={e => setWithdrawData({...withdrawData, amount: e.target.value})}
-                      className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
-                    <textarea 
-                      rows={2}
-                      value={withdrawData.notes}
-                      onChange={e => setWithdrawData({...withdrawData, notes: e.target.value})}
-                      className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                      placeholder="E.g. Monthly dividend, owner draw..."
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+              <div className="p-6 border-t border-slate-100 flex justify-end space-x-3 shrink-0">
                 <button 
                   type="button" 
                   onClick={handleWithdrawCancel}
