@@ -49,6 +49,9 @@ export interface Conversion {
   bagsUsed?: number;
   purchasePrice?: number;
   dryQuantityProduced: number;
+  purchaseId?: string;
+  remainBags?: number;
+  remainQuantity?: number;
 }
 
 export interface CompanyAdvance {
