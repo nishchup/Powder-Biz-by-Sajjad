@@ -1,17 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, X, Truck, Calendar, TrendingUp, TrendingDown, Wallet, ShoppingCart, Printer, FileText, Banknote } from 'lucide-react';
+import { Plus, Trash2, X, Truck, Calendar, TrendingUp, TrendingDown, Wallet, ShoppingCart, Printer, FileText, Banknote, Edit2 } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
 
 export const ProductDelivery: React.FC = () => {
-  const { state, addProductDelivery, deleteProductDelivery, addProfitWithdrawal } = useAppStore();
+  const { state, addProductDelivery, deleteProductDelivery, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal } = useAppStore();
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [withdrawDelivery, setWithdrawDelivery] = useState<any>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [editingWithdrawalId, setEditingWithdrawalId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -70,6 +71,7 @@ export const ProductDelivery: React.FC = () => {
     setWithdrawModalOpen(false);
     setWithdrawDelivery(null);
     setWithdrawError(null);
+    setEditingWithdrawalId(null);
     setWithdrawData({
       date: new Date().toISOString().split('T')[0],
       amount: '',
@@ -86,41 +88,85 @@ export const ProductDelivery: React.FC = () => {
       return;
     }
 
-    if (amount > withdrawDelivery.netProfit) {
-      setWithdrawError('Cannot withdraw more than the net profit');
+    const totalWithdrawn = state.profitWithdrawals
+      .filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== editingWithdrawalId)
+      .reduce((sum, pw) => sum + pw.amount, 0);
+    const remainingProfit = withdrawDelivery.netProfit - totalWithdrawn;
+
+    if (amount > remainingProfit) {
+      setWithdrawError(`Cannot withdraw more than remaining profit (৳${remainingProfit.toLocaleString()})`);
       return;
     }
 
-    // Check if already withdrawn for this delivery
-    const existingWithdrawal = state.profitWithdrawals.find(pw => pw.deliveryId === withdrawDelivery.id);
-    if (existingWithdrawal) {
-      setWithdrawError('Profit has already been withdrawn for this delivery');
-      return;
+    if (editingWithdrawalId) {
+      editProfitWithdrawal(editingWithdrawalId, {
+        date: withdrawData.date,
+        amount: amount,
+        deliveryId: withdrawDelivery.id,
+        notes: withdrawData.notes,
+      });
+    } else {
+      addProfitWithdrawal({
+        date: withdrawData.date,
+        amount: amount,
+        deliveryId: withdrawDelivery.id,
+        notes: withdrawData.notes,
+      });
     }
 
-    addProfitWithdrawal({
-      date: withdrawData.date,
-      amount: amount,
-      deliveryId: withdrawDelivery.id,
-      notes: withdrawData.notes,
+    setEditingWithdrawalId(null);
+    setWithdrawError(null);
+    
+    const newTotalWithdrawn = totalWithdrawn + amount;
+    const newRemainingProfit = withdrawDelivery.netProfit - newTotalWithdrawn;
+    
+    setWithdrawData({
+      date: new Date().toISOString().split('T')[0],
+      amount: newRemainingProfit > 0 ? newRemainingProfit.toString() : '',
+      notes: '',
     });
+  };
 
-    handleWithdrawCancel();
+  const handleEditWithdrawal = (pw: any) => {
+    setEditingWithdrawalId(pw.id);
+    setWithdrawData({
+      date: pw.date,
+      amount: pw.amount.toString(),
+      notes: pw.notes || '',
+    });
+    setWithdrawError(null);
+  };
+
+  const handleDeleteWithdrawal = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this withdrawal?')) {
+      deleteProfitWithdrawal(id);
+      if (editingWithdrawalId === id) {
+        setEditingWithdrawalId(null);
+        setWithdrawData({
+          date: new Date().toISOString().split('T')[0],
+          amount: '',
+          notes: '',
+        });
+      }
+    }
   };
 
   const openWithdrawModal = (delivery: any) => {
     setWithdrawDelivery(delivery);
-    setWithdrawData({ ...withdrawData, amount: delivery.netProfit > 0 ? delivery.netProfit.toString() : '' });
-    setWithdrawModalOpen(true);
+    
+    const totalWithdrawn = state.profitWithdrawals
+      .filter(pw => pw.deliveryId === delivery.id)
+      .reduce((sum, pw) => sum + pw.amount, 0);
+    const remainingProfit = delivery.netProfit - totalWithdrawn;
 
-    const existingWithdrawal = state.profitWithdrawals.find(pw => pw.deliveryId === delivery.id);
-    if (existingWithdrawal) {
-      setWithdrawError('Profit has already been withdrawn for this delivery.');
-    } else if (delivery.netProfit <= 0) {
-      setWithdrawError('No profit to withdraw for this delivery.');
-    } else {
-      setWithdrawError(null);
-    }
+    setWithdrawData({ 
+      date: new Date().toISOString().split('T')[0], 
+      amount: remainingProfit > 0 ? remainingProfit.toString() : '',
+      notes: ''
+    });
+    setWithdrawModalOpen(true);
+    setEditingWithdrawalId(null);
+    setWithdrawError(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -309,9 +355,9 @@ export const ProductDelivery: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-red-500 text-right font-medium">৳{d.totalExpenses.toLocaleString()}</td>
                     <td className={`px-6 py-4 text-sm text-right font-bold ${d.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                       ৳{d.netProfit.toLocaleString()}
-                      {state.profitWithdrawals.find(pw => pw.deliveryId === d.id) && (
+                      {state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).length > 0 && (
                         <div className="text-xs text-slate-500 font-normal mt-1">
-                          Withdrawn: ৳{state.profitWithdrawals.find(pw => pw.deliveryId === d.id)?.amount.toLocaleString()}
+                          Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                         </div>
                       )}
                     </td>
@@ -442,9 +488,9 @@ export const ProductDelivery: React.FC = () => {
                     <span className={`text-2xl font-black ${selectedDelivery.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                       ৳{selectedDelivery.netProfit.toLocaleString()}
                     </span>
-                    {state.profitWithdrawals.find(pw => pw.deliveryId === selectedDelivery.id) && (
+                    {state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).length > 0 && (
                       <p className="text-sm text-slate-600 mt-1 font-medium">
-                        Withdrawn: ৳{state.profitWithdrawals.find(pw => pw.deliveryId === selectedDelivery.id)?.amount.toLocaleString()}
+                        Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                       </p>
                     )}
                   </div>
@@ -497,49 +543,85 @@ export const ProductDelivery: React.FC = () => {
                 </div>
               )}
               
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-2">
-                <p className="text-sm text-slate-500 mb-1">Available Profit to Withdraw</p>
-                <p className="text-2xl font-bold text-emerald-600">৳{withdrawDelivery.netProfit.toLocaleString()}</p>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-sm text-slate-500">Total Net Profit</p>
+                  <p className="font-semibold text-slate-700">৳{withdrawDelivery.netProfit.toLocaleString()}</p>
+                </div>
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-sm text-slate-500">Total Withdrawn</p>
+                  <p className="font-semibold text-slate-700">৳{state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}</p>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200 mt-2">
+                  <p className="text-sm font-bold text-slate-700">Remaining Profit</p>
+                  <p className="text-lg font-bold text-emerald-600">৳{(withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}</p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Withdrawal Date</label>
-                <input 
-                  type="date" 
-                  required
-                  disabled={!!withdrawError}
-                  value={withdrawData.date}
-                  onChange={e => setWithdrawData({...withdrawData, date: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500"
-                />
-              </div>
+              {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Previous Withdrawals</h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                    {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).map(pw => (
+                      <div key={pw.id} className={`flex justify-between items-center p-3 border rounded-lg transition-colors ${editingWithdrawalId === pw.id ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'}`}>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">৳{pw.amount.toLocaleString()}</p>
+                          <p className="text-xs text-slate-500">{pw.date} {pw.notes && `- ${pw.notes}`}</p>
+                        </div>
+                        <div className="flex space-x-1">
+                          <button type="button" onClick={() => handleEditWithdrawal(pw)} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors">
+                            <Edit2 size={14} />
+                          </button>
+                          <button type="button" onClick={() => handleDeleteWithdrawal(pw.id)} className="p-1.5 text-red-600 hover:bg-red-100 rounded-md transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Amount (৳)</label>
-                <input 
-                  type="number" 
-                  required
-                  disabled={!!withdrawError}
-                  min="1"
-                  max={withdrawDelivery.netProfit > 0 ? withdrawDelivery.netProfit : 1}
-                  step="0.01"
-                  value={withdrawData.amount}
-                  onChange={e => setWithdrawData({...withdrawData, amount: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500"
-                />
-              </div>
+              {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
+                <div className="space-y-4 border-t border-slate-100 pt-4">
+                  <h4 className="text-sm font-semibold text-slate-700">{editingWithdrawalId ? 'Edit Withdrawal' : 'New Withdrawal'}</h4>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Withdrawal Date</label>
+                    <input 
+                      type="date" 
+                      required
+                      value={withdrawData.date}
+                      onChange={e => setWithdrawData({...withdrawData, date: e.target.value})}
+                      className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
-                <textarea 
-                  rows={2}
-                  disabled={!!withdrawError}
-                  value={withdrawData.notes}
-                  onChange={e => setWithdrawData({...withdrawData, notes: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500"
-                  placeholder="E.g. Monthly dividend, owner draw..."
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Amount (৳)</label>
+                    <input 
+                      type="number" 
+                      required
+                      min="1"
+                      max={withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== editingWithdrawalId).reduce((sum, pw) => sum + pw.amount, 0)}
+                      step="0.01"
+                      value={withdrawData.amount}
+                      onChange={e => setWithdrawData({...withdrawData, amount: e.target.value})}
+                      className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
+                    <textarea 
+                      rows={2}
+                      value={withdrawData.notes}
+                      onChange={e => setWithdrawData({...withdrawData, notes: e.target.value})}
+                      className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                      placeholder="E.g. Monthly dividend, owner draw..."
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
                 <button 
@@ -547,15 +629,16 @@ export const ProductDelivery: React.FC = () => {
                   onClick={handleWithdrawCancel}
                   className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  Cancel
+                  {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) ? 'Cancel' : 'Close'}
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={!!withdrawError}
-                  className={`font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm ${!!withdrawError ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
-                >
-                  Confirm Withdrawal
-                </button>
+                {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
+                  <button 
+                    type="submit" 
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
+                  >
+                    {editingWithdrawalId ? 'Update Withdrawal' : 'Confirm Withdrawal'}
+                  </button>
+                )}
               </div>
             </form>
           </div>
