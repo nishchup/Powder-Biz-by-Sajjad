@@ -214,15 +214,17 @@ export const ProductDelivery: React.FC = () => {
       </div>
 
       {isFormOpen && (
-        <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 mb-6 animate-in slide-in-from-top-4 duration-300">
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="text-lg font-bold text-slate-800">New Delivery Summary</h3>
-            <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
-              <X size={20} />
-            </button>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
+              <h3 className="text-lg font-bold text-slate-800">New Delivery Summary</h3>
+              <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Report Date</label>
@@ -314,7 +316,9 @@ export const ProductDelivery: React.FC = () => {
             </div>
           </form>
         </div>
-      )}
+      </div>
+    </div>
+  )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">

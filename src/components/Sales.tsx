@@ -122,23 +122,25 @@ export const Sales: React.FC = () => {
       </div>
 
       {isFormOpen && (
-        <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 mb-6 animate-in slide-in-from-top-4 duration-300">
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="text-lg font-bold text-slate-800">
-              {editingId ? 'Edit Sale' : 'New Sale Details'}
-            </h3>
-            <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
-              <X size={20} />
-            </button>
-          </div>
-          
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
-              {error}
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
+              <h3 className="text-lg font-bold text-slate-800">
+                {editingId ? 'Edit Sale' : 'New Sale Details'}
+              </h3>
+              <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X size={20} />
+              </button>
             </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            
+            <div className="p-6 overflow-y-auto">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Date</label>
               <input 
@@ -221,22 +223,24 @@ export const Sales: React.FC = () => {
                 className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
               />
             </div>
-            <div className="lg:col-span-4 flex justify-end space-x-3 mt-2 pt-4 border-t border-slate-100">
-              <button 
-                type="button" 
-                onClick={handleCancel}
-                className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
-              >
-                {editingId ? 'Update Sale' : 'Save Sale'}
-              </button>
+                <div className="sm:col-span-2 lg:col-span-3 flex justify-end space-x-3 mt-4 pt-4 border-t border-slate-100">
+                  <button 
+                    type="button" 
+                    onClick={handleCancel}
+                    className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
+                  >
+                    {editingId ? 'Update Sale' : 'Save Sale'}
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
