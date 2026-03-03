@@ -134,14 +134,21 @@ export const ProductDelivery: React.FC = () => {
   const handleDeleteWithdrawal = (id: string) => {
     if (window.confirm('Are you sure you want to delete this withdrawal?')) {
       deleteProfitWithdrawal(id);
+      
+      // Calculate new remaining profit after this deletion
+      const totalWithdrawnAfterDelete = state.profitWithdrawals
+        .filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== id)
+        .reduce((sum, pw) => sum + pw.amount, 0);
+      const newRemainingProfit = withdrawDelivery.netProfit - totalWithdrawnAfterDelete;
+
       if (editingWithdrawalId === id) {
         setEditingWithdrawalId(null);
-        setWithdrawData({
-          date: new Date().toISOString().split('T')[0],
-          amount: '',
-          notes: '',
-        });
       }
+      
+      setWithdrawData(prev => ({
+        ...prev,
+        amount: newRemainingProfit > 0 ? newRemainingProfit.toString() : '',
+      }));
     }
   };
 
