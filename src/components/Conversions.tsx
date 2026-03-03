@@ -5,7 +5,7 @@ import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
 
 export const Conversions: React.FC = () => {
-  const { state, addConversion, editConversion, deleteConversion, wetStock } = useAppStore();
+  const { state, addConversion, editConversion, deleteConversion, wetStock, wetBagsStock } = useAppStore();
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -18,6 +18,7 @@ export const Conversions: React.FC = () => {
     wetQuantityUsed: '',
     dryQuantityProduced: '',
     purchasePrice: '',
+    bagsUsed: '',
   });
 
   const handleEdit = (c: any) => {
@@ -26,6 +27,7 @@ export const Conversions: React.FC = () => {
       wetQuantityUsed: c.wetQuantityUsed.toString(),
       dryQuantityProduced: c.dryQuantityProduced.toString(),
       purchasePrice: c.purchasePrice ? c.purchasePrice.toString() : '',
+      bagsUsed: c.bagsUsed ? c.bagsUsed.toString() : '',
     });
     setEditingId(c.id);
     setIsFormOpen(true);
@@ -35,7 +37,7 @@ export const Conversions: React.FC = () => {
     setIsFormOpen(false);
     setEditingId(null);
     setError(null);
-    setFormData({ date: new Date().toISOString().split('T')[0], wetQuantityUsed: '', dryQuantityProduced: '', purchasePrice: '' });
+    setFormData({ date: new Date().toISOString().split('T')[0], wetQuantityUsed: '', dryQuantityProduced: '', purchasePrice: '', bagsUsed: '' });
   };
 
   const handleWetQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,6 +63,7 @@ export const Conversions: React.FC = () => {
     e.preventDefault();
     const wetQty = parseFloat(formData.wetQuantityUsed);
     const dryQty = parseFloat(formData.dryQuantityProduced);
+    const bagsUsed = parseFloat(formData.bagsUsed);
     
     if (wetQty > 0 && dryQty > 0) {
       // Check stock
@@ -72,12 +75,21 @@ export const Conversions: React.FC = () => {
         return;
       }
 
+      const oldBagsUsed = editingId ? (state.conversions.find(c => c.id === editingId)?.bagsUsed || 0) : 0;
+      const availableBagsStock = wetBagsStock + oldBagsUsed;
+
+      if (bagsUsed > availableBagsStock) {
+        setError(`Not enough bags! Available: ${availableBagsStock} bags`);
+        return;
+      }
+
       setError(null);
       const data = {
         date: formData.date,
         wetQuantityUsed: wetQty,
         dryQuantityProduced: dryQty,
         purchasePrice: parseFloat(formData.purchasePrice) || 0,
+        bagsUsed: bagsUsed || 0,
       };
 
       if (editingId) {
@@ -119,9 +131,15 @@ export const Conversions: React.FC = () => {
       </div>
 
       <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
-        <div>
-          <p className="text-sm text-blue-800 font-semibold mb-1">Available Wet Stock</p>
-          <p className="text-3xl font-bold text-blue-900">{(wetStock || 0).toFixed(2)} <span className="text-lg font-medium">kg</span></p>
+        <div className="flex gap-8">
+          <div>
+            <p className="text-sm text-blue-800 font-semibold mb-1">Available Wet Stock</p>
+            <p className="text-3xl font-bold text-blue-900">{(wetStock || 0).toFixed(2)} <span className="text-lg font-medium">kg</span></p>
+          </div>
+          <div>
+            <p className="text-sm text-blue-800 font-semibold mb-1">Available Bags</p>
+            <p className="text-3xl font-bold text-blue-900">{wetBagsStock || 0} <span className="text-lg font-medium">bags</span></p>
+          </div>
         </div>
       </div>
 
@@ -150,6 +168,19 @@ export const Conversions: React.FC = () => {
                 required
                 value={formData.date}
                 onChange={e => setFormData({...formData, date: e.target.value})}
+                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Bags Used</label>
+              <input 
+                type="number" 
+                required
+                min="0"
+                step="1"
+                placeholder="0"
+                value={formData.bagsUsed}
+                onChange={e => setFormData({...formData, bagsUsed: e.target.value})}
                 className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
               />
             </div>
@@ -218,6 +249,7 @@ export const Conversions: React.FC = () => {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Bags Used</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Wet Used (kg)</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Purchase Price</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Dry Produced (kg)</th>
@@ -228,7 +260,7 @@ export const Conversions: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {paginatedConversions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center">
                       <Sun className="text-slate-300 mb-3" size={48} />
                       <p className="text-base font-medium">No drying batches recorded yet.</p>
@@ -242,6 +274,7 @@ export const Conversions: React.FC = () => {
                   return (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-6 py-4 text-sm text-slate-700">{c.date}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-semibold text-right">{c.bagsUsed || 0}</td>
                       <td className="px-6 py-4 text-sm text-blue-600 font-semibold text-right">{(c.wetQuantityUsed || 0).toFixed(2)}</td>
                       <td className="px-6 py-4 text-sm text-slate-600 font-medium text-right">
                         ৳{((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

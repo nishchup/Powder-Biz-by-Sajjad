@@ -46,8 +46,16 @@ export interface Conversion {
   id: string;
   date: string;
   wetQuantityUsed: number;
+  bagsUsed?: number;
   purchasePrice?: number;
   dryQuantityProduced: number;
+}
+
+export interface CompanyAdvance {
+  id: string;
+  date: string;
+  amount: number;
+  description: string;
 }
 
 export interface Sale {
@@ -121,6 +129,7 @@ export interface AppState {
   customerPayments: CustomerPayment[];
   notes: Note[];
   loans: Loan[];
+  companyAdvances: CompanyAdvance[];
   productDeliveries: ProductDelivery[];
   language: 'en' | 'bn';
 }
@@ -143,6 +152,7 @@ const initialState: AppState = {
   customerPayments: [],
   notes: [],
   loans: [],
+  companyAdvances: [],
   productDeliveries: [],
   language: 'en',
 };
@@ -184,6 +194,9 @@ interface AppContextType {
   addLoan: (l: Omit<Loan, 'id'>) => void;
   editLoan: (id: string, l: Omit<Loan, 'id'>) => void;
   deleteLoan: (id: string) => void;
+  addCompanyAdvance: (a: Omit<CompanyAdvance, 'id'>) => void;
+  editCompanyAdvance: (id: string, a: Omit<CompanyAdvance, 'id'>) => void;
+  deleteCompanyAdvance: (id: string) => void;
   addProductDelivery: (d: Omit<ProductDelivery, 'id'>) => void;
   deleteProductDelivery: (id: string) => void;
   resetState: () => void;
@@ -191,6 +204,7 @@ interface AppContextType {
   setLanguage: (lang: 'en' | 'bn') => void;
   wetStock: number;
   dryStock: number;
+  wetBagsStock: number;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -215,6 +229,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           customerPayments: Array.isArray(parsed.customerPayments) ? parsed.customerPayments : [],
           notes: Array.isArray(parsed.notes) ? parsed.notes : [],
           loans: Array.isArray(parsed.loans) ? parsed.loans : [],
+          companyAdvances: Array.isArray(parsed.companyAdvances) ? parsed.companyAdvances : [],
           productDeliveries: Array.isArray(parsed.productDeliveries) ? parsed.productDeliveries : [],
           language: parsed.language || 'en',
         };
@@ -371,6 +386,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, loans: s.loans.filter(l => l.id !== id) }));
   };
 
+  const addCompanyAdvance = (a: Omit<CompanyAdvance, 'id'>) => {
+    setState(s => ({ ...s, companyAdvances: [...s.companyAdvances, { ...a, id: generateId() }] }));
+  };
+
+  const editCompanyAdvance = (id: string, a: Omit<CompanyAdvance, 'id'>) => {
+    setState(s => ({ ...s, companyAdvances: s.companyAdvances.map(adv => adv.id === id ? { ...a, id } : adv) }));
+  };
+
+  const deleteCompanyAdvance = (id: string) => {
+    setState(s => ({ ...s, companyAdvances: s.companyAdvances.filter(a => a.id !== id) }));
+  };
+
   const addProductDelivery = (d: Omit<ProductDelivery, 'id'>) => {
     setState(s => ({ ...s, productDeliveries: [...s.productDeliveries, { ...d, id: generateId() }] }));
   };
@@ -397,6 +424,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const dryStock = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0) +
                    state.purchases.filter(p => p.type === 'dry').reduce((sum, p) => sum + (p.quantity || 0), 0) -
                    state.sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+
+  const wetBagsStock = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.totalBags || 0), 0) -
+                       state.conversions.reduce((sum, c) => sum + (c.bagsUsed || 0), 0);
 
   return (
     <AppContext.Provider value={{
@@ -436,13 +466,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addLoan,
       editLoan,
       deleteLoan,
+      addCompanyAdvance,
+      editCompanyAdvance,
+      deleteCompanyAdvance,
       addProductDelivery,
       deleteProductDelivery,
       resetState,
       importState,
       setLanguage,
       wetStock,
-      dryStock
+      dryStock,
+      wetBagsStock
     }}>
       {children}
     </AppContext.Provider>

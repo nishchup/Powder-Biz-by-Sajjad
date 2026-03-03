@@ -53,7 +53,13 @@ export const Reports: React.FC = () => {
     return true;
   }).reduce((sum, l) => sum + l.amount, 0);
   
-  const netProfit = totalSales - (totalPurchases + totalExpenses + totalLoans);
+  const totalCompanyAdvances = state.companyAdvances.filter(a => {
+    if (startDate && a.date < startDate) return false;
+    if (endDate && a.date > endDate) return false;
+    return true;
+  }).reduce((sum, a) => sum + a.amount, 0);
+  
+  const netProfit = totalSales + totalCompanyAdvances - (totalPurchases + totalExpenses + totalLoans);
 
   return (
     <div className="space-y-6" id="reports-content">
@@ -130,8 +136,13 @@ export const Reports: React.FC = () => {
                   <span className="text-gray-600">Total Sales (Revenue)</span>
                   <span className="font-semibold text-green-600">৳{(totalSales || 0).toLocaleString()}</span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '100%' }}></div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Company Advances (In)</span>
+                  <span className="font-semibold text-green-600">৳{(totalCompanyAdvances || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm mt-2 pt-2 border-t border-gray-100">
+                  <span className="font-medium text-gray-800">Total Inflow</span>
+                  <span className="font-bold text-green-600">৳{((totalSales || 0) + (totalCompanyAdvances || 0)).toLocaleString()}</span>
                 </div>
               </div>
 

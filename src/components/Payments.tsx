@@ -5,9 +5,9 @@ import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
 
 export const Payments: React.FC = () => {
-  const { state, addSupplierPayment, editSupplierPayment, deleteSupplierPayment, addCustomerPayment, editCustomerPayment, deleteCustomerPayment, addLoan, editLoan, deleteLoan } = useAppStore();
+  const { state, addSupplierPayment, editSupplierPayment, deleteSupplierPayment, addCustomerPayment, editCustomerPayment, deleteCustomerPayment, addLoan, editLoan, deleteLoan, addCompanyAdvance, editCompanyAdvance, deleteCompanyAdvance } = useAppStore();
   const t = useTranslation(state.language);
-  const [activeTab, setActiveTab] = useState<'supplier' | 'customer' | 'loan'>('supplier');
+  const [activeTab, setActiveTab] = useState<'supplier' | 'customer' | 'loan' | 'companyAdvance'>('supplier');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,7 +23,7 @@ export const Payments: React.FC = () => {
   const handleEdit = (p: any) => {
     setFormData({
       date: p.date,
-      name: activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : p.personName,
+      name: activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : '',
       amount: p.amount.toString(),
       description: p.description || '',
     });
@@ -63,6 +63,13 @@ export const Payments: React.FC = () => {
           addLoan({ date: formData.date, personName: formData.name, amount, description: formData.description });
         }
         handleCancel();
+      } else if (activeTab === 'companyAdvance') {
+        if (editingId) {
+          editCompanyAdvance(editingId, { date: formData.date, amount, description: formData.description });
+        } else {
+          addCompanyAdvance({ date: formData.date, amount, description: formData.description });
+        }
+        handleCancel();
       }
     }
   };
@@ -70,6 +77,7 @@ export const Payments: React.FC = () => {
   const getActiveData = () => {
     if (activeTab === 'supplier') return state.supplierPayments;
     if (activeTab === 'customer') return state.customerPayments;
+    if (activeTab === 'companyAdvance') return state.companyAdvances;
     return state.loans;
   };
 
@@ -136,14 +144,25 @@ export const Payments: React.FC = () => {
           <HandCoins size={18} className="mr-2" />
           {t('loans')} (Deduction)
         </button>
+        <button
+          onClick={() => { setActiveTab('companyAdvance'); handleCancel(); setCurrentPage(1); }}
+          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
+            activeTab === 'companyAdvance' 
+              ? 'border-b-2 border-indigo-600 text-indigo-600' 
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <CreditCard size={18} className="mr-2" />
+          Advance to Company (In)
+        </button>
       </div>
 
       {isFormOpen && (
         <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 mb-6 animate-in slide-in-from-top-4 duration-300">
           <h3 className="text-lg font-bold text-slate-800 mb-5">
             {editingId 
-              ? `${t('editNote').replace('Note', 'Payment')} (${activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : t('loans')})`
-              : activeTab === 'supplier' ? `${t('addPayment')} (${t('supplier')})` : activeTab === 'customer' ? `${t('addPayment')} (${t('customer')})` : t('addLoan')
+              ? `${t('editNote').replace('Note', 'Payment')} (${activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : activeTab === 'loan' ? t('loans') : 'Company Advance'})`
+              : activeTab === 'supplier' ? `${t('addPayment')} (${t('supplier')})` : activeTab === 'customer' ? `${t('addPayment')} (${t('customer')})` : activeTab === 'loan' ? t('addLoan') : 'Add Company Advance'
             }
           </h3>
           
@@ -158,34 +177,36 @@ export const Payments: React.FC = () => {
                 className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                {activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : t('personName')}
-              </label>
-              {activeTab === 'loan' ? (
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Enter name..."
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                />
-              ) : (
-                <select 
-                  required
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white"
-                >
-                  <option value="" disabled>Select {activeTab === 'supplier' ? t('supplier') : t('customer')}</option>
-                  {activeTab === 'supplier' 
-                    ? state.suppliers.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
-                    : state.customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
-                  }
-                </select>
-              )}
-            </div>
+            {activeTab !== 'companyAdvance' && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  {activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : t('personName')}
+                </label>
+                {activeTab === 'loan' ? (
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Enter name..."
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  />
+                ) : (
+                  <select 
+                    required
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white"
+                  >
+                    <option value="" disabled>Select {activeTab === 'supplier' ? t('supplier') : t('customer')}</option>
+                    {activeTab === 'supplier' 
+                      ? state.suppliers.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
+                      : state.customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
+                    }
+                  </select>
+                )}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('amount')} (৳)</label>
               <input 
@@ -199,12 +220,12 @@ export const Payments: React.FC = () => {
                 className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
               />
             </div>
-            {activeTab === 'loan' && (
+            {(activeTab === 'loan' || activeTab === 'companyAdvance') && (
               <div className="sm:col-span-3">
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('description')}</label>
                 <input 
                   type="text" 
-                  placeholder="Loan details..."
+                  placeholder={activeTab === 'loan' ? "Loan details..." : "Advance details..."}
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
@@ -236,18 +257,20 @@ export const Payments: React.FC = () => {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('date')}</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  {activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : t('personName')}
-                </th>
-                {activeTab === 'loan' && <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('description')}</th>}
+                {activeTab !== 'companyAdvance' && (
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    {activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : t('personName')}
+                  </th>
+                )}
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">{t('amount')}</th>
+                {(activeTab === 'loan' || activeTab === 'companyAdvance') && <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('description')}</th>}
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center print:hidden">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={activeTab === 'loan' ? 5 : 4} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={(activeTab === 'loan' || activeTab === 'companyAdvance') ? (activeTab === 'companyAdvance' ? 4 : 5) : 4} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center">
                       <CreditCard className="text-slate-300 mb-3" size={48} />
                       <p className="text-base font-medium">No {activeTab}s recorded yet.</p>
@@ -258,11 +281,13 @@ export const Payments: React.FC = () => {
                 paginatedData.map((p: any) => (
                   <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 text-sm text-slate-700">{p.date}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900 font-semibold">
-                      {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : p.personName}
-                    </td>
-                    {activeTab === 'loan' && <td className="px-6 py-4 text-sm text-slate-600">{p.description}</td>}
+                    {activeTab !== 'companyAdvance' && (
+                      <td className="px-6 py-4 text-sm text-slate-900 font-semibold">
+                        {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : p.personName}
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-sm text-slate-900 text-right font-bold">৳{(p.amount || 0).toLocaleString()}</td>
+                    {(activeTab === 'loan' || activeTab === 'companyAdvance') && <td className="px-6 py-4 text-sm text-slate-600">{p.description}</td>}
                     <td className="px-6 py-4 text-sm text-center print:hidden">
                       <div className="flex justify-center space-x-2">
                         <button 
@@ -276,6 +301,7 @@ export const Payments: React.FC = () => {
                           onClick={() => {
                             if (activeTab === 'supplier') deleteSupplierPayment(p.id);
                             else if (activeTab === 'customer') deleteCustomerPayment(p.id);
+                            else if (activeTab === 'companyAdvance') deleteCompanyAdvance(p.id);
                             else deleteLoan(p.id);
                           }}
                           className="text-red-600 hover:text-red-800 p-1.5 rounded-md hover:bg-red-50 transition-colors"

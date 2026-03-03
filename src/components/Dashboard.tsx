@@ -16,11 +16,12 @@ export const Dashboard: React.FC = () => {
   const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
   const totalCustomerPayments = state.customerPayments.reduce((sum, p) => sum + p.amount, 0);
   const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
+  const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
 
   const totalCustomerDue = totalSales - (totalSalesPaid + totalCustomerPayments);
   const totalSupplierDue = totalPurchases - (totalPurchasesPaid + totalSupplierPayments);
 
-  const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans;
+  const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments + totalCompanyAdvances - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans;
 
   return (
     <div className="space-y-6" id="dashboard-content">
@@ -83,6 +84,12 @@ export const Dashboard: React.FC = () => {
           value={`৳${(totalSupplierDue || 0).toLocaleString()}`} 
           icon={CreditCard} 
           color="bg-rose-100 text-rose-600" 
+        />
+        <StatCard 
+          title="Company Advance" 
+          value={`৳${(totalCompanyAdvances || 0).toLocaleString()}`} 
+          icon={Landmark} 
+          color="bg-teal-100 text-teal-600" 
         />
       </div>
 
