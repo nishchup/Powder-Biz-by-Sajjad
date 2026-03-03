@@ -17,11 +17,12 @@ export const Dashboard: React.FC = () => {
   const totalCustomerPayments = state.customerPayments.reduce((sum, p) => sum + p.amount, 0);
   const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
   const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
+  const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
 
   const totalCustomerDue = totalSales - (totalSalesPaid + totalCustomerPayments);
   const totalSupplierDue = totalPurchases - (totalPurchasesPaid + totalSupplierPayments);
 
-  const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments + totalCompanyAdvances - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans;
+  const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments + totalCompanyAdvances - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans - totalProfitWithdrawals;
 
   return (
     <div className="space-y-6" id="dashboard-content">

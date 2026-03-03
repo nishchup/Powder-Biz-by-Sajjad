@@ -1,20 +1,29 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, X, Truck, Calendar, TrendingUp, TrendingDown, Wallet, ShoppingCart, Printer, FileText } from 'lucide-react';
+import { Plus, Trash2, X, Truck, Calendar, TrendingUp, TrendingDown, Wallet, ShoppingCart, Printer, FileText, Banknote } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
 
 export const ProductDelivery: React.FC = () => {
-  const { state, addProductDelivery, deleteProductDelivery } = useAppStore();
+  const { state, addProductDelivery, deleteProductDelivery, addProfitWithdrawal } = useAppStore();
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [withdrawDelivery, setWithdrawDelivery] = useState<any>(null);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     startDate: '',
     endDate: new Date().toISOString().split('T')[0],
     description: '',
+  });
+
+  const [withdrawData, setWithdrawData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    amount: '',
+    notes: '',
   });
 
   const summary = useMemo(() => {
@@ -55,6 +64,63 @@ export const ProductDelivery: React.FC = () => {
       endDate: new Date().toISOString().split('T')[0], 
       description: '' 
     });
+  };
+
+  const handleWithdrawCancel = () => {
+    setWithdrawModalOpen(false);
+    setWithdrawDelivery(null);
+    setWithdrawError(null);
+    setWithdrawData({
+      date: new Date().toISOString().split('T')[0],
+      amount: '',
+      notes: '',
+    });
+  };
+
+  const handleWithdrawSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseFloat(withdrawData.amount);
+    
+    if (amount <= 0) {
+      setWithdrawError('Amount must be greater than 0');
+      return;
+    }
+
+    if (amount > withdrawDelivery.netProfit) {
+      setWithdrawError('Cannot withdraw more than the net profit');
+      return;
+    }
+
+    // Check if already withdrawn for this delivery
+    const existingWithdrawal = state.profitWithdrawals.find(pw => pw.deliveryId === withdrawDelivery.id);
+    if (existingWithdrawal) {
+      setWithdrawError('Profit has already been withdrawn for this delivery');
+      return;
+    }
+
+    addProfitWithdrawal({
+      date: withdrawData.date,
+      amount: amount,
+      deliveryId: withdrawDelivery.id,
+      notes: withdrawData.notes,
+    });
+
+    handleWithdrawCancel();
+  };
+
+  const openWithdrawModal = (delivery: any) => {
+    const existingWithdrawal = state.profitWithdrawals.find(pw => pw.deliveryId === delivery.id);
+    if (existingWithdrawal) {
+      alert('Profit has already been withdrawn for this delivery.');
+      return;
+    }
+    if (delivery.netProfit <= 0) {
+      alert('No profit to withdraw for this delivery.');
+      return;
+    }
+    setWithdrawDelivery(delivery);
+    setWithdrawData({ ...withdrawData, amount: delivery.netProfit.toString() });
+    setWithdrawModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -246,6 +312,13 @@ export const ProductDelivery: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-center">
                       <div className="flex items-center justify-center space-x-2">
+                        <button 
+                          onClick={() => openWithdrawModal(d)}
+                          className="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-md hover:bg-emerald-50 transition-colors"
+                          title="Withdraw Profit"
+                        >
+                          <Banknote size={18} />
+                        </button>
                         <button 
                           onClick={() => setSelectedDelivery(d)}
                           className="text-blue-600 hover:text-blue-800 p-1.5 rounded-md hover:bg-blue-50 transition-colors"

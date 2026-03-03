@@ -115,6 +115,14 @@ export interface ProductDelivery {
   description: string;
 }
 
+export interface ProfitWithdrawal {
+  id: string;
+  date: string;
+  amount: number;
+  deliveryId: string;
+  notes: string;
+}
+
 export interface AppState {
   purchases: Purchase[];
   expenses: Expense[];
@@ -131,6 +139,7 @@ export interface AppState {
   loans: Loan[];
   companyAdvances: CompanyAdvance[];
   productDeliveries: ProductDelivery[];
+  profitWithdrawals: ProfitWithdrawal[];
   language: 'en' | 'bn';
 }
 
@@ -199,6 +208,9 @@ interface AppContextType {
   deleteCompanyAdvance: (id: string) => void;
   addProductDelivery: (d: Omit<ProductDelivery, 'id'>) => void;
   deleteProductDelivery: (id: string) => void;
+  addProfitWithdrawal: (p: Omit<ProfitWithdrawal, 'id'>) => void;
+  editProfitWithdrawal: (id: string, p: Omit<ProfitWithdrawal, 'id'>) => void;
+  deleteProfitWithdrawal: (id: string) => void;
   resetState: () => void;
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
@@ -231,6 +243,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           loans: Array.isArray(parsed.loans) ? parsed.loans : [],
           companyAdvances: Array.isArray(parsed.companyAdvances) ? parsed.companyAdvances : [],
           productDeliveries: Array.isArray(parsed.productDeliveries) ? parsed.productDeliveries : [],
+          profitWithdrawals: Array.isArray(parsed.profitWithdrawals) ? parsed.profitWithdrawals : [],
           language: parsed.language || 'en',
         };
       }
@@ -406,6 +419,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, productDeliveries: s.productDeliveries.filter(d => d.id !== id) }));
   };
 
+  const addProfitWithdrawal = (p: Omit<ProfitWithdrawal, 'id'>) => {
+    setState(s => ({ ...s, profitWithdrawals: [...s.profitWithdrawals, { ...p, id: generateId() }] }));
+  };
+
+  const editProfitWithdrawal = (id: string, p: Omit<ProfitWithdrawal, 'id'>) => {
+    setState(s => ({ ...s, profitWithdrawals: s.profitWithdrawals.map(pw => pw.id === id ? { ...p, id } : pw) }));
+  };
+
+  const deleteProfitWithdrawal = (id: string) => {
+    setState(s => ({ ...s, profitWithdrawals: s.profitWithdrawals.filter(pw => pw.id !== id) }));
+  };
+
   const resetState = () => {
     setState(initialState);
   };
@@ -471,6 +496,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteCompanyAdvance,
       addProductDelivery,
       deleteProductDelivery,
+      addProfitWithdrawal,
+      editProfitWithdrawal,
+      deleteProfitWithdrawal,
       resetState,
       importState,
       setLanguage,
