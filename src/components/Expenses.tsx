@@ -9,6 +9,8 @@ export const Expenses: React.FC = () => {
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -55,6 +57,10 @@ export const Expenses: React.FC = () => {
       handleCancel();
     }
   };
+
+  const sortedExpenses = [...state.expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const totalPages = Math.ceil(sortedExpenses.length / itemsPerPage);
+  const paginatedExpenses = sortedExpenses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-6" id="expenses-content">
@@ -175,7 +181,7 @@ export const Expenses: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {state.expenses.length === 0 ? (
+              {paginatedExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center">
@@ -186,7 +192,7 @@ export const Expenses: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                state.expenses.map((e) => (
+                paginatedExpenses.map((e) => (
                   <tr key={e.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 text-sm text-slate-700">{e.date}</td>
                     <td className="px-6 py-4 text-sm">
@@ -220,6 +226,30 @@ export const Expenses: React.FC = () => {
             </tbody>
           </table>
         </div>
+        
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+            <div className="text-sm text-slate-500">
+              Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, sortedExpenses.length)}</span> of <span className="font-medium">{sortedExpenses.length}</span> results
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

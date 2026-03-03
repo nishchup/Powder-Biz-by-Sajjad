@@ -8,6 +8,8 @@ export const Purchases: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -17,6 +19,7 @@ export const Purchases: React.FC = () => {
     paidAmount: '',
     discount: '',
     type: 'wet' as 'wet' | 'dry',
+    totalBags: '',
   });
 
   const handleEdit = (p: any) => {
@@ -28,6 +31,7 @@ export const Purchases: React.FC = () => {
       paidAmount: p.paidAmount !== undefined ? p.paidAmount.toString() : p.totalCost.toString(),
       discount: p.discount !== undefined ? p.discount.toString() : '',
       type: p.type || 'wet',
+      totalBags: p.totalBags !== undefined ? p.totalBags.toString() : '',
     });
     setEditingId(p.id);
     setIsFormOpen(true);
@@ -43,7 +47,8 @@ export const Purchases: React.FC = () => {
       pricePerKg: '', 
       paidAmount: '',
       discount: '',
-      type: 'wet'
+      type: 'wet',
+      totalBags: ''
     });
   };
 
@@ -54,6 +59,7 @@ export const Purchases: React.FC = () => {
     const discount = parseFloat(formData.discount) || 0;
     const totalCost = (qty * price) - discount;
     const paid = formData.paidAmount === '' ? totalCost : parseFloat(formData.paidAmount);
+    const bags = formData.totalBags === '' ? undefined : parseInt(formData.totalBags, 10);
     
     if (qty > 0 && price > 0 && formData.supplierName) {
       const data = {
@@ -65,6 +71,7 @@ export const Purchases: React.FC = () => {
         paidAmount: paid,
         discount: discount,
         type: formData.type,
+        totalBags: bags,
       };
 
       if (editingId) {
@@ -83,6 +90,10 @@ export const Purchases: React.FC = () => {
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
+
+  const sortedPurchases = [...state.purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const totalPages = Math.ceil(sortedPurchases.length / itemsPerPage);
+  const paginatedPurchases = sortedPurchases.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-6" id="purchases-content">
@@ -158,6 +169,18 @@ export const Purchases: React.FC = () => {
                 <option value="wet">Wet Powder</option>
                 <option value="dry">Dry Powder</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Total Bag</label>
+              <input 
+                type="number" 
+                min="1"
+                step="1"
+                placeholder="0"
+                value={formData.totalBags}
+                onChange={e => setFormData({...formData, totalBags: e.target.value})}
+                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Quantity (kg)</label>
@@ -241,6 +264,7 @@ export const Purchases: React.FC = () => {
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Supplier</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Bags</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Qty (kg)</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Price/kg</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Discount</th>
@@ -251,9 +275,9 @@ export const Purchases: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {state.purchases.length === 0 ? (
+              {paginatedPurchases.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={11} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center">
                       <ShoppingCart className="text-slate-300 mb-3" size={48} />
                       <p className="text-base font-medium">No purchases recorded yet.</p>
@@ -262,7 +286,7 @@ export const Purchases: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                state.purchases.map((p) => (
+                paginatedPurchases.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 text-sm text-slate-700">{p.date}</td>
                     <td className="px-6 py-4 text-sm text-slate-900 font-semibold">{p.supplierName}</td>
@@ -271,6 +295,7 @@ export const Purchases: React.FC = () => {
                         {p.type === 'dry' ? 'Dry' : 'Wet'}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-sm text-slate-700 text-right">{p.totalBags || '-'}</td>
                     <td className="px-6 py-4 text-sm text-slate-700 text-right">{(p.quantity || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 text-sm text-slate-700 text-right">৳{(p.pricePerKg || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 text-sm text-slate-700 text-right">৳{(p.discount || 0).toLocaleString()}</td>
@@ -308,6 +333,30 @@ export const Purchases: React.FC = () => {
             </tbody>
           </table>
         </div>
+        
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+            <div className="text-sm text-slate-500">
+              Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, sortedPurchases.length)}</span> of <span className="font-medium">{sortedPurchases.length}</span> results
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Receipt Modal */}

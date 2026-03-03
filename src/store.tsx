@@ -31,6 +31,7 @@ export interface Purchase {
   paidAmount?: number;
   discount?: number;
   type: 'wet' | 'dry';
+  totalBags?: number;
 }
 
 export interface Expense {
