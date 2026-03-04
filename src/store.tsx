@@ -218,6 +218,10 @@ interface AppContextType {
   resetState: () => void;
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
+  isOnline: boolean;
+  isSyncing: boolean;
+  lastSynced: string | null;
+  syncData: () => void;
   wetStock: number;
   dryStock: number;
   wetBagsStock: number;
@@ -226,6 +230,10 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [lastSynced, setLastSynced] = useState<string | null>(localStorage.getItem('powderbiz_last_synced'));
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const [state, setState] = useState<AppState>(() => {
     try {
       const saved = localStorage.getItem('powderbiz_data_v2');
@@ -257,9 +265,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return initialState;
   });
 
+  const syncData = async (dataToSync: AppState) => {
+    if (!navigator.onLine) return;
+    
+    setIsSyncing(true);
+    try {
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSync),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setLastSynced(result.timestamp);
+        localStorage.setItem('powderbiz_last_synced', result.timestamp);
+      }
+    } catch (error) {
+      console.error("Sync failed:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchInitialState = async () => {
+      if (!navigator.onLine) return;
+      try {
+        const response = await fetch('/api/state');
+        if (response.ok) {
+          const serverState = await response.json();
+          // Only update if server state is newer or local is empty
+          // For simplicity in this demo, we'll just merge or overwrite
+          // In a real app, you'd use timestamps for conflict resolution
+          setState(serverState);
+        }
+      } catch (error) {
+        console.error("Failed to fetch initial state:", error);
+      }
+    };
+    fetchInitialState();
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncData(state);
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [state]);
+
   useEffect(() => {
     localStorage.setItem('powderbiz_data_v2', JSON.stringify(state));
-  }, [state]);
+    
+    // Auto-sync on changes if online
+    const timeoutId = setTimeout(() => {
+      if (isOnline) {
+        syncData(state);
+      }
+    }, 2000); // Debounce sync
+
+    return () => clearTimeout(timeoutId);
+  }, [state, isOnline]);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -506,6 +581,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       resetState,
       importState,
       setLanguage,
+      isOnline,
+      isSyncing,
+      lastSynced,
+      syncData: () => syncData(state),
       wetStock,
       dryStock,
       wetBagsStock

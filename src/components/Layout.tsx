@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 
@@ -12,8 +12,14 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onLock }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { dryStock, state, setLanguage } = useAppStore();
+  const { dryStock, state, setLanguage, isOnline, isSyncing, lastSynced, syncData } = useAppStore();
   const t = useTranslation(state.language);
+
+  const formatLastSynced = (dateStr: string | null) => {
+    if (!dateStr) return 'Never';
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   const navItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
@@ -103,6 +109,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             PowderBiz
           </div>
           <div className="flex items-center space-x-3">
+            <div className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+              {isOnline ? <Wifi size={12} className="mr-1" /> : <WifiOff size={12} className="mr-1" />}
+              {isOnline ? 'Online' : 'Offline'}
+            </div>
+            {isOnline && isSyncing && (
+              <RefreshCw size={16} className="text-blue-500 animate-spin" />
+            )}
             <button 
               onClick={() => setLanguage(state.language === 'en' ? 'bn' : 'en')}
               className="flex items-center text-slate-600 hover:text-blue-600 font-medium text-sm bg-slate-100 px-2 py-1 rounded-md"
@@ -131,6 +144,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             {navItems.find(item => item.id === activeTab)?.label}
           </h1>
           <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 mr-2">
+              <div className={`flex items-center text-xs font-bold px-3 py-1.5 rounded-lg border ${isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                {isOnline ? <Wifi size={14} className="mr-2" /> : <WifiOff size={14} className="mr-2" />}
+                {isOnline ? 'Online' : 'Offline'}
+              </div>
+              {isOnline && (
+                <button 
+                  onClick={syncData}
+                  disabled={isSyncing}
+                  className={`flex items-center text-xs font-bold px-3 py-1.5 rounded-lg border bg-white hover:bg-slate-50 transition-colors ${isSyncing ? 'text-blue-400 border-blue-100' : 'text-slate-600 border-slate-200'}`}
+                  title={`Last synced: ${formatLastSynced(lastSynced)}`}
+                >
+                  <RefreshCw size={14} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Syncing...' : `Synced ${formatLastSynced(lastSynced)}`}
+                </button>
+              )}
+            </div>
             <button 
               onClick={() => setLanguage(state.language === 'en' ? 'bn' : 'en')}
               className="flex items-center text-slate-600 hover:text-blue-600 font-medium text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
