@@ -79,6 +79,14 @@ export interface Note {
   content: string;
 }
 
+export interface Task {
+  id: string;
+  date: string;
+  title: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+}
+
 export interface Loan {
   id: string;
   date: string;
@@ -145,6 +153,7 @@ export interface AppState {
   companyAdvances: CompanyAdvance[];
   productDeliveries: ProductDelivery[];
   profitWithdrawals: ProfitWithdrawal[];
+  tasks: Task[];
   language: 'en' | 'bn';
 }
 
@@ -169,6 +178,7 @@ const initialState: AppState = {
   companyAdvances: [],
   productDeliveries: [],
   profitWithdrawals: [],
+  tasks: [],
   language: 'en',
 };
 
@@ -217,11 +227,15 @@ interface AppContextType {
   addProfitWithdrawal: (p: Omit<ProfitWithdrawal, 'id'>) => void;
   editProfitWithdrawal: (id: string, p: Omit<ProfitWithdrawal, 'id'>) => void;
   deleteProfitWithdrawal: (id: string) => void;
+  addTask: (t: Omit<Task, 'id'>) => void;
+  toggleTask: (id: string) => void;
+  deleteTask: (id: string) => void;
   resetState: () => void;
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
   isOnline: boolean;
   isSyncing: boolean;
+  hasPendingSync: boolean;
   lastSynced: string | null;
   syncData: () => void;
   wetStock: number;
@@ -235,6 +249,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSynced, setLastSynced] = useState<string | null>(localStorage.getItem('powderbiz_last_synced'));
   const [isSyncing, setIsSyncing] = useState(false);
+  const [hasPendingSync, setHasPendingSync] = useState(() => {
+    const lastSyncedTime = localStorage.getItem('powderbiz_last_synced');
+    const lastDataUpdate = localStorage.getItem('powderbiz_last_update');
+    if (!lastSyncedTime || !lastDataUpdate) return false;
+    return new Date(lastDataUpdate) > new Date(lastSyncedTime);
+  });
 
   const [state, setState] = useState<AppState>(() => {
     try {
@@ -258,6 +278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           companyAdvances: Array.isArray(parsed.companyAdvances) ? parsed.companyAdvances : [],
           productDeliveries: Array.isArray(parsed.productDeliveries) ? parsed.productDeliveries : [],
           profitWithdrawals: Array.isArray(parsed.profitWithdrawals) ? parsed.profitWithdrawals : [],
+          tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
           language: parsed.language || 'en',
         };
       }
@@ -281,6 +302,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (response.ok) {
         const result = await response.json();
         setLastSynced(result.timestamp);
+        setHasPendingSync(false);
         localStorage.setItem('powderbiz_last_synced', result.timestamp);
       }
     } catch (error) {
@@ -327,6 +349,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem('powderbiz_data_v2', JSON.stringify(state));
+    localStorage.setItem('powderbiz_last_update', new Date().toISOString());
+    setHasPendingSync(true);
     
     // Auto-sync on changes if online
     const timeoutId = setTimeout(() => {
@@ -512,6 +536,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, profitWithdrawals: s.profitWithdrawals.filter(pw => pw.id !== id) }));
   };
 
+  const addTask = (t: Omit<Task, 'id'>) => {
+    setState(s => ({ ...s, tasks: [...s.tasks, { ...t, id: generateId() }] }));
+  };
+
+  const toggleTask = (id: string) => {
+    setState(s => ({ ...s, tasks: s.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t) }));
+  };
+
+  const deleteTask = (id: string) => {
+    setState(s => ({ ...s, tasks: s.tasks.filter(t => t.id !== id) }));
+  };
+
   const resetState = () => {
     setState(initialState);
   };
@@ -580,11 +616,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addProfitWithdrawal,
       editProfitWithdrawal,
       deleteProfitWithdrawal,
+      addTask,
+      toggleTask,
+      deleteTask,
       resetState,
       importState,
       setLanguage,
       isOnline,
       isSyncing,
+      hasPendingSync,
       lastSynced,
       syncData: () => syncData(state),
       wetStock,

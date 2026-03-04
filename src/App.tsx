@@ -16,6 +16,7 @@ import { Contacts } from './components/Contacts';
 import { Payments } from './components/Payments';
 import { Notes } from './components/Notes';
 import { ProductDelivery } from './components/ProductDelivery';
+import { Tasks } from './components/Tasks';
 import { LockScreen } from './components/LockScreen';
 import { Inventory } from './components/Inventory';
 
@@ -39,6 +40,7 @@ function AppContent() {
       case 'payments': return <Payments />;
       case 'reports': return <Reports />;
       case 'productDelivery': return <ProductDelivery />;
+      case 'tasks': return <Tasks />;
       case 'notes': return <Notes />;
       default: return <Dashboard />;
     }

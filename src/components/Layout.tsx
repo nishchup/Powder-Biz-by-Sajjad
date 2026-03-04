@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 
@@ -12,7 +12,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onLock }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { dryStock, state, setLanguage, isOnline, isSyncing, lastSynced, syncData } = useAppStore();
+  const { dryStock, state, setLanguage, isOnline, isSyncing, hasPendingSync, lastSynced, syncData } = useAppStore();
   const t = useTranslation(state.language);
 
   const formatLastSynced = (dateStr: string | null) => {
@@ -32,6 +32,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     { id: 'payments', label: t('payments'), icon: CreditCard },
     { id: 'reports', label: t('reports'), icon: BarChart3 },
     { id: 'productDelivery', label: t('productDelivery'), icon: Truck },
+    { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
     { id: 'notes', label: t('notes'), icon: StickyNote },
   ];
 
@@ -109,6 +110,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             PowderBiz
           </div>
           <div className="flex items-center space-x-3">
+            {!isOnline && hasPendingSync && (
+              <div className="flex items-center text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded-full animate-pulse">
+                <RefreshCw size={10} className="mr-1" />
+                Pending
+              </div>
+            )}
             <div className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
               {isOnline ? <Wifi size={12} className="mr-1" /> : <WifiOff size={12} className="mr-1" />}
               {isOnline ? 'Online' : 'Offline'}
@@ -144,6 +151,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             {navItems.find(item => item.id === activeTab)?.label}
           </h1>
           <div className="flex items-center space-x-4">
+            {hasPendingSync && (
+              <div className={`flex items-center text-xs font-bold px-3 py-1.5 rounded-lg border animate-pulse ${isOnline ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                <RefreshCw size={14} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isOnline ? 'Syncing Changes...' : 'Offline: Changes Pending Sync'}
+              </div>
+            )}
             <div className="flex items-center space-x-2 mr-2">
               <div className={`flex items-center text-xs font-bold px-3 py-1.5 rounded-lg border ${isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
                 {isOnline ? <Wifi size={14} className="mr-2" /> : <WifiOff size={14} className="mr-2" />}
