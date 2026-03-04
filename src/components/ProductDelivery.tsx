@@ -47,8 +47,8 @@ export const ProductDelivery: React.FC = () => {
     // User Rule: Displayed Dry Produced = Actual Production - Current Stock
     const displayedDryProduced = actualDryProducedInPeriod - dryStock;
     
-    // User Rule: Displayed Wet Used = Displayed Dry Produced * 0.20
-    const displayedWetUsed = displayedDryProduced * 0.20;
+    // User Rule: Total Wet Used = Total Dry Produced + (Total Dry Produced * 0.20)
+    const displayedWetUsed = displayedDryProduced + (displayedDryProduced * 0.20);
 
     // 2. Sales in period
     const filteredSales = state.sales.filter(s => s.date >= formData.startDate && s.date <= formData.endDate);
