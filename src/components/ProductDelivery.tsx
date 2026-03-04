@@ -5,7 +5,7 @@ import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
 
 export const ProductDelivery: React.FC = () => {
-  const { state, addProductDelivery, deleteProductDelivery, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal } = useAppStore();
+  const { state, addProductDelivery, deleteProductDelivery, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal, dryStock } = useAppStore();
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
@@ -30,37 +30,50 @@ export const ProductDelivery: React.FC = () => {
   const summary = useMemo(() => {
     if (!formData.startDate || !formData.endDate) return null;
 
-    // 1. Cost of wet powder from Drying Process (Conversions)
+    // Calculate Global Average Cost per kg of Dry Powder
+    const allConversionsCost = state.conversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0);
+    const allDryPurchasesCost = state.purchases.filter(p => p.type === 'dry').reduce((sum, p) => sum + p.totalCost, 0);
+    const allDryProducedQty = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0) + 
+                             state.purchases.filter(p => p.type === 'dry').reduce((sum, p) => sum + (p.quantity || 0), 0);
+    const averageCostPerKg = allDryProducedQty > 0 ? (allConversionsCost + allDryPurchasesCost) / allDryProducedQty : 0;
+
+    // 1. Production in period
     const filteredConversions = state.conversions.filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
-    const wetPowderCost = filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0);
-
-    // 2. Cost of dry powder from Purchases
     const filteredDryPurchases = state.purchases.filter(p => p.type === 'dry' && p.date >= formData.startDate && p.date <= formData.endDate);
-    const dryPowderCost = filteredDryPurchases.reduce((sum, p) => sum + p.totalCost, 0);
+    
+    const actualDryProducedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0) +
+                                     filteredDryPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0);
 
-    const totalPurchases = wetPowderCost + dryPowderCost;
+    // User Rule: Displayed Dry Produced = Actual Production - Current Stock
+    const displayedDryProduced = actualDryProducedInPeriod - dryStock;
+    
+    // User Rule: Displayed Wet Used = Displayed Dry Produced * 0.20
+    const displayedWetUsed = displayedDryProduced * 0.20;
 
+    // 2. Sales in period
     const filteredSales = state.sales.filter(s => s.date >= formData.startDate && s.date <= formData.endDate);
-    const filteredExpenses = state.expenses.filter(e => e.date >= formData.startDate && e.date <= formData.endDate);
-
+    const totalSalesQty = filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0);
     const totalSales = filteredSales.reduce((sum, s) => sum + s.totalRevenue, 0);
-    const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const netProfit = totalSales - (totalPurchases + totalExpenses);
 
-    const totalWetUsed = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-    const totalDryProduced = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+    // User Rule: Total Purchases/Cost = Sales Qty * Average Purchase Price (COGS)
+    const totalPurchases = totalSalesQty * averageCostPerKg;
+
+    const filteredExpenses = state.expenses.filter(e => e.date >= formData.startDate && e.date <= formData.endDate);
+    const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    const netProfit = totalSales - (totalPurchases + totalExpenses);
 
     return {
       totalPurchases,
       totalSales,
       totalExpenses,
       netProfit,
-      wetPowderCost,
-      dryPowderCost,
-      totalWetUsed,
-      totalDryProduced
+      wetPowderCost: 0, // Not used in new logic but kept for interface
+      dryPowderCost: 0, // Not used in new logic but kept for interface
+      totalWetUsed: displayedWetUsed,
+      totalDryProduced: displayedDryProduced
     };
-  }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses, state.conversions]);
+  }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses, state.conversions, dryStock]);
 
   const handleCancel = () => {
     setIsFormOpen(false);
@@ -268,11 +281,10 @@ export const ProductDelivery: React.FC = () => {
             {summary && (
               <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Purchases/Cost</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Cost (Based on Sales)</p>
                   <p className="text-xl font-bold text-slate-900">৳{summary.totalPurchases.toLocaleString()}</p>
                   <p className="text-xs text-slate-500 mt-1">
-                    Wet (Drying): ৳{summary.wetPowderCost.toLocaleString()}<br/>
-                    Dry (Direct): ৳{summary.dryPowderCost.toLocaleString()}
+                    Calculated using average purchase price
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -471,12 +483,10 @@ export const ProductDelivery: React.FC = () => {
                       <ShoppingCart className="text-blue-600" size={20} />
                     </div>
                     <div>
-                      <span className="font-semibold text-slate-700">Total Purchases/Cost</span>
-                      {(selectedDelivery.wetPowderCost !== undefined || selectedDelivery.dryPowderCost !== undefined) && (
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Wet (Drying): ৳{(selectedDelivery.wetPowderCost || 0).toLocaleString()} | Dry (Direct): ৳{(selectedDelivery.dryPowderCost || 0).toLocaleString()}
-                        </p>
-                      )}
+                      <span className="font-semibold text-slate-700">Total Cost (Based on Sales)</span>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Calculated using average purchase price
+                      </p>
                     </div>
                   </div>
                   <span className="text-lg font-bold text-slate-900">৳{selectedDelivery.totalPurchases.toLocaleString()}</span>
