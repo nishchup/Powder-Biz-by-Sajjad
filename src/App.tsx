@@ -17,6 +17,7 @@ import { Payments } from './components/Payments';
 import { Notes } from './components/Notes';
 import { ProductDelivery } from './components/ProductDelivery';
 import { Tasks } from './components/Tasks';
+import { LaborTracking } from './components/LaborTracking';
 import { LockScreen } from './components/LockScreen';
 import { Inventory } from './components/Inventory';
 
@@ -37,6 +38,7 @@ function AppContent() {
       case 'drying': return <Conversions />;
       case 'sales': return <Sales />;
       case 'expenses': return <Expenses />;
+      case 'labor': return <LaborTracking />;
       case 'payments': return <Payments />;
       case 'reports': return <Reports />;
       case 'productDelivery': return <ProductDelivery />;

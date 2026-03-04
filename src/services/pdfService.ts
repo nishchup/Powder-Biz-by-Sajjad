@@ -9,21 +9,25 @@ export const exportToPDF = async (elementId: string, fileName: string = 'report.
   }
 
   try {
-    // Hide elements with 'print:hidden' class temporarily if needed, 
-    // but html2canvas doesn't respect @media print.
-    // We can manually hide them or use a specific container.
-    
+    // Create a temporary container to ensure consistent styling for PDF
     const canvas = await html2canvas(element, {
-      scale: 2, // Higher quality
+      scale: 2, // High resolution
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
       ignoreElements: (el) => el.classList.contains('print:hidden'),
       onclone: (clonedDoc) => {
         const clonedElement = clonedDoc.getElementById(elementId);
         if (!clonedElement) return;
-
-        // Helper to convert any color to rgba using a canvas
+        
+        // Ensure all text is visible and colors are correct
+        clonedElement.style.padding = '20px';
+        clonedElement.style.width = '100%';
+        clonedElement.style.height = 'auto';
+        
+        // Convert OKLCH colors to RGB for html2canvas compatibility
         const colorCanvas = clonedDoc.createElement('canvas');
         colorCanvas.width = 1;
         colorCanvas.height = 1;
@@ -39,19 +43,12 @@ export const exportToPDF = async (elementId: string, fileName: string = 'report.
         };
 
         const elements = clonedElement.getElementsByTagName('*');
-        const allElements = [clonedElement, ...Array.from(elements)];
-        
-        for (const el of allElements) {
+        for (const el of Array.from(elements)) {
           const htmlEl = el as HTMLElement;
           const style = clonedDoc.defaultView?.getComputedStyle(htmlEl);
           if (!style) continue;
           
-          const colorProps = [
-            'color', 'backgroundColor', 'borderColor', 
-            'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor', 
-            'textDecorationColor', 'outlineColor', 'fill', 'stroke'
-          ];
-          
+          const colorProps = ['color', 'backgroundColor', 'borderColor'];
           for (const prop of colorProps) {
             const val = style.getPropertyValue(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
             if (val && val.includes('oklch')) {
@@ -62,22 +59,36 @@ export const exportToPDF = async (elementId: string, fileName: string = 'report.
       }
     });
 
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
 
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    let heightLeft = imgHeight;
+    let position = 0;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    // Add first page
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Add subsequent pages if content is longer than one page
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
     pdf.save(fileName);
   } catch (error) {
     console.error('PDF Export Error:', error);
-    // Fallback to window.print if library fails
     window.print();
   }
 };

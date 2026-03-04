@@ -9,7 +9,7 @@ export const Contacts: React.FC = () => {
     addSupplier, addCustomer, addExpenseCategory, 
     editSupplier, editCustomer, editExpenseCategory,
     deleteSupplier, deleteCustomer, deleteExpenseCategory,
-    setInitialCapital, setCompanyInfo,
+    setInitialCapital, setCompanyInfo, setAppPin, setLastBackupTime,
     resetState, importState
   } = useAppStore();
   
@@ -17,8 +17,27 @@ export const Contacts: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
-  const [message, setMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
+  const [message, setMessage] = useState<{text: string, type: 'success' | 'error' | 'info'} | null>(null);
   const [importData, setImportData] = useState<any>(null);
+
+  // Check for backup notification
+  React.useEffect(() => {
+    const checkBackup = () => {
+      if (!state.lastBackupTime) return;
+      
+      const lastBackup = new Date(state.lastBackupTime).getTime();
+      const now = new Date().getTime();
+      const twelveHoursInMs = 12 * 60 * 60 * 1000;
+      
+      if (now - lastBackup > twelveHoursInMs) {
+        showMessage("It's been over 12 hours since your last backup. Please download a backup to keep your data safe.", 'info');
+      }
+    };
+    
+    checkBackup();
+    const interval = setInterval(checkBackup, 60 * 60 * 1000); // Check every hour
+    return () => clearInterval(interval);
+  }, [state.lastBackupTime]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +46,7 @@ export const Contacts: React.FC = () => {
 
   const [companyData, setCompanyData] = useState(state.companyInfo);
   const [capitalData, setCapitalData] = useState(state.initialCapital.toString());
+  const [pinData, setPinData] = useState(state.appPin);
 
   const handleEdit = (item: any) => {
     setFormData({
@@ -61,18 +81,28 @@ export const Contacts: React.FC = () => {
   };
 
   const handleExport = () => {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+    const fileName = `powderBiz-${dateStr}-${timeStr}.json`;
+
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "powderbiz_backup_" + new Date().toISOString().split('T')[0] + ".json");
+    downloadAnchorNode.setAttribute("download", fileName);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+    
+    setLastBackupTime(now.toISOString());
+    showMessage("Backup downloaded successfully!", 'success');
   };
 
-  const showMessage = (text: string, type: 'success' | 'error') => {
+  const showMessage = (text: string, type: 'success' | 'error' | 'info') => {
     setMessage({ text, type });
-    setTimeout(() => setMessage(null), 3000);
+    if (type !== 'info') {
+      setTimeout(() => setMessage(null), 3000);
+    }
   };
 
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +164,9 @@ export const Contacts: React.FC = () => {
     e.preventDefault();
     setCompanyInfo(companyData);
     setInitialCapital(parseFloat(capitalData) || 0);
+    if (pinData.length === 4) {
+      setAppPin(pinData);
+    }
     showMessage("Settings saved successfully!", 'success');
   };
 
@@ -150,8 +183,20 @@ export const Contacts: React.FC = () => {
   return (
     <div className="space-y-6 relative">
       {message && (
-        <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg font-medium z-50 animate-in slide-in-from-top-4 ${message.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+        <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg font-medium z-50 animate-in slide-in-from-top-4 flex items-center gap-3 ${
+          message.type === 'success' ? 'bg-green-600 text-white' : 
+          message.type === 'error' ? 'bg-red-600 text-white' : 
+          'bg-blue-600 text-white'
+        }`}>
           {message.text}
+          {message.type === 'info' && (
+            <button 
+              onClick={() => setMessage(null)}
+              className="ml-2 bg-white/20 hover:bg-white/30 rounded p-1 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       )}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -362,6 +407,24 @@ export const Contacts: React.FC = () => {
                     placeholder="Email Address"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-5 rounded-lg border border-slate-100">
+              <h4 className="font-semibold text-slate-800 mb-4">Security Settings</h4>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">App Lock PIN</label>
+                <input 
+                  type="password" 
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={pinData}
+                  onChange={e => setPinData(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono tracking-widest text-lg"
+                  placeholder="Enter 4-digit PIN"
+                />
+                <p className="text-xs text-slate-500 mt-1.5">Set a 4-digit PIN to secure your application. Default is 1234.</p>
               </div>
             </div>
 

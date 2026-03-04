@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 
@@ -29,6 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     { id: 'drying', label: t('dryingProcess'), icon: Sun },
     { id: 'sales', label: t('sales'), icon: TrendingUp },
     { id: 'expenses', label: t('expenses'), icon: Wallet },
+    { id: 'labor', label: t('laborTracking'), icon: Clock },
     { id: 'payments', label: t('payments'), icon: CreditCard },
     { id: 'reports', label: t('reports'), icon: BarChart3 },
     { id: 'productDelivery', label: t('productDelivery'), icon: Truck },

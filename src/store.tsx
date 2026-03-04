@@ -87,6 +87,17 @@ export interface Task {
   priority: 'low' | 'medium' | 'high';
 }
 
+export interface LaborRecord {
+  id: string;
+  date: string;
+  workerName: string;
+  processName: string;
+  hours: number;
+  hourlyRate: number;
+  totalCost: number;
+  notes: string;
+}
+
 export interface Loan {
   id: string;
   date: string;
@@ -154,6 +165,9 @@ export interface AppState {
   productDeliveries: ProductDelivery[];
   profitWithdrawals: ProfitWithdrawal[];
   tasks: Task[];
+  laborRecords: LaborRecord[];
+  appPin: string;
+  lastBackupTime: string | null;
   language: 'en' | 'bn';
 }
 
@@ -179,6 +193,9 @@ const initialState: AppState = {
   productDeliveries: [],
   profitWithdrawals: [],
   tasks: [],
+  laborRecords: [],
+  appPin: '1234',
+  lastBackupTime: null,
   language: 'en',
 };
 
@@ -231,6 +248,11 @@ interface AppContextType {
   editTask: (id: string, t: Omit<Task, 'id'>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
+  addLaborRecord: (l: Omit<LaborRecord, 'id'>) => void;
+  editLaborRecord: (id: string, l: Omit<LaborRecord, 'id'>) => void;
+  deleteLaborRecord: (id: string) => void;
+  setAppPin: (pin: string) => void;
+  setLastBackupTime: (time: string) => void;
   resetState: () => void;
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
@@ -280,6 +302,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           productDeliveries: Array.isArray(parsed.productDeliveries) ? parsed.productDeliveries : [],
           profitWithdrawals: Array.isArray(parsed.profitWithdrawals) ? parsed.profitWithdrawals : [],
           tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+          laborRecords: Array.isArray(parsed.laborRecords) ? parsed.laborRecords : [],
+          appPin: parsed.appPin || '1234',
+          lastBackupTime: parsed.lastBackupTime || null,
           language: parsed.language || 'en',
         };
       }
@@ -553,6 +578,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, tasks: s.tasks.filter(t => t.id !== id) }));
   };
 
+  const addLaborRecord = (l: Omit<LaborRecord, 'id'>) => {
+    setState(s => ({ ...s, laborRecords: [...s.laborRecords, { ...l, id: generateId() }] }));
+  };
+
+  const editLaborRecord = (id: string, l: Omit<LaborRecord, 'id'>) => {
+    setState(s => ({ ...s, laborRecords: s.laborRecords.map(item => item.id === id ? { ...l, id } : item) }));
+  };
+
+  const deleteLaborRecord = (id: string) => {
+    setState(s => ({ ...s, laborRecords: s.laborRecords.filter(l => l.id !== id) }));
+  };
+
+  const setAppPin = (pin: string) => {
+    setState(s => ({ ...s, appPin: pin }));
+  };
+
+  const setLastBackupTime = (time: string) => {
+    setState(s => ({ ...s, lastBackupTime: time }));
+  };
+
   const resetState = () => {
     setState(initialState);
   };
@@ -625,6 +670,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       editTask,
       toggleTask,
       deleteTask,
+      addLaborRecord,
+      editLaborRecord,
+      deleteLaborRecord,
+      setAppPin,
+      setLastBackupTime,
       resetState,
       importState,
       setLanguage,

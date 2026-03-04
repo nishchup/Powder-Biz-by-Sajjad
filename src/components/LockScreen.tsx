@@ -1,25 +1,31 @@
 import React, { useState } from 'react';
-import { Lock, Unlock, AlertCircle } from 'lucide-react';
+import { Lock, Unlock, AlertCircle, RotateCcw } from 'lucide-react';
+import { useAppStore } from '../store';
 
 interface LockScreenProps {
   onUnlock: () => void;
 }
 
 export function LockScreen({ onUnlock }: LockScreenProps) {
+  const { state, setAppPin } = useAppStore();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   
-  // Default PIN is 1234 for demo purposes
-  const CORRECT_PIN = '1234';
-
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === CORRECT_PIN) {
+    if (pin === state.appPin) {
       setError(false);
       onUnlock();
     } else {
       setError(true);
       setPin('');
+    }
+  };
+
+  const handleResetPin = () => {
+    if (window.confirm('Are you sure you want to reset the PIN to default (1234)?')) {
+      setAppPin('1234');
+      alert('PIN has been reset to 1234');
     }
   };
 
@@ -67,8 +73,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
           </button>
         </form>
 
-        <div className="text-center text-sm text-slate-500">
-          Demo PIN: <span className="font-mono font-bold text-slate-700">1234</span>
+        <div className="pt-4 border-t border-slate-100 flex justify-center">
+          <button 
+            onClick={handleResetPin}
+            className="flex items-center text-xs text-slate-400 hover:text-indigo-600 transition-colors"
+          >
+            <RotateCcw size={14} className="mr-1.5" />
+            Reset PIN to Default
+          </button>
         </div>
       </div>
     </div>

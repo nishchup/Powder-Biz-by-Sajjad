@@ -12,7 +12,7 @@ export const Reports: React.FC = () => {
   
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [reportTab, setReportTab] = useState<'summary' | 'purchases' | 'drying' | 'sales' | 'expenses' | 'due'>('summary');
+  const [reportTab, setReportTab] = useState<'summary' | 'purchases' | 'drying' | 'sales' | 'expenses' | 'labor' | 'due'>('summary');
 
   const filteredPurchases = useMemo(() => {
     return state.purchases.filter(p => {
@@ -46,9 +46,18 @@ export const Reports: React.FC = () => {
     });
   }, [state.expenses, startDate, endDate]);
 
+  const filteredLabor = useMemo(() => {
+    return state.laborRecords.filter(l => {
+      if (startDate && l.date < startDate) return false;
+      if (endDate && l.date > endDate) return false;
+      return true;
+    });
+  }, [state.laborRecords, startDate, endDate]);
+
   const totalPurchases = filteredPurchases.reduce((sum, p) => sum + p.totalCost, 0);
   const totalSales = filteredSales.reduce((sum, s) => sum + s.totalRevenue, 0);
   const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalLabor = filteredLabor.reduce((sum, l) => sum + l.totalCost, 0);
   const totalLoans = state.loans.filter(l => {
     if (startDate && l.date < startDate) return false;
     if (endDate && l.date > endDate) return false;
@@ -67,7 +76,7 @@ export const Reports: React.FC = () => {
     return true;
   }).reduce((sum, pw) => sum + pw.amount, 0);
 
-  const netProfit = totalSales + totalCompanyAdvances - (totalPurchases + totalExpenses + totalLoans + totalProfitWithdrawals);
+  const netProfit = totalSales + totalCompanyAdvances - (totalPurchases + totalExpenses + totalLabor + totalLoans + totalProfitWithdrawals);
 
   return (
     <div className="space-y-6" id="reports-content">
@@ -126,6 +135,7 @@ export const Reports: React.FC = () => {
         <button onClick={() => setReportTab('drying')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'drying' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Drying Report</button>
         <button onClick={() => setReportTab('sales')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'sales' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Sales Report</button>
         <button onClick={() => setReportTab('expenses')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'expenses' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Expenses Report</button>
+        <button onClick={() => setReportTab('labor')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'labor' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Labor Report</button>
         <button onClick={() => setReportTab('due')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'due' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Due Report</button>
       </div>
 
@@ -164,6 +174,10 @@ export const Reports: React.FC = () => {
                   <span className="font-semibold text-red-500">৳{(totalExpenses || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Labor Costs</span>
+                  <span className="font-semibold text-red-500">৳{(totalLabor || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Total Loans</span>
                   <span className="font-semibold text-red-500">৳{(totalLoans || 0).toLocaleString()}</span>
                 </div>
@@ -173,7 +187,7 @@ export const Reports: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-sm mt-2 pt-2 border-t border-gray-100">
                   <span className="font-medium text-gray-800">Total Outflow</span>
-                  <span className="font-bold text-red-600">৳{((totalPurchases || 0) + (totalExpenses || 0) + (totalLoans || 0) + (totalProfitWithdrawals || 0)).toLocaleString()}</span>
+                  <span className="font-bold text-red-600">৳{((totalPurchases || 0) + (totalExpenses || 0) + (totalLabor || 0) + (totalLoans || 0) + (totalProfitWithdrawals || 0)).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -439,6 +453,47 @@ export const Reports: React.FC = () => {
           </div>
         </div>
       )}
+      {reportTab === 'labor' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <h3 className="font-semibold text-gray-800">Labor Report</h3>
+            <span className="text-sm font-medium text-gray-600">Total: ৳{(totalLabor || 0).toLocaleString()}</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white border-b border-gray-100">
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Worker</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Process</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Hours</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Rate</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredLabor.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">No labor records for this period.</td>
+                  </tr>
+                ) : (
+                  filteredLabor.map(record => (
+                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm text-gray-600">{record.date}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-800">{record.workerName}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{record.processName}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 text-center">{record.hours}h</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 text-right">৳{record.hourlyRate.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-gray-800 text-right">৳{record.totalCost.toLocaleString()}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {reportTab === 'due' && (
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
