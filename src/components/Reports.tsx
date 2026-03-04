@@ -244,15 +244,25 @@ export const Reports: React.FC = () => {
                 {filteredPurchases.length === 0 ? (
                   <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
                 ) : (
-                  filteredPurchases.map(p => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-sm">{p.date}</td>
-                      <td className="px-6 py-3 text-sm font-medium">{p.supplierName}</td>
-                      <td className="px-6 py-3 text-sm text-right">{(p.quantity || 0).toFixed(2)}</td>
-                      <td className="px-6 py-3 text-sm text-right">৳{(p.pricePerKg || 0).toFixed(2)}</td>
-                      <td className="px-6 py-3 text-sm text-right font-semibold">৳{(p.totalCost || 0).toLocaleString()}</td>
+                  <>
+                    {filteredPurchases.map(p => (
+                      <tr key={p.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-3 text-sm">{p.date}</td>
+                        <td className="px-6 py-3 text-sm font-medium">{p.supplierName}</td>
+                        <td className="px-6 py-3 text-sm text-right">{(p.quantity || 0).toFixed(2)}</td>
+                        <td className="px-6 py-3 text-sm text-right">৳{(p.pricePerKg || 0).toFixed(2)}</td>
+                        <td className="px-6 py-3 text-sm text-right font-semibold">৳{(p.totalCost || 0).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
+                      <td colSpan={2} className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
+                      <td className="px-6 py-4 text-sm text-right text-slate-800">
+                        {filteredPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right text-slate-400 font-normal">Average: ৳{(totalPurchases / (filteredPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0) || 1)).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-sm text-right text-red-700">৳{totalPurchases.toLocaleString()}</td>
                     </tr>
-                  ))
+                  </>
                 )}
               </tbody>
             </table>
@@ -281,15 +291,25 @@ export const Reports: React.FC = () => {
                 {filteredSales.length === 0 ? (
                   <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
                 ) : (
-                  filteredSales.map(s => (
-                    <tr key={s.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-sm">{s.date}</td>
-                      <td className="px-6 py-3 text-sm font-medium">{s.customerName}</td>
-                      <td className="px-6 py-3 text-sm text-right">{(s.quantity || 0).toFixed(2)}</td>
-                      <td className="px-6 py-3 text-sm text-right">৳{(s.pricePerKg || 0).toFixed(2)}</td>
-                      <td className="px-6 py-3 text-sm text-right font-semibold text-green-600">৳{(s.totalRevenue || 0).toLocaleString()}</td>
+                  <>
+                    {filteredSales.map(s => (
+                      <tr key={s.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-3 text-sm">{s.date}</td>
+                        <td className="px-6 py-3 text-sm font-medium">{s.customerName}</td>
+                        <td className="px-6 py-3 text-sm text-right">{(s.quantity || 0).toFixed(2)}</td>
+                        <td className="px-6 py-3 text-sm text-right">৳{(s.pricePerKg || 0).toFixed(2)}</td>
+                        <td className="px-6 py-3 text-sm text-right font-semibold text-green-600">৳{(s.totalRevenue || 0).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
+                      <td colSpan={2} className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
+                      <td className="px-6 py-4 text-sm text-right text-slate-800">
+                        {filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right text-slate-400 font-normal">Average: ৳{(totalSales / (filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0) || 1)).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-sm text-right text-green-700">৳{totalSales.toLocaleString()}</td>
                     </tr>
-                  ))
+                  </>
                 )}
               </tbody>
             </table>
@@ -299,11 +319,19 @@ export const Reports: React.FC = () => {
 
       {reportTab === 'drying' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+          <div className="p-4 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h3 className="font-semibold text-gray-800">Drying Process Report</h3>
-            <span className="text-sm font-medium text-gray-600">
-              Total Dry Produced: {filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0).toFixed(2)} kg
-            </span>
+            <div className="flex flex-col text-right">
+              <span className="text-sm font-medium text-gray-600">
+                Total Dry Produced: {filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0).toFixed(2)} kg
+              </span>
+              <span className="text-sm font-medium text-blue-600">
+                Total Wet Used: {filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0).toFixed(2)} kg
+              </span>
+              <span className="text-sm font-bold text-emerald-600">
+                Total Wet Cost: ৳{filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -311,25 +339,49 @@ export const Reports: React.FC = () => {
                 <tr className="bg-white border-b border-gray-100">
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Wet Used (kg)</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Wet Cost (৳)</th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-center">Yield %</th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Dry Produced (kg)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredConversions.length === 0 ? (
-                  <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
                 ) : (
-                  filteredConversions.map(c => {
-                    const yieldPercent = (c.dryQuantityProduced / c.wetQuantityUsed) * 100;
-                    return (
-                      <tr key={c.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm">{c.date}</td>
-                        <td className="px-6 py-3 text-sm text-right text-blue-600">{(c.wetQuantityUsed || 0).toFixed(2)}</td>
-                        <td className="px-6 py-3 text-sm text-center">{(yieldPercent || 0).toFixed(1)}%</td>
-                        <td className="px-6 py-3 text-sm text-right font-semibold text-yellow-600">{(c.dryQuantityProduced || 0).toFixed(2)}</td>
-                      </tr>
-                    );
-                  })
+                  <>
+                    {filteredConversions.map(c => {
+                      const yieldPercent = (c.dryQuantityProduced / c.wetQuantityUsed) * 100;
+                      const wetCost = (c.wetQuantityUsed || 0) * (c.purchasePrice || 0);
+                      return (
+                        <tr key={c.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-sm">{c.date}</td>
+                          <td className="px-6 py-3 text-sm text-right text-blue-600">{(c.wetQuantityUsed || 0).toFixed(2)}</td>
+                          <td className="px-6 py-3 text-sm text-right text-emerald-600 font-medium">৳{wetCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td className="px-6 py-3 text-sm text-center">{(yieldPercent || 0).toFixed(1)}%</td>
+                          <td className="px-6 py-3 text-sm text-right font-semibold text-yellow-600">{(c.dryQuantityProduced || 0).toFixed(2)}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
+                      <td className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
+                      <td className="px-6 py-4 text-sm text-right text-blue-700">
+                        {filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right text-emerald-700">
+                        ৳{filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-center text-slate-700">
+                        {(() => {
+                          const totalWet = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+                          const totalDry = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+                          return totalWet > 0 ? ((totalDry / totalWet) * 100).toFixed(1) + '%' : '0%';
+                        })()}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right text-yellow-700">
+                        {filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  </>
                 )}
               </tbody>
             </table>
@@ -357,14 +409,20 @@ export const Reports: React.FC = () => {
                 {filteredExpenses.length === 0 ? (
                   <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
                 ) : (
-                  filteredExpenses.map(e => (
-                    <tr key={e.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-sm">{e.date}</td>
-                      <td className="px-6 py-3 text-sm"><span className="px-2 py-1 bg-gray-100 rounded-full text-xs">{e.category}</span></td>
-                      <td className="px-6 py-3 text-sm">{e.description}</td>
-                      <td className="px-6 py-3 text-sm text-right font-semibold text-red-600">৳{(e.amount || 0).toLocaleString()}</td>
+                  <>
+                    {filteredExpenses.map(e => (
+                      <tr key={e.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-3 text-sm">{e.date}</td>
+                        <td className="px-6 py-3 text-sm"><span className="px-2 py-1 bg-gray-100 rounded-full text-xs">{e.category}</span></td>
+                        <td className="px-6 py-3 text-sm">{e.description}</td>
+                        <td className="px-6 py-3 text-sm text-right font-semibold text-red-600">৳{(e.amount || 0).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
+                      <td colSpan={3} className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
+                      <td className="px-6 py-4 text-sm text-right text-red-700">৳{totalExpenses.toLocaleString()}</td>
                     </tr>
-                  ))
+                  </>
                 )}
               </tbody>
             </table>
