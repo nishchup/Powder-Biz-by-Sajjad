@@ -3,6 +3,8 @@ import { useAppStore } from '../store';
 import { PieChart, TrendingUp, Wallet, Package, Sun, Filter, FileText, ShoppingCart, Droplets, Receipt, Printer } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
+import { ProductionCharts } from './ProductionCharts';
+import { FinancialCharts } from './FinancialCharts';
 
 export const Reports: React.FC = () => {
   const { state, wetStock, dryStock } = useAppStore();
@@ -220,6 +222,10 @@ export const Reports: React.FC = () => {
               </div>
             </div>
           </div>
+
+          <div className="md:col-span-2">
+            <FinancialCharts startDate={startDate} endDate={endDate} />
+          </div>
         </div>
       )}
 
@@ -318,7 +324,10 @@ export const Reports: React.FC = () => {
       )}
 
       {reportTab === 'drying' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="space-y-6">
+          <ProductionCharts startDate={startDate} endDate={endDate} />
+          
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-4 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h3 className="font-semibold text-gray-800">Drying Process Report</h3>
             <div className="flex flex-col text-right">
@@ -387,6 +396,7 @@ export const Reports: React.FC = () => {
             </table>
           </div>
         </div>
+      </div>
       )}
 
       {reportTab === 'expenses' && (

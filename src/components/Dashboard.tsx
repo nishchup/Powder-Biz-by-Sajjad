@@ -2,6 +2,8 @@ import React from 'react';
 import { useAppStore } from '../store';
 import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
+import { ProductionCharts } from './ProductionCharts';
+import { FinancialCharts } from './FinancialCharts';
 
 export const Dashboard: React.FC = () => {
   const { state, wetStock, dryStock } = useAppStore();
@@ -93,6 +95,10 @@ export const Dashboard: React.FC = () => {
           color="bg-teal-100 text-teal-600" 
         />
       </div>
+
+      <ProductionCharts />
+
+      <FinancialCharts />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
