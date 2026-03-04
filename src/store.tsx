@@ -228,6 +228,7 @@ interface AppContextType {
   editProfitWithdrawal: (id: string, p: Omit<ProfitWithdrawal, 'id'>) => void;
   deleteProfitWithdrawal: (id: string) => void;
   addTask: (t: Omit<Task, 'id'>) => void;
+  editTask: (id: string, t: Omit<Task, 'id'>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
   resetState: () => void;
@@ -540,6 +541,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, tasks: [...s.tasks, { ...t, id: generateId() }] }));
   };
 
+  const editTask = (id: string, t: Omit<Task, 'id'>) => {
+    setState(s => ({ ...s, tasks: s.tasks.map(item => item.id === id ? { ...t, id } : item) }));
+  };
+
   const toggleTask = (id: string) => {
     setState(s => ({ ...s, tasks: s.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t) }));
   };
@@ -617,6 +622,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       editProfitWithdrawal,
       deleteProfitWithdrawal,
       addTask,
+      editTask,
       toggleTask,
       deleteTask,
       resetState,

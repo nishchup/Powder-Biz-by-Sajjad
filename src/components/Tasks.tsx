@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, CheckCircle2, Circle, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, Calendar, AlertCircle, Clock, Edit2 } from 'lucide-react';
 import { useTranslation } from '../translations';
 
 export const Tasks: React.FC = () => {
-  const { state, addTask, toggleTask, deleteTask } = useAppStore();
+  const { state, addTask, editTask, toggleTask, deleteTask } = useAppStore();
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
@@ -16,15 +17,39 @@ export const Tasks: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.title.trim()) {
-      addTask({
-        title: formData.title,
-        priority: formData.priority,
-        date: formData.date,
-        completed: false
-      });
-      setFormData({ title: '', priority: 'medium', date: new Date().toISOString().split('T')[0] });
-      setIsFormOpen(false);
+      if (editingId) {
+        editTask(editingId, {
+          title: formData.title,
+          priority: formData.priority,
+          date: formData.date,
+          completed: state.tasks.find(t => t.id === editingId)?.completed || false
+        });
+      } else {
+        addTask({
+          title: formData.title,
+          priority: formData.priority,
+          date: formData.date,
+          completed: false
+        });
+      }
+      handleCloseForm();
     }
+  };
+
+  const handleEdit = (task: any) => {
+    setFormData({
+      title: task.title,
+      priority: task.priority,
+      date: task.date
+    });
+    setEditingId(task.id);
+    setIsFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setFormData({ title: '', priority: 'medium', date: new Date().toISOString().split('T')[0] });
+    setEditingId(null);
+    setIsFormOpen(false);
   };
 
   const sortedTasks = [...state.tasks].sort((a, b) => {
@@ -50,7 +75,10 @@ export const Tasks: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Daily Operations Tasks</h2>
         <button 
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => {
+            handleCloseForm();
+            setIsFormOpen(true);
+          }}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center transition-colors shadow-sm font-medium"
         >
           <Plus size={20} className="mr-2" />
@@ -60,6 +88,7 @@ export const Tasks: React.FC = () => {
 
       {isFormOpen && (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-top-4 duration-200">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">{editingId ? 'Edit Task' : 'Add New Task'}</h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Task Description</label>
@@ -93,7 +122,7 @@ export const Tasks: React.FC = () => {
               </button>
               <button 
                 type="button"
-                onClick={() => setIsFormOpen(false)}
+                onClick={handleCloseForm}
                 className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
               >
                 Cancel
@@ -139,12 +168,22 @@ export const Tasks: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button 
-                onClick={() => deleteTask(task.id)}
-                className="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => handleEdit(task)}
+                  className="text-slate-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-all"
+                  title="Edit Task"
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button 
+                  onClick={() => deleteTask(task.id)}
+                  className="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-all"
+                  title="Delete Task"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </div>
           ))
         )}

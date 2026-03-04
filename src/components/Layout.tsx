@@ -65,7 +65,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
         <div className="p-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center text-white font-bold text-xl tracking-tight">
             <Package className="mr-2 text-blue-500" />
-            PowderBiz
+            {state.companyInfo.name}
           </div>
           <button className="md:hidden text-slate-400 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
             <X size={24} />
@@ -104,43 +104,43 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 md:pl-64 transition-all duration-300 print:pl-0">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex items-center justify-between md:hidden print:hidden">
-          <div className="flex items-center text-slate-800 font-bold text-lg">
-            <Package className="mr-2 text-blue-600" size={20} />
-            PowderBiz
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm px-3 py-2.5 flex items-center justify-between md:hidden print:hidden">
+          <div className="flex items-center text-slate-800 font-bold text-base sm:text-lg shrink-0">
+            <Package className="mr-1.5 text-blue-600" size={18} />
+            <span className="truncate max-w-[120px] sm:max-w-none">{state.companyInfo.name}</span>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 sm:space-x-3 overflow-hidden">
             {!isOnline && hasPendingSync && (
-              <div className="flex items-center text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded-full animate-pulse">
-                <RefreshCw size={10} className="mr-1" />
-                Pending
+              <div className="flex items-center text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full animate-pulse shrink-0">
+                <RefreshCw size={8} className="mr-1" />
+                <span className="hidden min-[380px]:inline">Pending</span>
               </div>
             )}
-            <div className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-              {isOnline ? <Wifi size={12} className="mr-1" /> : <WifiOff size={12} className="mr-1" />}
-              {isOnline ? 'Online' : 'Offline'}
+            <div className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+              {isOnline ? <Wifi size={10} className="mr-1" /> : <WifiOff size={10} className="mr-1" />}
+              <span className="hidden min-[380px]:inline">{isOnline ? 'Online' : 'Offline'}</span>
             </div>
             {isOnline && isSyncing && (
-              <RefreshCw size={16} className="text-blue-500 animate-spin" />
+              <RefreshCw size={14} className="text-blue-500 animate-spin shrink-0" />
             )}
             <button 
               onClick={() => setLanguage(state.language === 'en' ? 'bn' : 'en')}
-              className="flex items-center text-slate-600 hover:text-blue-600 font-medium text-sm bg-slate-100 px-2 py-1 rounded-md"
+              className="flex items-center text-slate-600 hover:text-blue-600 font-medium text-[10px] bg-slate-100 px-1.5 py-0.5 rounded-md shrink-0"
             >
-              <Globe size={16} className="mr-1" />
-              {state.language === 'en' ? 'বাংলা' : 'EN'}
+              <Globe size={14} className="mr-1" />
+              {state.language === 'en' ? 'বাং' : 'EN'}
             </button>
             <button 
               onClick={onLock}
-              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
             >
-              <Lock size={20} />
+              <Lock size={18} />
             </button>
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
-              className="p-2 -mr-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-1.5 -mr-1 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
             >
-              <Menu size={24} />
+              <Menu size={22} />
             </button>
           </div>
         </header>
