@@ -47,13 +47,18 @@ export const ProductDelivery: React.FC = () => {
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = totalSales - (totalPurchases + totalExpenses);
 
+    const totalWetUsed = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalDryProduced = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+
     return {
       totalPurchases,
       totalSales,
       totalExpenses,
       netProfit,
       wetPowderCost,
-      dryPowderCost
+      dryPowderCost,
+      totalWetUsed,
+      totalDryProduced
     };
   }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses, state.conversions]);
 
@@ -183,6 +188,8 @@ export const ProductDelivery: React.FC = () => {
         totalSales: summary.totalSales,
         totalExpenses: summary.totalExpenses,
         netProfit: summary.netProfit,
+        totalWetUsed: summary.totalWetUsed,
+        totalDryProduced: summary.totalDryProduced,
         description: formData.description,
       });
       handleCancel();
@@ -282,6 +289,14 @@ export const ProductDelivery: React.FC = () => {
                     ৳{summary.netProfit.toLocaleString()}
                   </p>
                 </div>
+                <div className="space-y-1 bg-blue-50/50 p-2 rounded-lg border border-blue-100">
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Total Wet Used</p>
+                  <p className="text-lg font-bold text-blue-700">{summary.totalWetUsed.toFixed(2)} kg</p>
+                </div>
+                <div className="space-y-1 bg-yellow-50/50 p-2 rounded-lg border border-yellow-100">
+                  <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-wider">Total Dry Produced</p>
+                  <p className="text-lg font-bold text-yellow-700">{summary.totalDryProduced.toFixed(2)} kg</p>
+                </div>
               </div>
             )}
 
@@ -331,6 +346,7 @@ export const ProductDelivery: React.FC = () => {
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Sales</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Expenses</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Net Profit</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Wet/Dry (kg)</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Actions</th>
               </tr>
             </thead>
@@ -365,6 +381,10 @@ export const ProductDelivery: React.FC = () => {
                           Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                         </div>
                       )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-right">
+                      <div className="text-blue-600 font-medium">W: {(d.totalWetUsed || 0).toFixed(1)}</div>
+                      <div className="text-yellow-600 font-medium">D: {(d.totalDryProduced || 0).toFixed(1)}</div>
                     </td>
                     <td className="px-6 py-4 text-sm text-center">
                       <div className="flex items-center justify-center space-x-2">
@@ -498,6 +518,17 @@ export const ProductDelivery: React.FC = () => {
                         Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                       </p>
                     )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1">Total Wet Used</p>
+                    <p className="text-xl font-bold text-blue-800">{(selectedDelivery.totalWetUsed || 0).toFixed(2)} kg</p>
+                  </div>
+                  <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                    <p className="text-xs font-bold text-yellow-600 uppercase tracking-widest mb-1">Total Dry Produced</p>
+                    <p className="text-xl font-bold text-yellow-800">{(selectedDelivery.totalDryProduced || 0).toFixed(2)} kg</p>
                   </div>
                 </div>
               </div>

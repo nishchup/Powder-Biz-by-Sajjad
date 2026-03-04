@@ -115,6 +115,8 @@ export interface ProductDelivery {
   totalSales: number;
   totalExpenses: number;
   netProfit: number;
+  totalWetUsed?: number;
+  totalDryProduced?: number;
   description: string;
 }
 
