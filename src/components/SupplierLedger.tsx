@@ -34,7 +34,9 @@ export const SupplierLedger: React.FC = () => {
         id: p.id,
         date: p.date,
         type: 'Payment',
-        description: p.remarks || 'Supplier Payment',
+        description: p.purchaseId 
+          ? `${p.remarks || 'Due Payment'} (Ref: PR-${p.purchaseId.substring(0, 6).toUpperCase()})`
+          : p.remarks || 'Supplier Payment',
         debit: 0,
         credit: p.amount,
         reference: `PY-${p.id.substring(0, 6).toUpperCase()}`

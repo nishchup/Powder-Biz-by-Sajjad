@@ -31,6 +31,13 @@ export const Purchases: React.FC = () => {
     totalBags: '',
   });
 
+  const getPurchasePaidAmount = (p: any) => {
+    const additionalPayments = state.supplierPayments
+      .filter(sp => sp.purchaseId === p.id)
+      .reduce((sum, sp) => sum + sp.amount, 0);
+    return (p.paidAmount !== undefined ? p.paidAmount : p.totalCost) + additionalPayments;
+  };
+
   const getSupplierAdvance = (supplierName: string) => {
     const totalPurchases = state.purchases
       .filter(p => p.supplierName === supplierName)
@@ -48,8 +55,15 @@ export const Purchases: React.FC = () => {
     return balance > 0 ? balance : 0;
   };
 
+  const getSupplierTotalPayments = (supplierName: string) => {
+    return state.supplierPayments
+      .filter(p => p.supplierName === supplierName && !p.purchaseId)
+      .reduce((sum, p) => sum + p.amount, 0);
+  };
+
   const handlePayDue = (p: any) => {
-    const due = p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost);
+    const paid = getPurchasePaidAmount(p);
+    const due = p.totalCost - paid;
     setSelectedPurchaseForDue(p);
     setDuePaymentData({
       amount: due,
@@ -66,37 +80,31 @@ export const Purchases: React.FC = () => {
     const amount = duePaymentData.amount;
     const isAdjust = duePaymentData.adjustFromAdvance;
 
-    // Update the purchase paid amount
-    const updatedPurchase = {
-      ...selectedPurchaseForDue,
-      paidAmount: (selectedPurchaseForDue.paidAmount || 0) + amount
-    };
-    const { id, ...purchaseData } = updatedPurchase;
-    editPurchase(id, purchaseData);
-
-    // If not adjusting from advance, add a payment record
     if (!isAdjust) {
+      // Cash payment
       addSupplierPayment({
         date: new Date().toISOString().split('T')[0],
         supplierName: selectedPurchaseForDue.supplierName,
         amount: amount,
-        remarks: duePaymentData.remarks || `Due payment for purchase PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}`
+        remarks: duePaymentData.remarks || `Due payment for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}`,
+        purchaseId: selectedPurchaseForDue.id
       });
     } else {
-      // If adjusting from advance, we also need to record it as a payment with negative or special remark?
-      // Actually, the user said: "যদি ঐ supplier এর কোনো advance থাকে তাহলে সেখানে due paid এর পর তার advance থেকে বিয়োগ হয়ে দেখাবে যা payment এর advance ও adjust হবে।"
-      // This means we should record a payment that "uses" the advance.
-      // In this system, "Advance" is just the surplus of payments.
-      // If we adjust from advance, we are essentially saying "use the existing surplus to pay this due".
-      // So we don't need to add a NEW SupplierPayment record because that would increase the total paid even more.
-      // We just update the purchase's paidAmount.
-      // However, to track this "adjustment", maybe we should add a 0-amount payment with remarks?
-      // Or just a remark in the purchase.
+      // Adjust from existing payments (surplus)
+      // 1. Add allocated payment
       addSupplierPayment({
         date: new Date().toISOString().split('T')[0],
         supplierName: selectedPurchaseForDue.supplierName,
-        amount: 0, // 0 because it's already paid
-        remarks: `Adjusted ৳${amount} from existing payments for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`
+        amount: amount,
+        remarks: `Adjusted from existing payments for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`,
+        purchaseId: selectedPurchaseForDue.id
+      });
+      // 2. Add offset to unallocated payments to keep ledger balance same
+      addSupplierPayment({
+        date: new Date().toISOString().split('T')[0],
+        supplierName: selectedPurchaseForDue.supplierName,
+        amount: -amount,
+        remarks: `Offset for adjustment to PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}`
       });
     }
 
@@ -438,12 +446,12 @@ export const Purchases: React.FC = () => {
                     <td className="px-8 py-5 text-sm text-slate-700 text-right font-bold">{p.totalBags || '-'}</td>
                     <td className="px-8 py-5 text-sm text-slate-900 text-right font-black">{(p.quantity || 0).toFixed(2)}</td>
                     <td className="px-8 py-5 text-sm text-slate-900 text-right font-black">৳{(p.totalCost || 0).toLocaleString()}</td>
-                    <td className="px-8 py-5 text-sm text-emerald-600 text-right font-black">৳{(p.paidAmount !== undefined ? p.paidAmount : p.totalCost).toLocaleString()}</td>
+                    <td className="px-8 py-5 text-sm text-emerald-600 text-right font-black">৳{getPurchasePaidAmount(p).toLocaleString()}</td>
                     <td className="px-8 py-5 text-sm text-rose-500 text-right font-black">
-                      {p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost) > 0 
+                      {p.totalCost - getPurchasePaidAmount(p) > 0 
                         ? (
                           <div className="flex flex-col items-end">
-                            <span>৳{(p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost)).toLocaleString()}</span>
+                            <span>৳{(p.totalCost - getPurchasePaidAmount(p)).toLocaleString()}</span>
                             <button 
                               onClick={() => handlePayDue(p)}
                               className="text-[10px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-tighter mt-1 flex items-center"
@@ -528,12 +536,15 @@ export const Purchases: React.FC = () => {
             </div>
             
             <form onSubmit={submitDuePayment} className="p-8 space-y-6">
-              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex justify-between items-center">
-                <div>
-                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Available Payment Balance</p>
-                  <p className="text-lg font-black text-blue-700">৳{getSupplierAdvance(selectedPurchaseForDue.supplierName).toLocaleString()}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex flex-col items-center justify-center text-center">
+                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Available Payment Balance</p>
+                  <p className="text-lg font-black text-blue-700">৳{getSupplierTotalPayments(selectedPurchaseForDue.supplierName).toLocaleString()}</p>
                 </div>
-                <Wallet className="text-blue-300" size={32} />
+                <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex flex-col items-center justify-center text-center">
+                  <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Net Surplus (Available)</p>
+                  <p className="text-lg font-black text-emerald-700">৳{getSupplierAdvance(selectedPurchaseForDue.supplierName).toLocaleString()}</p>
+                </div>
               </div>
 
               <div className="space-y-2">

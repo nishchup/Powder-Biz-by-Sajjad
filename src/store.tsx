@@ -13,6 +13,7 @@ export interface SupplierPayment {
   supplierName: string;
   amount: number;
   remarks?: string;
+  purchaseId?: string;
 }
 
 export interface CustomerPayment {
