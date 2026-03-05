@@ -95,8 +95,8 @@ export const Purchases: React.FC = () => {
       addSupplierPayment({
         date: new Date().toISOString().split('T')[0],
         supplierName: selectedPurchaseForDue.supplierName,
-        amount: 0, // 0 because it's already paid as advance
-        remarks: `Adjusted ৳${amount} from advance for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`
+        amount: 0, // 0 because it's already paid
+        remarks: `Adjusted ৳${amount} from existing payments for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`
       });
     }
 
@@ -530,7 +530,7 @@ export const Purchases: React.FC = () => {
             <form onSubmit={submitDuePayment} className="p-8 space-y-6">
               <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex justify-between items-center">
                 <div>
-                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Supplier Advance</p>
+                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Available Payment Balance</p>
                   <p className="text-lg font-black text-blue-700">৳{getSupplierAdvance(selectedPurchaseForDue.supplierName).toLocaleString()}</p>
                 </div>
                 <Wallet className="text-blue-300" size={32} />
@@ -570,7 +570,7 @@ export const Purchases: React.FC = () => {
                     className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                   />
                   <label htmlFor="adjustFromAdvance" className="text-sm font-bold text-slate-700 cursor-pointer">
-                    Adjust from supplier advance
+                    Adjust from existing payments
                   </label>
                 </div>
               )}

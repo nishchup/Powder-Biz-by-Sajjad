@@ -128,7 +128,7 @@ export const SupplierLedger: React.FC = () => {
             </div>
             <div className={`p-8 rounded-[2rem] border shadow-sm ${balance > 0 ? 'bg-rose-50 border-rose-100' : 'bg-emerald-50 border-emerald-100'}`}>
               <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${balance > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                {balance > 0 ? 'Total Due' : 'Advance Balance'}
+                {balance > 0 ? 'Total Due' : 'Payment Balance'}
               </p>
               <p className={`text-3xl font-black ${balance > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                 ৳{Math.abs(balance).toLocaleString()}
