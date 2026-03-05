@@ -29,15 +29,28 @@ export const exportToPDF = async (elementId: string, fileName: string = 'report.
         clonedElement.style.color = '#000000';
         clonedElement.style.backgroundColor = '#ffffff';
 
-        // Force visibility of all elements
+        // Force visibility and standard colors for all elements
         const allElements = clonedElement.getElementsByTagName('*');
         for (const el of Array.from(allElements)) {
           const htmlEl = el as HTMLElement;
           htmlEl.style.opacity = '1';
           htmlEl.style.visibility = 'visible';
           
-          // Fix for oklch colors - replace with standard colors if possible
-          // or just ensure they are captured. html2canvas-pro handles most but not all.
+          // Get computed style to check for oklch or other modern colors
+          const style = window.getComputedStyle(htmlEl);
+          
+          // If color is very light or uses modern syntax, force it to a safe color
+          if (style.color.includes('oklch') || style.color.includes('var')) {
+            htmlEl.style.color = '#1e293b'; // slate-800 equivalent
+          }
+
+          // Ensure backgrounds are solid if they use modern syntax
+          if (style.backgroundColor.includes('oklch') || style.backgroundColor.includes('var')) {
+            // Only force if it's not transparent
+            if (style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent') {
+              htmlEl.style.backgroundColor = '#f8fafc'; // slate-50 equivalent
+            }
+          }
         }
       }
     });

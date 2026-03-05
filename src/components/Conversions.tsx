@@ -3,7 +3,6 @@ import { useAppStore } from '../store';
 import { Plus, Trash2, Pencil, X, Sun, Printer, FileText, History, AlertCircle, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export const Conversions: React.FC = () => {
   const { state, addConversion, editConversion, deleteConversion, wetStock, wetBagsStock, dryStock } = useAppStore();
@@ -205,10 +204,7 @@ export const Conversions: React.FC = () => {
   };
 
   return (
-    <motion.div 
-      variants={container}
-      initial="hidden"
-      animate="show"
+    <div 
       className="space-y-8" 
       id="conversions-content"
     >
@@ -236,7 +232,7 @@ export const Conversions: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem] flex items-center group bg-blue-50/50 border-blue-100">
+        <div className="glass-panel p-8 rounded-[2rem] flex items-center group bg-blue-50/50 border-blue-100">
           <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mr-6 group-hover:scale-110 transition-transform">
             <Package size={32} />
           </div>
@@ -244,8 +240,8 @@ export const Conversions: React.FC = () => {
             <p className="text-xs font-black text-blue-500 uppercase tracking-widest mb-1">Wet Stock</p>
             <p className="text-3xl font-black text-blue-900">{(wetStock || 0).toFixed(1)} <span className="text-sm font-bold text-blue-400">kg</span></p>
           </div>
-        </motion.div>
-        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem] flex items-center group bg-indigo-50/50 border-indigo-100">
+        </div>
+        <div className="glass-panel p-8 rounded-[2rem] flex items-center group bg-indigo-50/50 border-indigo-100">
           <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mr-6 group-hover:scale-110 transition-transform">
             <FileText size={32} />
           </div>
@@ -253,8 +249,8 @@ export const Conversions: React.FC = () => {
             <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-1">Wet Bags</p>
             <p className="text-3xl font-black text-indigo-900">{wetBagsStock || 0} <span className="text-sm font-bold text-indigo-400">bags</span></p>
           </div>
-        </motion.div>
-        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem] flex items-center group bg-amber-50/50 border-amber-100">
+        </div>
+        <div className="glass-panel p-8 rounded-[2rem] flex items-center group bg-amber-50/50 border-amber-100">
           <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 mr-6 group-hover:scale-110 transition-transform">
             <Sun size={32} />
           </div>
@@ -262,41 +258,35 @@ export const Conversions: React.FC = () => {
             <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-1">Dry Stock</p>
             <p className="text-3xl font-black text-amber-900">{(dryStock || 0).toFixed(1)} <span className="text-sm font-bold text-amber-400">kg</span></p>
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      <AnimatePresence>
-        {isFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
-            >
-              <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900">
-                    {editingId ? 'Edit Drying Batch' : 'New Drying Batch'}
-                  </h3>
-                  <p className="text-slate-500 font-medium">Record conversion metrics for this batch</p>
-                </div>
-                <button onClick={handleCancel} className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center active:scale-90">
-                  <X size={24} />
-                </button>
+      {isFormOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+          <div 
+            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">
+                  {editingId ? 'Edit Drying Batch' : 'New Drying Batch'}
+                </h3>
+                <p className="text-slate-500 font-medium">Record conversion metrics for this batch</p>
               </div>
-              
-              <div className="p-8 overflow-y-auto custom-scrollbar">
-                {error && (
-                  <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="mb-8 p-4 bg-rose-50 text-rose-700 border border-rose-100 rounded-2xl text-sm font-bold flex items-center"
-                  >
-                    <AlertCircle className="mr-3 shrink-0" size={20} />
-                    {error}
-                  </motion.div>
-                )}
+              <button onClick={handleCancel} className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center active:scale-90">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-8 overflow-y-auto custom-scrollbar">
+              {error && (
+                <div 
+                  className="mb-8 p-4 bg-rose-50 text-rose-700 border border-rose-100 rounded-2xl text-sm font-bold flex items-center"
+                >
+                  <AlertCircle className="mr-3 shrink-0" size={20} />
+                  {error}
+                </div>
+              )}
                 
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                   <div className="space-y-2">
@@ -425,12 +415,11 @@ export const Conversions: React.FC = () => {
                   </div>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
 
-      <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden">
+      <div className="glass-panel rounded-[2rem] overflow-hidden">
         <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h3 className="text-xl font-black text-slate-900 flex items-center">
             <History className="mr-3 text-amber-500" size={24} />
@@ -547,18 +536,14 @@ export const Conversions: React.FC = () => {
             </div>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Receipt Modal */}
-      <AnimatePresence>
-        {selectedReceipt && (
-          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[110] p-4 backdrop-blur-md print-modal-container">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] print-modal-content"
-            >
+      {selectedReceipt && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[110] p-4 backdrop-blur-md print-modal-container">
+          <div 
+            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] print-modal-content"
+          >
               <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50 print:hidden">
                 <h3 className="text-xl font-black text-slate-900">Batch Receipt</h3>
                 <div className="flex space-x-3">
@@ -647,10 +632,9 @@ export const Conversions: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };

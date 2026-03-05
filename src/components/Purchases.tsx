@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Plus, Trash2, Pencil, X, ShoppingCart, Receipt, Printer, Share2, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export const Purchases: React.FC = () => {
   const { state, addPurchase, editPurchase, deletePurchase } = useAppStore();
@@ -115,10 +114,7 @@ export const Purchases: React.FC = () => {
   };
 
   return (
-    <motion.div 
-      variants={container}
-      initial="hidden"
-      animate="show"
+    <div 
       className="space-y-8" 
       id="purchases-content"
     >
@@ -162,15 +158,11 @@ export const Purchases: React.FC = () => {
         </div>
       </div>
 
-      <AnimatePresence>
-        {isFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
-            >
+      {isFormOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+          <div 
+            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
               <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
                 <div>
                   <h3 className="text-2xl font-black text-slate-900">
@@ -313,12 +305,11 @@ export const Purchases: React.FC = () => {
                   </div>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
 
-      <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden">
+      <div className="glass-panel rounded-[2rem] overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
@@ -428,18 +419,14 @@ export const Purchases: React.FC = () => {
             </div>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Receipt Modal */}
-      <AnimatePresence>
-        {selectedReceipt && (
-          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[110] p-4 backdrop-blur-md print-modal-container">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print-modal-content"
-            >
+      {selectedReceipt && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[110] p-4 backdrop-blur-md print-modal-container">
+          <div 
+            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print-modal-content"
+          >
               <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50 print:hidden">
                 <h3 className="text-xl font-black text-slate-900">Purchase Receipt</h3>
                 <div className="flex space-x-3">
@@ -543,10 +530,9 @@ export const Purchases: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };

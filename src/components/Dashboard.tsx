@@ -4,7 +4,6 @@ import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Land
 import { exportToPDF } from '../services/pdfService';
 import { ProductionCharts } from './ProductionCharts';
 import { FinancialCharts } from './FinancialCharts';
-import { motion } from 'framer-motion';
 
 export const Dashboard: React.FC = () => {
   const { state, wetStock, dryStock } = useAppStore();
@@ -27,26 +26,8 @@ export const Dashboard: React.FC = () => {
 
   const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments + totalCompanyAdvances - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans - totalProfitWithdrawals;
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
   return (
-    <motion.div 
-      variants={container}
-      initial="hidden"
-      animate="show"
+    <div 
       className="space-y-8" 
       id="dashboard-content"
     >
@@ -70,70 +51,62 @@ export const Dashboard: React.FC = () => {
           value={`${(wetStock || 0).toFixed(2)} kg`} 
           icon={Package} 
           color="bg-blue-500" 
-          variants={item}
         />
         <StatCard 
           title="Dry Powder Stock" 
           value={`${(dryStock || 0).toFixed(2)} kg`} 
           icon={Sun} 
           color="bg-amber-500" 
-          variants={item}
         />
         <StatCard 
           title="Total Sales" 
           value={`৳${(totalSales || 0).toLocaleString()}`} 
           icon={TrendingUp} 
           color="bg-emerald-500" 
-          variants={item}
         />
         <StatCard 
           title="Inhand Cash" 
           value={`৳${(inhandCash || 0).toLocaleString()}`} 
           icon={DollarSign} 
           color="bg-indigo-500" 
-          variants={item}
         />
         <StatCard 
           title="Net Profit" 
           value={`৳${(netProfit || 0).toLocaleString()}`} 
           icon={Wallet} 
           color={(netProfit || 0) >= 0 ? "bg-emerald-600" : "bg-rose-600"} 
-          variants={item}
         />
         <StatCard 
           title="Total Loan" 
           value={`৳${(totalLoans || 0).toLocaleString()}`} 
           icon={Landmark} 
           color="bg-violet-500" 
-          variants={item}
         />
         <StatCard 
           title="Customer Due" 
           value={`৳${(totalCustomerDue || 0).toLocaleString()}`} 
           icon={AlertCircle} 
           color="bg-orange-500" 
-          variants={item}
         />
         <StatCard 
           title="Supplier Due" 
           value={`৳${(totalSupplierDue || 0).toLocaleString()}`} 
           icon={CreditCard} 
           color="bg-rose-500" 
-          variants={item}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem]">
+        <div className="glass-panel p-8 rounded-[2rem]">
           <ProductionCharts />
-        </motion.div>
-        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem]">
+        </div>
+        <div className="glass-panel p-8 rounded-[2rem]">
           <FinancialCharts />
-        </motion.div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden">
+        <div className="glass-panel rounded-[2rem] overflow-hidden">
           <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h3 className="text-xl font-black text-slate-900 flex items-center">
               <Activity className="mr-3 text-indigo-500" size={24} />
@@ -185,9 +158,9 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden flex flex-col">
+        <div className="glass-panel rounded-[2rem] overflow-hidden flex flex-col">
           <div className="p-8 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-xl font-black text-slate-900">Financial Summary</h3>
             <p className="text-slate-500 text-sm font-medium">Overall performance overview</p>
@@ -231,16 +204,14 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-const StatCard = ({ title, value, icon: Icon, color, variants }: any) => (
-  <motion.div 
-    variants={variants}
-    whileHover={{ y: -5, scale: 1.02 }}
+const StatCard = ({ title, value, icon: Icon, color }: any) => (
+  <div 
     className="glass-panel p-6 rounded-3xl flex items-center group cursor-default"
   >
     <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-lg shadow-${color.split('-')[1]}-200 mr-5 group-hover:rotate-6 transition-transform`}>
@@ -250,5 +221,5 @@ const StatCard = ({ title, value, icon: Icon, color, variants }: any) => (
       <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
       <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
     </div>
-  </motion.div>
+  </div>
 );

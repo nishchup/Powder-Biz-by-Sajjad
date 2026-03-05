@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, CreditCard, ArrowDownCircle, ArrowUpCircle, HandCoins, Pencil, Printer, X, Search, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
+import { Plus, Trash2, CreditCard, ArrowDownCircle, ArrowUpCircle, HandCoins, Pencil, Printer, X, Search, ChevronLeft, ChevronRight, DollarSign, History } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export const Payments: React.FC = () => {
   const { state, addSupplierPayment, editSupplierPayment, deleteSupplierPayment, addCustomerPayment, editCustomerPayment, deleteCustomerPayment, addLoan, editLoan, deleteLoan, addCompanyAdvance, editCompanyAdvance, deleteCompanyAdvance } = useAppStore();
@@ -96,24 +95,8 @@ export const Payments: React.FC = () => {
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const paginatedData = sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
   return (
-    <motion.div 
-      variants={container}
-      initial="hidden"
-      animate="show"
+    <div 
       className="space-y-8" 
       id="payments-content"
     >
@@ -175,15 +158,11 @@ export const Payments: React.FC = () => {
         </div>
       </div>
 
-      <AnimatePresence>
-        {isFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
-            >
+      {isFormOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+          <div 
+            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
               <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
                 <div>
                   <h3 className="text-2xl font-black text-slate-900">
@@ -285,12 +264,11 @@ export const Payments: React.FC = () => {
                   </div>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
 
-      <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden">
+      <div className="glass-panel rounded-[2rem] overflow-hidden">
         <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h3 className="text-xl font-black text-slate-900 flex items-center uppercase tracking-tight">
             <History className="mr-3 text-indigo-500" size={24} />
@@ -392,7 +370,7 @@ export const Payments: React.FC = () => {
             </div>
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
