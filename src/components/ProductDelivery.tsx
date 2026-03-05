@@ -272,7 +272,7 @@ export const ProductDelivery: React.FC = () => {
 
       {isFormOpen && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h3 className="text-lg font-bold text-slate-800">New Delivery Summary</h3>
               <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -503,7 +503,7 @@ export const ProductDelivery: React.FC = () => {
       {/* Delivery Detail Modal */}
       {selectedDelivery && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 my-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white rounded-t-2xl z-10 print:hidden">
               <h3 className="text-xl font-bold text-slate-800 flex items-center">
                 <Truck className="mr-2 text-blue-600" /> Delivery Summary Report
@@ -638,7 +638,7 @@ export const ProductDelivery: React.FC = () => {
       {/* Withdraw Profit Modal */}
       {withdrawModalOpen && withdrawDelivery && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h3 className="text-xl font-bold text-slate-800 flex items-center">
                 <Banknote className="mr-2 text-emerald-600" /> Withdraw Profit

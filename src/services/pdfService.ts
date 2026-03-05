@@ -9,60 +9,40 @@ export const exportToPDF = async (elementId: string, fileName: string = 'report.
   }
 
   try {
+    // Create a temporary container to ensure consistent styling for PDF
     const canvas = await html2canvas(element, {
-      scale: 3, // Even higher resolution for crisp text
+      scale: 2, // High resolution
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: 1200, // Fixed width for consistent layout
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
       ignoreElements: (el) => el.classList.contains('print:hidden'),
       onclone: (clonedDoc) => {
         const clonedElement = clonedDoc.getElementById(elementId);
         if (!clonedElement) return;
         
-        // Professional Document Styling
-        clonedElement.style.padding = '40px';
-        clonedElement.style.width = '1200px';
+        // Ensure all text is visible and colors are correct
+        clonedElement.style.padding = '20px';
+        clonedElement.style.width = '100%';
         clonedElement.style.height = 'auto';
-        clonedElement.style.fontFamily = '"Plus Jakarta Sans", sans-serif';
-        
-        // Convert OKLCH colors to RGB for html2canvas compatibility
-        const colorCanvas = clonedDoc.createElement('canvas');
-        colorCanvas.width = 1;
-        colorCanvas.height = 1;
-        const ctx = colorCanvas.getContext('2d', { willReadFrequently: true });
+        clonedElement.style.color = '#000000';
+        clonedElement.style.backgroundColor = '#ffffff';
 
-        const convertColor = (colorStr: string) => {
-          if (!ctx || !colorStr || !colorStr.includes('oklch')) return colorStr;
-          ctx.clearRect(0, 0, 1, 1);
-          ctx.fillStyle = colorStr;
-          ctx.fillRect(0, 0, 1, 1);
-          const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
-          return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-        };
-
-        const elements = clonedElement.getElementsByTagName('*');
-        for (const el of Array.from(elements)) {
+        // Force visibility of all elements
+        const allElements = clonedElement.getElementsByTagName('*');
+        for (const el of Array.from(allElements)) {
           const htmlEl = el as HTMLElement;
+          htmlEl.style.opacity = '1';
+          htmlEl.style.visibility = 'visible';
           
-          // Force visibility of borders and backgrounds
-          htmlEl.style.boxShadow = 'none';
-          
-          const style = clonedDoc.defaultView?.getComputedStyle(htmlEl);
-          if (!style) continue;
-          
-          const colorProps = ['color', 'backgroundColor', 'borderColor'];
-          for (const prop of colorProps) {
-            const val = style.getPropertyValue(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
-            if (val && val.includes('oklch')) {
-              htmlEl.style.setProperty(prop.replace(/([A-Z])/g, '-$1').toLowerCase(), convertColor(val), 'important');
-            }
-          }
+          // Fix for oklch colors - replace with standard colors if possible
+          // or just ensure they are captured. html2canvas-pro handles most but not all.
         }
       }
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -71,39 +51,22 @@ export const exportToPDF = async (elementId: string, fileName: string = 'report.
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 10;
-    const contentWidth = pageWidth - (margin * 2);
-    
-    // Calculate image dimensions to fit the page width
-    const imgWidth = contentWidth;
+    const imgWidth = pageWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    // If the content is slightly longer than one page, we scale it down to fit one page
-    // Otherwise, we use multiple pages
-    const maxSinglePageHeight = pageHeight - (margin * 2);
-    
-    if (imgHeight <= maxSinglePageHeight * 1.2) {
-      // Scale down to fit one page if it's within 20% of the limit
-      const scaleFactor = maxSinglePageHeight / imgHeight;
-      const finalWidth = imgWidth * scaleFactor;
-      const finalHeight = maxSinglePageHeight;
-      const xOffset = (pageWidth - finalWidth) / 2;
-      
-      pdf.addImage(imgData, 'JPEG', xOffset, margin, finalWidth, finalHeight);
-    } else {
-      // Multi-page logic
-      let heightLeft = imgHeight;
-      let position = margin;
+    let heightLeft = imgHeight;
+    let position = 0;
 
-      pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
-      heightLeft -= maxSinglePageHeight;
+    // Add first page
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + margin;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
-        heightLeft -= maxSinglePageHeight;
-      }
+    // Add subsequent pages if content is longer than one page
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
     }
 
     pdf.save(fileName);

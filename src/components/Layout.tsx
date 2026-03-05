@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
-import { motion, AnimatePresence } from 'motion/react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,19 +22,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
   };
 
   const navItems = [
-    { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard, color: 'text-blue-500' },
-    { id: 'inventory', label: t('inventory'), icon: Package, color: 'text-emerald-500' },
-    { id: 'contacts', label: t('contactsSettings'), icon: Users, color: 'text-indigo-500' },
-    { id: 'purchases', label: t('purchases'), icon: ShoppingCart, color: 'text-rose-500' },
-    { id: 'drying', label: t('dryingProcess'), icon: Sun, color: 'text-amber-500' },
-    { id: 'sales', label: t('sales'), icon: TrendingUp, color: 'text-green-500' },
-    { id: 'expenses', label: t('expenses'), icon: Wallet, color: 'text-orange-500' },
-    { id: 'labor', label: t('laborTracking'), icon: Clock, color: 'text-teal-500' },
-    { id: 'payments', label: t('payments'), icon: CreditCard, color: 'text-cyan-500' },
-    { id: 'reports', label: t('reports'), icon: BarChart3, color: 'text-violet-500' },
-    { id: 'productDelivery', label: t('productDelivery'), icon: Truck, color: 'text-sky-500' },
-    { id: 'tasks', label: 'Tasks', icon: CheckCircle2, color: 'text-pink-500' },
-    { id: 'notes', label: t('notes'), icon: StickyNote, color: 'text-yellow-500' },
+    { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'inventory', label: t('inventory'), icon: Package },
+    { id: 'contacts', label: t('contactsSettings'), icon: Users },
+    { id: 'purchases', label: t('purchases'), icon: ShoppingCart },
+    { id: 'drying', label: t('dryingProcess'), icon: Sun },
+    { id: 'sales', label: t('sales'), icon: TrendingUp },
+    { id: 'expenses', label: t('expenses'), icon: Wallet },
+    { id: 'labor', label: t('laborTracking'), icon: Clock },
+    { id: 'payments', label: t('payments'), icon: CreditCard },
+    { id: 'reports', label: t('reports'), icon: BarChart3 },
+    { id: 'productDelivery', label: t('productDelivery'), icon: Truck },
+    { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+    { id: 'notes', label: t('notes'), icon: StickyNote },
   ];
 
   // Close mobile menu on resize
@@ -48,32 +47,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/60 z-40 md:hidden backdrop-blur-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-40 md:hidden transition-opacity backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 
-        transform transition-transform duration-500 ease-in-out shadow-2xl
+        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0 flex flex-col print:hidden
       `}>
-        <div className="p-8 flex items-center justify-between">
-          <div className="flex items-center text-white font-extrabold text-2xl tracking-tight">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-blue-600/30">
-              <Package className="text-white" size={24} />
-            </div>
+        <div className="p-6 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center text-white font-bold text-xl tracking-tight">
+            <Package className="mr-2 text-blue-500" />
             {state.companyInfo.name}
           </div>
           <button className="md:hidden text-slate-400 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
@@ -81,8 +72,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
           </button>
         </div>
         
-        <nav className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
-          <ul className="space-y-1">
+        <nav className="flex-1 overflow-y-auto py-6">
+          <ul className="space-y-1.5 px-3">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -94,145 +85,132 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                       setIsMobileMenuOpen(false);
                     }}
                     className={`
-                      w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-300 group
+                      w-full flex items-center px-3 py-3 rounded-lg transition-all duration-200
                       ${isActive 
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
-                        : 'hover:bg-slate-800/50 hover:text-white'}
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' 
+                        : 'hover:bg-slate-800 hover:text-white'}
                     `}
                   >
-                    <Icon size={20} className={`mr-3 transition-colors duration-300 ${isActive ? 'text-white' : item.color + ' group-hover:scale-110'}`} />
-                    <span className={`font-semibold text-sm tracking-wide ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
-                      {item.label}
-                    </span>
-                    {isActive && (
-                      <motion.div 
-                        layoutId="activeTab"
-                        className="ml-auto w-1.5 h-1.5 bg-white rounded-full"
-                      />
-                    )}
+                    <Icon size={20} className={`mr-3 ${isActive ? 'text-blue-200' : 'text-slate-400'}`} />
+                    <span className="font-medium text-sm">{item.label}</span>
                   </button>
                 </li>
               );
             })}
           </ul>
         </nav>
-
-        <div className="p-6 border-t border-slate-800/50">
-          <div className="bg-slate-800/50 rounded-2xl p-4">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">App Status</p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${isOnline ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-red-500'}`} />
-                <span className="text-xs font-bold text-slate-300">{isOnline ? 'Online' : 'Offline'}</span>
-              </div>
-              <button 
-                onClick={onLock}
-                className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-all"
-              >
-                <Lock size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content Wrapper */}
-      <div className="flex-1 flex flex-col min-w-0 md:pl-72 transition-all duration-500 print:pl-0">
+      <div className="flex-1 flex flex-col min-w-0 md:pl-64 print:pl-0">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm px-4 py-3 flex items-center justify-between md:hidden print:hidden">
-          <div className="flex items-center text-slate-900 font-extrabold text-lg shrink-0">
-            <Package className="mr-2 text-blue-600" size={20} />
-            <span className="truncate max-w-[150px]">{state.companyInfo.name}</span>
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm px-3 py-2.5 flex items-center justify-between md:hidden print:hidden">
+          <div className="flex items-center text-slate-800 font-bold text-base sm:text-lg shrink-0">
+            <Package className="mr-1.5 text-blue-600" size={18} />
+            <span className="truncate max-w-[120px] sm:max-w-none">{state.companyInfo.name}</span>
           </div>
-          <button 
-            onClick={() => setIsMobileMenuOpen(true)} 
-            className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
-          >
-            <Menu size={24} />
-          </button>
+          <div className="flex items-center space-x-1.5 sm:space-x-3 overflow-hidden">
+            {!isOnline && hasPendingSync && (
+              <div className="flex items-center text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full animate-pulse shrink-0">
+                <RefreshCw size={8} className="mr-1" />
+                <span className="hidden min-[380px]:inline">Pending</span>
+              </div>
+            )}
+            <div className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+              {isOnline ? <Wifi size={10} className="mr-1" /> : <WifiOff size={10} className="mr-1" />}
+              <span className="hidden min-[380px]:inline">{isOnline ? 'Online' : 'Offline'}</span>
+            </div>
+            {isOnline && isSyncing && (
+              <RefreshCw size={14} className="text-blue-500 animate-spin shrink-0" />
+            )}
+            <button 
+              onClick={() => setLanguage(state.language === 'en' ? 'bn' : 'en')}
+              className="flex items-center text-slate-600 hover:text-blue-600 font-medium text-[10px] bg-slate-100 px-1.5 py-0.5 rounded-md shrink-0"
+            >
+              <Globe size={14} className="mr-1" />
+              {state.language === 'en' ? 'বাং' : 'EN'}
+            </button>
+            <button 
+              onClick={onLock}
+              className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
+            >
+              <Lock size={18} />
+            </button>
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)} 
+              className="p-1.5 -mr-1 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
+            >
+              <Menu size={22} />
+            </button>
+          </div>
         </header>
 
         {/* Desktop Header */}
-        <header className="hidden md:flex sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm px-10 py-5 items-center justify-between print:hidden">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              {navItems.find(item => item.id === activeTab)?.label}
-            </h1>
-            <p className="text-sm font-medium text-slate-500 mt-0.5">Manage your business operations efficiently</p>
-          </div>
-          
+        <header className="hidden md:flex sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm px-8 py-4 items-center justify-between print:hidden">
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+            {navItems.find(item => item.id === activeTab)?.label}
+          </h1>
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl">
-              <button 
-                onClick={() => setLanguage('en')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${state.language === 'en' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                EN
-              </button>
-              <button 
-                onClick={() => setLanguage('bn')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${state.language === 'bn' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                বাং
-              </button>
+            {hasPendingSync && (
+              <div className={`flex items-center text-xs font-bold px-3 py-1.5 rounded-lg border animate-pulse ${isOnline ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                <RefreshCw size={14} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isOnline ? 'Syncing Changes...' : 'Offline: Changes Pending Sync'}
+              </div>
+            )}
+            <div className="flex items-center space-x-2 mr-2">
+              <div className={`flex items-center text-xs font-bold px-3 py-1.5 rounded-lg border ${isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                {isOnline ? <Wifi size={14} className="mr-2" /> : <WifiOff size={14} className="mr-2" />}
+                {isOnline ? 'Online' : 'Offline'}
+              </div>
+              {isOnline && (
+                <button 
+                  onClick={syncData}
+                  disabled={isSyncing}
+                  className={`flex items-center text-xs font-bold px-3 py-1.5 rounded-lg border bg-white hover:bg-slate-50 transition-colors ${isSyncing ? 'text-blue-400 border-blue-100' : 'text-slate-600 border-slate-200'}`}
+                  title={`Last synced: ${formatLastSynced(lastSynced)}`}
+                >
+                  <RefreshCw size={14} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Syncing...' : `Synced ${formatLastSynced(lastSynced)}`}
+                </button>
+              )}
             </div>
-
-            <div className="h-8 w-px bg-slate-200 mx-2" />
-
             <button 
-              onClick={syncData}
-              disabled={isSyncing}
-              className={`flex items-center text-xs font-bold px-4 py-2 rounded-xl border transition-all ${isSyncing ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600'}`}
+              onClick={() => setLanguage(state.language === 'en' ? 'bn' : 'en')}
+              className="flex items-center text-slate-600 hover:text-blue-600 font-medium text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
             >
-              <RefreshCw size={14} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'Syncing...' : `Synced ${formatLastSynced(lastSynced)}`}
+              <Globe size={18} className="mr-2" />
+              {state.language === 'en' ? 'বাংলা' : 'English'}
             </button>
-
             <button 
               onClick={onLock}
-              className="flex items-center text-xs font-bold px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
+              className="flex items-center text-slate-600 hover:text-red-600 font-medium text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
+              title="Lock Application"
             >
-              <Lock size={14} className="mr-2" />
-              Lock App
+              <Lock size={18} className="mr-2" />
+              Lock
             </button>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-6 md:p-10 print:overflow-visible print:bg-white print:p-0 custom-scrollbar">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6 md:p-8 print:overflow-visible print:bg-white print:p-0">
           <div className="max-w-7xl mx-auto">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
-                {dryStock >= 11500 && (
-                  <motion.div 
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="mb-8 bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between shadow-xl shadow-emerald-500/20 gap-4 print:hidden"
-                  >
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mr-4 backdrop-blur-md">
-                        <Truck className="text-white animate-bounce" size={28} />
-                      </div>
-                      <div>
-                        <h3 className="font-extrabold text-xl">Ready for Truck!</h3>
-                        <p className="text-emerald-50/80 text-sm font-medium">Stock threshold reached for delivery</p>
-                      </div>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl font-bold text-sm">
-                      Current: {dryStock.toFixed(2)} kg
-                    </div>
-                  </motion.div>
-                )}
-                
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            {dryStock >= 11000 && (
+              <div className="mb-6 bg-emerald-50 text-emerald-800 px-4 py-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between shadow-sm border border-emerald-200 gap-3 print:hidden">
+                <div className="flex items-center font-bold text-lg">
+                  <Truck className="mr-3 text-emerald-600 animate-bounce" size={24} />
+                  Ready for Truck!
+                </div>
+                <div className="text-sm font-medium bg-emerald-100 px-3 py-1.5 rounded-full inline-block w-fit">
+                  Current Dry Stock: {dryStock.toFixed(2)} kg (Min: 11,500 kg)
+                </div>
+              </div>
+            )}
+            
+            {/* Content Container */}
+            <div>
+              {children}
+            </div>
           </div>
         </main>
       </div>
