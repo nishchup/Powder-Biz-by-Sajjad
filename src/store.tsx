@@ -12,6 +12,7 @@ export interface SupplierPayment {
   date: string;
   supplierName: string;
   amount: number;
+  description?: string;
 }
 
 export interface CustomerPayment {
@@ -19,6 +20,7 @@ export interface CustomerPayment {
   date: string;
   customerName: string;
   amount: number;
+  description?: string;
 }
 
 export interface Purchase {

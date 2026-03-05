@@ -4,12 +4,19 @@ import { Plus, Trash2, Pencil, X, ShoppingCart, Receipt, Printer, Share2, Filter
 import { exportToPDF } from '../services/pdfService';
 
 export const Purchases: React.FC = () => {
-  const { state, addPurchase, editPurchase, deletePurchase } = useAppStore();
+  const { state, addPurchase, editPurchase, deletePurchase, addSupplierPayment } = useAppStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [payingDuePurchase, setPayingDuePurchase] = useState<any>(null);
+  const [duePaymentData, setDuePaymentData] = useState({
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
+    remarks: '',
+    adjustFromAdvance: false
+  });
   const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
@@ -90,6 +97,61 @@ export const Purchases: React.FC = () => {
     const text = `*${state.companyInfo.name}*\n_Purchase Receipt_\n\n*Date:* ${receipt.date}\n*Receipt #:* PR-${receipt.id.substring(0, 6).toUpperCase()}\n*Supplier:* ${receipt.supplierName}\n\n*Description:* ${typeLabel}\n*Quantity:* ${receipt.quantity.toFixed(2)} kg\n*Rate:* ৳${receipt.pricePerKg.toFixed(2)}\n\n*Subtotal:* ৳${receipt.totalCost.toLocaleString()}\n*Paid Amount:* ৳${(receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost).toLocaleString()}\n*Due Amount:* ৳${(receipt.totalCost - (receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost)).toLocaleString()}\n\n*Total:* ৳${receipt.totalCost.toLocaleString()}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
+  };
+
+  const handleDuePaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payingDuePurchase) return;
+
+    const amount = parseFloat(duePaymentData.amount);
+    const due = payingDuePurchase.totalCost - (payingDuePurchase.paidAmount !== undefined ? payingDuePurchase.paidAmount : payingDuePurchase.totalCost);
+    
+    if (amount > 0 && amount <= due) {
+      // Update purchase paid amount
+      const updatedPurchase = {
+        ...payingDuePurchase,
+        paidAmount: (payingDuePurchase.paidAmount !== undefined ? payingDuePurchase.paidAmount : payingDuePurchase.totalCost) + amount
+      };
+      const { id, ...purchaseData } = updatedPurchase;
+      editPurchase(id, purchaseData);
+
+      // Record payment
+      if (duePaymentData.adjustFromAdvance) {
+        // If adjusting from advance, we add a negative payment to "use up" the general advance pool
+        // since we just increased the specific purchase's paidAmount
+        addSupplierPayment({
+          date: duePaymentData.date,
+          supplierName: payingDuePurchase.supplierName,
+          amount: -amount,
+          description: `Adjusted from Advance for PR-${payingDuePurchase.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`
+        });
+      } else {
+        // Normal payment
+        addSupplierPayment({
+          date: duePaymentData.date,
+          supplierName: payingDuePurchase.supplierName,
+          amount: amount,
+          description: `Due Payment for PR-${payingDuePurchase.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`
+        });
+      }
+
+      setPayingDuePurchase(null);
+      setDuePaymentData({
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        remarks: '',
+        adjustFromAdvance: false
+      });
+    }
+  };
+
+  const getSupplierAdvance = (supplierName: string) => {
+    const supplierPurchases = state.purchases.filter(p => p.supplierName === supplierName);
+    const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
+    const totalPaidPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
+    const totalPayments = state.supplierPayments.filter(p => p.supplierName === supplierName).reduce((sum, p) => sum + p.amount, 0);
+    const totalPaid = totalPaidPurchases + totalPayments;
+    return Math.max(0, totalPaid - totalBilled);
   };
 
   const filteredPurchases = state.purchases.filter(p => 
@@ -359,10 +421,26 @@ export const Purchases: React.FC = () => {
                     <td className="px-8 py-5 text-sm text-slate-900 text-right font-black">৳{(p.totalCost || 0).toLocaleString()}</td>
                     <td className="px-8 py-5 text-sm text-emerald-600 text-right font-black">৳{(p.paidAmount !== undefined ? p.paidAmount : p.totalCost).toLocaleString()}</td>
                     <td className="px-8 py-5 text-sm text-rose-500 text-right font-black">
-                      {p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost) > 0 
-                        ? `৳${(p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost)).toLocaleString()}`
-                        : '—'
-                      }
+                      <div className="flex flex-col items-end">
+                        {p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost) > 0 
+                          ? (
+                            <>
+                              <span>৳{(p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost)).toLocaleString()}</span>
+                              <button 
+                                onClick={() => {
+                                  setPayingDuePurchase(p);
+                                  const due = p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost);
+                                  setDuePaymentData(prev => ({ ...prev, amount: due.toString() }));
+                                }}
+                                className="text-[10px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-tighter mt-1 bg-blue-50 px-2 py-0.5 rounded-md active:scale-95 transition-all"
+                              >
+                                Payable Due
+                              </button>
+                            </>
+                          )
+                          : '—'
+                        }
+                      </div>
                     </td>
                     <td className="px-8 py-5 text-sm text-center">
                       <div className="flex items-center justify-center space-x-2">
@@ -533,6 +611,95 @@ export const Purchases: React.FC = () => {
             </div>
           </div>
         )}
+
+      {/* Due Payment Modal */}
+      {payingDuePurchase && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[120] p-4 backdrop-blur-md">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">Pay Due</h3>
+                <p className="text-slate-500 font-medium">PR-{payingDuePurchase.id.substring(0, 6).toUpperCase()}</p>
+              </div>
+              <button 
+                onClick={() => setPayingDuePurchase(null)}
+                className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center active:scale-90"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-8">
+              <form onSubmit={handleDuePaymentSubmit} className="space-y-6">
+                <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 mb-6">
+                  <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Remaining Due</p>
+                  <p className="text-2xl font-black text-rose-700">
+                    ৳{(payingDuePurchase.totalCost - (payingDuePurchase.paidAmount !== undefined ? payingDuePurchase.paidAmount : payingDuePurchase.totalCost)).toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Payment Date</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={duePaymentData.date}
+                    onChange={e => setDuePaymentData({...duePaymentData, date: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Amount to Pay (৳)</label>
+                  <input 
+                    type="number" 
+                    required
+                    min="0.01"
+                    max={payingDuePurchase.totalCost - (payingDuePurchase.paidAmount !== undefined ? payingDuePurchase.paidAmount : payingDuePurchase.totalCost)}
+                    step="0.01"
+                    value={duePaymentData.amount}
+                    onChange={e => setDuePaymentData({...duePaymentData, amount: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Remarks</label>
+                  <input 
+                    type="text" 
+                    placeholder="Payment notes..."
+                    value={duePaymentData.remarks}
+                    onChange={e => setDuePaymentData({...duePaymentData, remarks: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                  />
+                </div>
+
+                {getSupplierAdvance(payingDuePurchase.supplierName) > 0 && (
+                  <div className="flex items-center space-x-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                    <input 
+                      type="checkbox"
+                      id="adjustFromAdvance"
+                      checked={duePaymentData.adjustFromAdvance}
+                      onChange={e => setDuePaymentData({...duePaymentData, adjustFromAdvance: e.target.checked})}
+                      className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="adjustFromAdvance" className="text-sm font-bold text-indigo-700 cursor-pointer">
+                      Adjust from Advance (Available: ৳{getSupplierAdvance(payingDuePurchase.supplierName).toLocaleString()})
+                    </label>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  className="w-full bg-slate-900 hover:bg-black text-white font-black py-4 rounded-2xl transition-all shadow-lg active:scale-95 mt-4"
+                >
+                  Confirm Payment
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
