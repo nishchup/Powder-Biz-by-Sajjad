@@ -32,7 +32,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     { id: 'labor', label: t('laborTracking'), icon: Clock },
     { id: 'payments', label: t('payments'), icon: CreditCard },
     { id: 'reports', label: t('reports'), icon: BarChart3 },
-    { id: 'supplierLedger', label: 'Supplier Ledger', icon: History },
     { id: 'productDelivery', label: t('productDelivery'), icon: Truck },
     { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
     { id: 'notes', label: t('notes'), icon: StickyNote },

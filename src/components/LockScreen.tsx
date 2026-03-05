@@ -11,27 +11,15 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   
-  const handleUnlock = (enteredPin: string) => {
-    if (enteredPin === state.appPin) {
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin === state.appPin) {
       setError(false);
       onUnlock();
-    } else if (enteredPin.length === 4) {
+    } else {
       setError(true);
       setPin('');
     }
-  };
-
-  const handlePinChange = (enteredPin: string) => {
-    setPin(enteredPin);
-    setError(false);
-    if (enteredPin.length === 4) {
-      handleUnlock(enteredPin);
-    }
-  };
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleUnlock(pin);
   };
 
   const handleResetPin = () => {
@@ -52,7 +40,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
           <p className="text-slate-500 mt-2">Enter your PIN to access the dashboard</p>
         </div>
 
-        <form onSubmit={handleFormSubmit} className="space-y-6">
+        <form onSubmit={handleUnlock} className="space-y-6">
           <div>
             <label htmlFor="pin" className="sr-only">PIN</label>
             <input
@@ -61,7 +49,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
               inputMode="numeric"
               pattern="[0-9]*"
               value={pin}
-              onChange={(e) => handlePinChange(e.target.value)}
+              onChange={(e) => setPin(e.target.value)}
               className="block w-full text-center text-3xl tracking-widest rounded-xl border-slate-300 py-4 focus:border-indigo-500 focus:ring-indigo-500 bg-slate-50"
               placeholder="••••"
               maxLength={4}
