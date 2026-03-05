@@ -45,9 +45,9 @@ export const Payments: React.FC = () => {
     if (amount > 0) {
       if (activeTab === 'supplier' && formData.name) {
         if (editingId) {
-          editSupplierPayment(editingId, { date: formData.date, supplierName: formData.name, amount });
+          editSupplierPayment(editingId, { date: formData.date, supplierName: formData.name, amount, remarks: formData.description });
         } else {
-          addSupplierPayment({ date: formData.date, supplierName: formData.name, amount });
+          addSupplierPayment({ date: formData.date, supplierName: formData.name, amount, remarks: formData.description });
         }
         handleCancel();
       } else if (activeTab === 'customer' && formData.name) {
@@ -234,12 +234,14 @@ export const Payments: React.FC = () => {
                         />
                       </div>
                     </div>
-                    {(activeTab === 'loan' || activeTab === 'companyAdvance') && (
+                    {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && (
                       <div className="sm:col-span-2 lg:col-span-3 space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
+                          {activeTab === 'supplier' ? 'Remarks' : 'Description'}
+                        </label>
                         <input 
                           type="text" 
-                          placeholder={activeTab === 'loan' ? "Loan details..." : "Advance details..."}
+                          placeholder={activeTab === 'loan' ? "Loan details..." : activeTab === 'supplier' ? "Payment notes..." : "Advance details..."}
                           value={formData.description}
                           onChange={e => setFormData({...formData, description: e.target.value})}
                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
@@ -287,7 +289,9 @@ export const Payments: React.FC = () => {
                   </th>
                 )}
                 <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Amount</th>
-                {(activeTab === 'loan' || activeTab === 'companyAdvance') && <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Description</th>}
+                {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">
+                  {activeTab === 'supplier' ? 'Remarks' : 'Description'}
+                </th>}
                 <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center print:hidden">Actions</th>
               </tr>
             </thead>
@@ -316,7 +320,9 @@ export const Payments: React.FC = () => {
                     <td className="px-8 py-5 text-sm text-right">
                       <span className="font-black text-slate-900">৳{(p.amount || 0).toLocaleString()}</span>
                     </td>
-                    {(activeTab === 'loan' || activeTab === 'companyAdvance') && <td className="px-8 py-5 text-sm font-medium text-slate-500">{p.description}</td>}
+                    {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && <td className="px-8 py-5 text-sm font-medium text-slate-500">
+                      {activeTab === 'supplier' ? p.remarks : p.description}
+                    </td>}
                     <td className="px-8 py-5 text-center print:hidden">
                       <div className="flex justify-center space-x-2">
                         <button 

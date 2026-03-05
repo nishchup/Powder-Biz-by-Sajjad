@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, Pencil, X, ShoppingCart, Receipt, Printer, Share2, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Pencil, X, ShoppingCart, Receipt, Printer, Share2, Filter, Search, ChevronLeft, ChevronRight, Wallet } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 
 export const Purchases: React.FC = () => {
-  const { state, addPurchase, editPurchase, deletePurchase } = useAppStore();
+  const { state, addPurchase, editPurchase, deletePurchase, addSupplierPayment } = useAppStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [isPayDueOpen, setIsPayDueOpen] = useState(false);
+  const [selectedPurchaseForDue, setSelectedPurchaseForDue] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
+
+  const [duePaymentData, setDuePaymentData] = useState({
+    amount: 0,
+    remarks: '',
+    adjustFromAdvance: false
+  });
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -22,6 +30,79 @@ export const Purchases: React.FC = () => {
     type: 'wet' as 'wet' | 'dry',
     totalBags: '',
   });
+
+  const getSupplierAdvance = (supplierName: string) => {
+    const totalPurchases = state.purchases
+      .filter(p => p.supplierName === supplierName)
+      .reduce((sum, p) => sum + (p.totalCost || 0), 0);
+    
+    const totalPaidInPurchases = state.purchases
+      .filter(p => p.supplierName === supplierName)
+      .reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
+    
+    const totalSupplierPayments = state.supplierPayments
+      .filter(p => p.supplierName === supplierName)
+      .reduce((sum, p) => sum + p.amount, 0);
+    
+    const balance = (totalPaidInPurchases + totalSupplierPayments) - totalPurchases;
+    return balance > 0 ? balance : 0;
+  };
+
+  const handlePayDue = (p: any) => {
+    const due = p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost);
+    setSelectedPurchaseForDue(p);
+    setDuePaymentData({
+      amount: due,
+      remarks: '',
+      adjustFromAdvance: false
+    });
+    setIsPayDueOpen(true);
+  };
+
+  const submitDuePayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPurchaseForDue) return;
+
+    const amount = duePaymentData.amount;
+    const isAdjust = duePaymentData.adjustFromAdvance;
+
+    // Update the purchase paid amount
+    const updatedPurchase = {
+      ...selectedPurchaseForDue,
+      paidAmount: (selectedPurchaseForDue.paidAmount || 0) + amount
+    };
+    const { id, ...purchaseData } = updatedPurchase;
+    editPurchase(id, purchaseData);
+
+    // If not adjusting from advance, add a payment record
+    if (!isAdjust) {
+      addSupplierPayment({
+        date: new Date().toISOString().split('T')[0],
+        supplierName: selectedPurchaseForDue.supplierName,
+        amount: amount,
+        remarks: duePaymentData.remarks || `Due payment for purchase PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}`
+      });
+    } else {
+      // If adjusting from advance, we also need to record it as a payment with negative or special remark?
+      // Actually, the user said: "যদি ঐ supplier এর কোনো advance থাকে তাহলে সেখানে due paid এর পর তার advance থেকে বিয়োগ হয়ে দেখাবে যা payment এর advance ও adjust হবে।"
+      // This means we should record a payment that "uses" the advance.
+      // In this system, "Advance" is just the surplus of payments.
+      // If we adjust from advance, we are essentially saying "use the existing surplus to pay this due".
+      // So we don't need to add a NEW SupplierPayment record because that would increase the total paid even more.
+      // We just update the purchase's paidAmount.
+      // However, to track this "adjustment", maybe we should add a 0-amount payment with remarks?
+      // Or just a remark in the purchase.
+      addSupplierPayment({
+        date: new Date().toISOString().split('T')[0],
+        supplierName: selectedPurchaseForDue.supplierName,
+        amount: 0, // 0 because it's already paid as advance
+        remarks: `Adjusted ৳${amount} from advance for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`
+      });
+    }
+
+    setIsPayDueOpen(false);
+    setSelectedPurchaseForDue(null);
+  };
 
   const handleEdit = (p: any) => {
     setFormData({
@@ -360,7 +441,18 @@ export const Purchases: React.FC = () => {
                     <td className="px-8 py-5 text-sm text-emerald-600 text-right font-black">৳{(p.paidAmount !== undefined ? p.paidAmount : p.totalCost).toLocaleString()}</td>
                     <td className="px-8 py-5 text-sm text-rose-500 text-right font-black">
                       {p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost) > 0 
-                        ? `৳${(p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost)).toLocaleString()}`
+                        ? (
+                          <div className="flex flex-col items-end">
+                            <span>৳{(p.totalCost - (p.paidAmount !== undefined ? p.paidAmount : p.totalCost)).toLocaleString()}</span>
+                            <button 
+                              onClick={() => handlePayDue(p)}
+                              className="text-[10px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-tighter mt-1 flex items-center"
+                            >
+                              <Wallet size={10} className="mr-1" />
+                              Payable Due
+                            </button>
+                          </div>
+                        )
                         : '—'
                       }
                     </td>
@@ -420,6 +512,79 @@ export const Purchases: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Due Payment Modal */}
+      {isPayDueOpen && selectedPurchaseForDue && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[120] p-4 backdrop-blur-md">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">Pay Due Amount</h3>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">PR-{selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}</p>
+              </div>
+              <button onClick={() => setIsPayDueOpen(false)} className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={submitDuePayment} className="p-8 space-y-6">
+              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex justify-between items-center">
+                <div>
+                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Supplier Advance</p>
+                  <p className="text-lg font-black text-blue-700">৳{getSupplierAdvance(selectedPurchaseForDue.supplierName).toLocaleString()}</p>
+                </div>
+                <Wallet className="text-blue-300" size={32} />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Payment Amount (৳)</label>
+                <input 
+                  type="number" 
+                  required
+                  min="0.01"
+                  step="0.01"
+                  max={selectedPurchaseForDue.totalCost - (selectedPurchaseForDue.paidAmount || 0)}
+                  value={duePaymentData.amount}
+                  onChange={e => setDuePaymentData({...duePaymentData, amount: parseFloat(e.target.value)})}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Remarks</label>
+                <textarea 
+                  placeholder="Payment notes..."
+                  value={duePaymentData.remarks}
+                  onChange={e => setDuePaymentData({...duePaymentData, remarks: e.target.value})}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900 h-24 resize-none"
+                />
+              </div>
+
+              {getSupplierAdvance(selectedPurchaseForDue.supplierName) > 0 && (
+                <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <input 
+                    type="checkbox"
+                    id="adjustFromAdvance"
+                    checked={duePaymentData.adjustFromAdvance}
+                    onChange={e => setDuePaymentData({...duePaymentData, adjustFromAdvance: e.target.checked})}
+                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="adjustFromAdvance" className="text-sm font-bold text-slate-700 cursor-pointer">
+                    Adjust from supplier advance
+                  </label>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                className="w-full bg-slate-900 hover:bg-black text-white font-black py-4 rounded-2xl transition-all shadow-lg active:scale-95"
+              >
+                Confirm Payment
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Receipt Modal */}
       {selectedReceipt && (
