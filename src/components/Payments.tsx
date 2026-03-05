@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, CreditCard, ArrowDownCircle, ArrowUpCircle, HandCoins, Pencil, Printer, X } from 'lucide-react';
+import { Plus, Trash2, CreditCard, ArrowDownCircle, ArrowUpCircle, HandCoins, Pencil, Printer, X, Search, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Payments: React.FC = () => {
   const { state, addSupplierPayment, editSupplierPayment, deleteSupplierPayment, addCustomerPayment, editCustomerPayment, deleteCustomerPayment, addLoan, editLoan, deleteLoan, addCompanyAdvance, editCompanyAdvance, deleteCompanyAdvance } = useAppStore();
@@ -11,6 +12,7 @@ export const Payments: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
@@ -82,226 +84,266 @@ export const Payments: React.FC = () => {
   };
 
   const activeData = getActiveData();
-  const sortedData = [...activeData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  const filteredData = activeData.filter(p => {
+    const name = activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : '';
+    const description = p.description || '';
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           description.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const sortedData = [...filteredData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const paginatedData = sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="space-y-6" id="payments-content">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{t('payments')} & Adjustments</h2>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto print:hidden">
+    <motion.div 
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-8" 
+      id="payments-content"
+    >
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Payments & Adjustments</h2>
+          <p className="text-slate-500 font-medium">Track all financial movements and ledger adjustments.</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto print:hidden">
           <button 
             onClick={() => exportToPDF('payments-content', 'payments-report.pdf')}
-            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
+            className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-sm font-bold active:scale-95"
           >
-            <Printer size={18} className="mr-2" />
-            {t('print')}
+            <Printer size={20} className="mr-2" />
+            Print
           </button>
-          {!isFormOpen && (
-            <button 
-              onClick={() => setIsFormOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-indigo-100 font-bold active:scale-95"
+          >
+            <Plus size={24} className="mr-2" />
+            Add Payment
+          </button>
+        </div>
+      </div>
+
+      <div className="flex overflow-x-auto border-b border-slate-100 mb-8 scrollbar-hide bg-white/50 p-1 rounded-2xl print:hidden">
+        {[
+          { id: 'supplier', icon: ArrowUpCircle, label: 'Supplier (Out)' },
+          { id: 'customer', icon: ArrowDownCircle, label: 'Customer (In)' },
+          { id: 'loan', icon: HandCoins, label: 'Loans (Deduction)' },
+          { id: 'companyAdvance', icon: CreditCard, label: 'Advance (In)' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => { setActiveTab(tab.id as any); handleCancel(); setCurrentPage(1); }}
+            className={`py-3 px-6 flex items-center font-black uppercase tracking-widest text-[10px] transition-all rounded-xl whitespace-nowrap ${
+              activeTab === tab.id 
+                ? 'bg-slate-900 text-white shadow-lg' 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <tab.icon size={16} className="mr-2" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 print:hidden">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <input 
+            type="text"
+            placeholder="Search payments..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-900 shadow-sm"
+          />
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isFormOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <Plus size={20} className="mr-2" />
-              {t('addPayment') || 'Add Payment'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex overflow-x-auto border-b border-slate-200 mb-6 scrollbar-hide print:hidden">
-        <button
-          onClick={() => { setActiveTab('supplier'); handleCancel(); setCurrentPage(1); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'supplier' 
-              ? 'border-b-2 border-indigo-600 text-indigo-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <ArrowUpCircle size={18} className="mr-2" />
-          {t('supplier')} {t('payments')} (Out)
-        </button>
-        <button
-          onClick={() => { setActiveTab('customer'); handleCancel(); setCurrentPage(1); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'customer' 
-              ? 'border-b-2 border-indigo-600 text-indigo-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <ArrowDownCircle size={18} className="mr-2" />
-          {t('customer')} {t('payments')} (In)
-        </button>
-        <button
-          onClick={() => { setActiveTab('loan'); handleCancel(); setCurrentPage(1); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'loan' 
-              ? 'border-b-2 border-indigo-600 text-indigo-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <HandCoins size={18} className="mr-2" />
-          {t('loans')} (Deduction)
-        </button>
-        <button
-          onClick={() => { setActiveTab('companyAdvance'); handleCancel(); setCurrentPage(1); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'companyAdvance' 
-              ? 'border-b-2 border-indigo-600 text-indigo-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <CreditCard size={18} className="mr-2" />
-          Advance to Company (In)
-        </button>
-      </div>
-
-      {isFormOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
-              <h3 className="text-lg font-bold text-slate-800">
-                {editingId 
-                  ? `${t('editNote').replace('Note', 'Payment')} (${activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : activeTab === 'loan' ? t('loans') : 'Company Advance'})`
-                  : activeTab === 'supplier' ? `${t('addPayment')} (${t('supplier')})` : activeTab === 'customer' ? `${t('addPayment')} (${t('customer')})` : activeTab === 'loan' ? t('addLoan') : 'Add Company Advance'
-                }
-              </h3>
-              <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto">
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('date')}</label>
-              <input 
-                type="date" 
-                required
-                value={formData.date}
-                onChange={e => setFormData({...formData, date: e.target.value})}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-              />
-            </div>
-            {activeTab !== 'companyAdvance' && (
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  {activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : t('personName')}
-                </label>
-                {activeTab === 'loan' ? (
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="Enter name..."
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  />
-                ) : (
-                  <select 
-                    required
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white"
-                  >
-                    <option value="" disabled>Select {activeTab === 'supplier' ? t('supplier') : t('customer')}</option>
-                    {activeTab === 'supplier' 
-                      ? state.suppliers.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
-                      : state.customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
-                    }
-                  </select>
-                )}
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('amount')} (৳)</label>
-              <input 
-                type="number" 
-                required
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.amount}
-                onChange={e => setFormData({...formData, amount: e.target.value})}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-              />
-            </div>
-            {(activeTab === 'loan' || activeTab === 'companyAdvance') && (
-              <div className="sm:col-span-3">
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('description')}</label>
-                <input 
-                  type="text" 
-                  placeholder={activeTab === 'loan' ? "Loan details..." : "Advance details..."}
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                />
-              </div>
-            )}
-                <div className="sm:col-span-2 lg:col-span-3 flex justify-end space-x-3 mt-4 pt-4 border-t border-slate-100">
-                  <button 
-                    type="button" 
-                    onClick={handleCancel}
-                    className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
-                  >
-                    {t('cancel') || 'Cancel'}
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
-                  >
-                    {t('save') || 'Save'}
-                  </button>
+              <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">
+                    {editingId ? 'Edit Payment' : 'New Payment'}
+                  </h3>
+                  <p className="text-slate-500 font-medium">Record a financial transaction</p>
                 </div>
-              </form>
-            </div>
+                <button onClick={handleCancel} className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center active:scale-90">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto custom-scrollbar">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                      <input 
+                        type="date" 
+                        required
+                        value={formData.date}
+                        onChange={e => setFormData({...formData, date: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                      />
+                    </div>
+                    {activeTab !== 'companyAdvance' && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
+                          {activeTab === 'supplier' ? 'Supplier' : activeTab === 'customer' ? 'Customer' : 'Person Name'}
+                        </label>
+                        {activeTab === 'loan' ? (
+                          <input 
+                            type="text" 
+                            required
+                            placeholder="Enter name..."
+                            value={formData.name}
+                            onChange={e => setFormData({...formData, name: e.target.value})}
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                          />
+                        ) : (
+                          <select 
+                            required
+                            value={formData.name}
+                            onChange={e => setFormData({...formData, name: e.target.value})}
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none"
+                          >
+                            <option value="" disabled>Select {activeTab === 'supplier' ? 'Supplier' : 'Customer'}</option>
+                            {activeTab === 'supplier' 
+                              ? state.suppliers.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
+                              : state.customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
+                            }
+                          </select>
+                        )}
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Amount (৳)</label>
+                      <div className="relative">
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black">৳</span>
+                        <input 
+                          type="number" 
+                          required
+                          min="0.01"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={formData.amount}
+                          onChange={e => setFormData({...formData, amount: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-10 pr-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                        />
+                      </div>
+                    </div>
+                    {(activeTab === 'loan' || activeTab === 'companyAdvance') && (
+                      <div className="sm:col-span-2 lg:col-span-3 space-y-2">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
+                        <input 
+                          type="text" 
+                          placeholder={activeTab === 'loan' ? "Loan details..." : "Advance details..."}
+                          value={formData.description}
+                          onChange={e => setFormData({...formData, description: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end space-x-4 pt-4 border-t border-slate-100">
+                    <button 
+                      type="button" 
+                      onClick={handleCancel}
+                      className="px-8 py-3.5 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="bg-slate-900 hover:bg-black text-white font-black px-10 py-3.5 rounded-2xl transition-all shadow-lg active:scale-95"
+                    >
+                      {editingId ? 'Update Payment' : 'Save Payment'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden">
+        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <h3 className="text-xl font-black text-slate-900 flex items-center uppercase tracking-tight">
+            <History className="mr-3 text-indigo-500" size={24} />
+            {activeTab} History
+          </h3>
+          <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total: {sortedData.length}</span>
+        </div>
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('date')}</th>
+              <tr className="bg-slate-50/50">
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
                 {activeTab !== 'companyAdvance' && (
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    {activeTab === 'supplier' ? t('supplier') : activeTab === 'customer' ? t('customer') : t('personName')}
+                  <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">
+                    {activeTab === 'supplier' ? 'Supplier' : activeTab === 'customer' ? 'Customer' : 'Person'}
                   </th>
                 )}
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">{t('amount')}</th>
-                {(activeTab === 'loan' || activeTab === 'companyAdvance') && <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('description')}</th>}
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center print:hidden">Actions</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Amount</th>
+                {(activeTab === 'loan' || activeTab === 'companyAdvance') && <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Description</th>}
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center print:hidden">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={(activeTab === 'loan' || activeTab === 'companyAdvance') ? (activeTab === 'companyAdvance' ? 4 : 5) : 4} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={(activeTab === 'loan' || activeTab === 'companyAdvance') ? (activeTab === 'companyAdvance' ? 4 : 5) : 4} className="px-8 py-24 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <CreditCard className="text-slate-300 mb-3" size={48} />
-                      <p className="text-base font-medium">No {activeTab}s recorded yet.</p>
+                      <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                        <CreditCard className="text-slate-200" size={48} />
+                      </div>
+                      <p className="text-xl font-black text-slate-900">No {activeTab}s recorded</p>
+                      <p className="text-slate-400 font-medium mt-1">Start by adding your first transaction.</p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 paginatedData.map((p: any) => (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4 text-sm text-slate-700">{p.date}</td>
+                  <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-8 py-5 text-sm font-bold text-slate-600">{p.date}</td>
                     {activeTab !== 'companyAdvance' && (
-                      <td className="px-6 py-4 text-sm text-slate-900 font-semibold">
+                      <td className="px-8 py-5 text-sm font-black text-slate-900">
                         {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : p.personName}
                       </td>
                     )}
-                    <td className="px-6 py-4 text-sm text-slate-900 text-right font-bold">৳{(p.amount || 0).toLocaleString()}</td>
-                    {(activeTab === 'loan' || activeTab === 'companyAdvance') && <td className="px-6 py-4 text-sm text-slate-600">{p.description}</td>}
-                    <td className="px-6 py-4 text-sm text-center print:hidden">
+                    <td className="px-8 py-5 text-sm text-right">
+                      <span className="font-black text-slate-900">৳{(p.amount || 0).toLocaleString()}</span>
+                    </td>
+                    {(activeTab === 'loan' || activeTab === 'companyAdvance') && <td className="px-8 py-5 text-sm font-medium text-slate-500">{p.description}</td>}
+                    <td className="px-8 py-5 text-center print:hidden">
                       <div className="flex justify-center space-x-2">
                         <button 
                           onClick={() => handleEdit(p)}
-                          className="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-md hover:bg-indigo-50 transition-colors"
+                          className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center active:scale-90"
                           title="Edit"
                         >
                           <Pencil size={18} />
@@ -313,7 +355,7 @@ export const Payments: React.FC = () => {
                             else if (activeTab === 'companyAdvance') deleteCompanyAdvance(p.id);
                             else deleteLoan(p.id);
                           }}
-                          className="text-red-600 hover:text-red-800 p-1.5 rounded-md hover:bg-red-50 transition-colors"
+                          className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                           title="Delete"
                         >
                           <Trash2 size={18} />
@@ -328,29 +370,29 @@ export const Payments: React.FC = () => {
         </div>
         
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
-            <div className="text-sm text-slate-500">
-              Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, sortedData.length)}</span> of <span className="font-medium">{sortedData.length}</span> results
+          <div className="px-8 py-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="text-xs font-black uppercase tracking-widest text-slate-400">
+              Page {currentPage} of {totalPages}
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-90"
               >
-                Previous
+                <ChevronLeft size={24} />
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-90"
               >
-                Next
+                <ChevronRight size={24} />
               </button>
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

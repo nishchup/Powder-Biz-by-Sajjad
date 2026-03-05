@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, Pencil, X, Sun, Printer, FileText } from 'lucide-react';
+import { Plus, Trash2, Pencil, X, Sun, Printer, FileText, History, AlertCircle, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Conversions: React.FC = () => {
   const { state, addConversion, editConversion, deleteConversion, wetStock, wetBagsStock, dryStock } = useAppStore();
@@ -79,7 +80,6 @@ export const Conversions: React.FC = () => {
     if (purchaseId && !isNaN(bags)) {
       const purchase = state.purchases.find(p => p.id === purchaseId);
       if (purchase && purchase.totalBags && purchase.totalBags > 0) {
-        // wetQty = (totalQty / totalBags) * bagsUsed
         const wetQty = (purchase.quantity / purchase.totalBags) * bags;
         const estimatedDry = wetQty * 0.8;
         
@@ -101,7 +101,6 @@ export const Conversions: React.FC = () => {
   const handleWetQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const wetQty = parseFloat(e.target.value);
     if (!isNaN(wetQty)) {
-      // 1 kg wet = 800g dry (200g loss) -> 80% yield
       const estimatedDry = wetQty * 0.8;
       setFormData({
         ...formData,
@@ -125,7 +124,6 @@ export const Conversions: React.FC = () => {
     const purchaseId = formData.purchaseId;
     
     if (wetQty > 0 && dryQty > 0) {
-      // Check stock if purchase is selected
       if (purchaseId) {
         const available = getPurchaseAvailable(purchaseId, editingId);
         if (bagsUsed > available.bags) {
@@ -137,7 +135,6 @@ export const Conversions: React.FC = () => {
           return;
         }
       } else {
-        // Legacy check for overall stock
         const oldWetQty = editingId ? (state.conversions.find(c => c.id === editingId)?.wetQuantityUsed || 0) : 0;
         const availableWetStock = wetStock + oldWetQty;
 
@@ -157,7 +154,6 @@ export const Conversions: React.FC = () => {
 
       setError(null);
       
-      // Calculate remain values for this specific batch relative to the purchase
       let remainBags = 0;
       let remainQuantity = 0;
       if (purchaseId) {
@@ -191,224 +187,280 @@ export const Conversions: React.FC = () => {
   const totalPages = Math.ceil(sortedConversions.length / itemsPerPage);
   const paginatedConversions = sortedConversions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Calculate current remaining for the selected purchase in the form
   const selectedPurchaseAvailable = formData.purchaseId ? getPurchaseAvailable(formData.purchaseId, editingId) : null;
   const currentRemainBags = selectedPurchaseAvailable ? selectedPurchaseAvailable.bags - (parseFloat(formData.bagsUsed) || 0) : 0;
   const currentRemainQuantity = selectedPurchaseAvailable ? selectedPurchaseAvailable.quantity - (parseFloat(formData.wetQuantityUsed) || 0) : 0;
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="space-y-6" id="conversions-content">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{t('dryingProcess')}</h2>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto print:hidden">
+    <motion.div 
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-8" 
+      id="conversions-content"
+    >
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Drying Process</h2>
+          <p className="text-slate-500 font-medium">Track conversion from wet powder to dry powder.</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto print:hidden">
           <button 
             onClick={() => exportToPDF('conversions-content', 'drying-report.pdf')}
-            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
+            className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-sm font-bold active:scale-95"
           >
-            <Printer size={18} className="mr-2" />
-            {t('print')}
+            <Printer size={20} className="mr-2" />
+            Print Report
           </button>
-          {!isFormOpen && (
-            <button 
-              onClick={() => setIsFormOpen(true)}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-amber-100 font-bold active:scale-95"
+          >
+            <Plus size={24} className="mr-2" />
+            Record Batch
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem] flex items-center group bg-blue-50/50 border-blue-100">
+          <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mr-6 group-hover:scale-110 transition-transform">
+            <Package size={32} />
+          </div>
+          <div>
+            <p className="text-xs font-black text-blue-500 uppercase tracking-widest mb-1">Wet Stock</p>
+            <p className="text-3xl font-black text-blue-900">{(wetStock || 0).toFixed(1)} <span className="text-sm font-bold text-blue-400">kg</span></p>
+          </div>
+        </motion.div>
+        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem] flex items-center group bg-indigo-50/50 border-indigo-100">
+          <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mr-6 group-hover:scale-110 transition-transform">
+            <FileText size={32} />
+          </div>
+          <div>
+            <p className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-1">Wet Bags</p>
+            <p className="text-3xl font-black text-indigo-900">{wetBagsStock || 0} <span className="text-sm font-bold text-indigo-400">bags</span></p>
+          </div>
+        </motion.div>
+        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem] flex items-center group bg-amber-50/50 border-amber-100">
+          <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 mr-6 group-hover:scale-110 transition-transform">
+            <Sun size={32} />
+          </div>
+          <div>
+            <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-1">Dry Stock</p>
+            <p className="text-3xl font-black text-amber-900">{(dryStock || 0).toFixed(1)} <span className="text-sm font-bold text-amber-400">kg</span></p>
+          </div>
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {isFormOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <Plus size={20} className="mr-2" />
-              Record Batch
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
-        <div className="flex flex-wrap gap-8">
-          <div>
-            <p className="text-sm text-blue-800 font-semibold mb-1">Available Wet Stock</p>
-            <p className="text-3xl font-bold text-blue-900">{(wetStock || 0).toFixed(2)} <span className="text-lg font-medium">kg</span></p>
-          </div>
-          <div>
-            <p className="text-sm text-blue-800 font-semibold mb-1">Available Bags</p>
-            <p className="text-3xl font-bold text-blue-900">{wetBagsStock || 0} <span className="text-lg font-medium">bags</span></p>
-          </div>
-          <div className="border-l border-blue-200 pl-8">
-            <p className="text-sm text-blue-800 font-semibold mb-1">Dry Powder Stock</p>
-            <p className="text-3xl font-bold text-blue-900">{(dryStock || 0).toFixed(2)} <span className="text-lg font-medium">kg</span></p>
-          </div>
-        </div>
-      </div>
-
-      {isFormOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
-              <h3 className="text-lg font-bold text-slate-800">
-                {editingId ? 'Edit Drying Batch' : 'New Drying Batch'}
-              </h3>
-              <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto">
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
-                  {error}
+              <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">
+                    {editingId ? 'Edit Drying Batch' : 'New Drying Batch'}
+                  </h3>
+                  <p className="text-slate-500 font-medium">Record conversion metrics for this batch</p>
                 </div>
-              )}
+                <button onClick={handleCancel} className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center active:scale-90">
+                  <X size={24} />
+                </button>
+              </div>
               
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Date</label>
-              <input 
-                type="date" 
-                required
-                value={formData.date}
-                onChange={e => setFormData({...formData, date: e.target.value})}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Select Purchase</label>
-              <select
-                value={formData.purchaseId}
-                onChange={e => {
-                  const pId = e.target.value;
-                  const purchase = state.purchases.find(p => p.id === pId);
-                  setFormData({
-                    ...formData, 
-                    purchaseId: pId,
-                    purchasePrice: purchase ? purchase.pricePerKg.toString() : formData.purchasePrice
-                  });
-                }}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
-              >
-                <option value="">-- Select Purchase (Optional) --</option>
-                {wetPurchases
-                  .filter(p => {
-                    const avail = getPurchaseAvailable(p.id, editingId);
-                    return avail.bags > 0 || p.id === formData.purchaseId;
-                  })
-                  .map(p => {
-                    const avail = getPurchaseAvailable(p.id, editingId);
-                    return (
-                      <option key={p.id} value={p.id}>
-                        {p.date} - {p.supplierName} - {avail.bags} bags avail
-                      </option>
-                    );
-                  })}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Bags Used</label>
-              <input 
-                type="number" 
-                required
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.bagsUsed}
-                onChange={handleBagsUsedChange}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
-              />
-              {formData.purchaseId && (
-                <p className="text-xs text-slate-500 mt-1.5 font-medium">
-                  Remain Bags: <span className={currentRemainBags < 0 ? 'text-red-600' : 'text-blue-600'}>{currentRemainBags}</span>
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Wet Powder Used (kg)</label>
-              <input 
-                type="number" 
-                required
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.wetQuantityUsed}
-                onChange={handleWetQuantityChange}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
-              />
-              {formData.purchaseId && (
-                <p className="text-xs text-slate-500 mt-1.5 font-medium">
-                  Remain Quantity: <span className={currentRemainQuantity < 0 ? 'text-red-600' : 'text-blue-600'}>{currentRemainQuantity.toFixed(2)} kg</span>
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Purchase Price (per kg)</label>
-              <input 
-                type="number" 
-                required
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.purchasePrice}
-                onChange={e => setFormData({...formData, purchasePrice: e.target.value})}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Dry Powder Produced (kg)</label>
-              <input 
-                type="number" 
-                required
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.dryQuantityProduced}
-                onChange={e => setFormData({...formData, dryQuantityProduced: e.target.value})}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all"
-              />
-              <p className="text-xs text-slate-500 mt-1.5">Auto-calculated at 80% yield.</p>
-            </div>
-                <div className="sm:col-span-2 lg:col-span-3 flex justify-end space-x-3 mt-4 pt-4 border-t border-slate-100">
-                  <button 
-                    type="button" 
-                    onClick={handleCancel}
-                    className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+              <div className="p-8 overflow-y-auto custom-scrollbar">
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="mb-8 p-4 bg-rose-50 text-rose-700 border border-rose-100 rounded-2xl text-sm font-bold flex items-center"
                   >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
-                  >
-                    {editingId ? 'Update Batch' : 'Save Batch'}
-                  </button>
-                </div>
-              </form>
-            </div>
+                    <AlertCircle className="mr-3 shrink-0" size={20} />
+                    {error}
+                  </motion.div>
+                )}
+                
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                    <input 
+                      type="date" 
+                      required
+                      value={formData.date}
+                      onChange={e => setFormData({...formData, date: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Select Purchase</label>
+                    <select
+                      value={formData.purchaseId}
+                      onChange={e => {
+                        const pId = e.target.value;
+                        const purchase = state.purchases.find(p => p.id === pId);
+                        setFormData({
+                          ...formData, 
+                          purchaseId: pId,
+                          purchasePrice: purchase ? purchase.pricePerKg.toString() : formData.purchasePrice
+                        });
+                      }}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none"
+                    >
+                      <option value="">-- Select Purchase (Optional) --</option>
+                      {wetPurchases
+                        .filter(p => {
+                          const avail = getPurchaseAvailable(p.id, editingId);
+                          return avail.bags > 0 || p.id === formData.purchaseId;
+                        })
+                        .map(p => {
+                          const avail = getPurchaseAvailable(p.id, editingId);
+                          return (
+                            <option key={p.id} value={p.id}>
+                              {p.date} - {p.supplierName} ({avail.bags} bags)
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Bags Used</label>
+                    <input 
+                      type="number" 
+                      required
+                      min="0"
+                      step="1"
+                      placeholder="0"
+                      value={formData.bagsUsed}
+                      onChange={handleBagsUsedChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                    />
+                    {formData.purchaseId && (
+                      <p className="text-[10px] font-black uppercase tracking-wider ml-1">
+                        Remain: <span className={currentRemainBags < 0 ? 'text-rose-500' : 'text-blue-500'}>{currentRemainBags} bags</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Wet Powder Used (kg)</label>
+                    <input 
+                      type="number" 
+                      required
+                      min="0.01"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.wetQuantityUsed}
+                      onChange={handleWetQuantityChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                    />
+                    {formData.purchaseId && (
+                      <p className="text-[10px] font-black uppercase tracking-wider ml-1">
+                        Remain: <span className={currentRemainQuantity < 0 ? 'text-rose-500' : 'text-blue-500'}>{currentRemainQuantity.toFixed(2)} kg</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Purchase Price (৳/kg)</label>
+                    <input 
+                      type="number" 
+                      required
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.purchasePrice}
+                      onChange={e => setFormData({...formData, purchasePrice: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Dry Powder Produced (kg)</label>
+                    <input 
+                      type="number" 
+                      required
+                      min="0.01"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.dryQuantityProduced}
+                      onChange={e => setFormData({...formData, dryQuantityProduced: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                    />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Yield estimated at 80%</p>
+                  </div>
+
+                  <div className="sm:col-span-2 lg:col-span-3 flex justify-end space-x-4 mt-4 pt-8 border-t border-slate-100">
+                    <button 
+                      type="button" 
+                      onClick={handleCancel}
+                      className="px-8 py-3.5 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="bg-slate-900 hover:bg-black text-white font-black px-10 py-3.5 rounded-2xl transition-all shadow-lg active:scale-95"
+                    >
+                      {editingId ? 'Update Batch' : 'Save Batch'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden">
+        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <h3 className="text-xl font-black text-slate-900 flex items-center">
+            <History className="mr-3 text-amber-500" size={24} />
+            Drying Batch History
+          </h3>
+          <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total Batches: {state.conversions.length}</span>
+        </div>
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Purchase Info</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Bags Used</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Wet Used (kg)</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Purchase Price</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Dry Produced (kg)</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Yield %</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center print:hidden">Actions</th>
+              <tr className="bg-slate-50/50">
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Purchase Source</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Bags</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Wet (kg)</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Dry (kg)</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Yield</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center print:hidden">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedConversions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={7} className="px-8 py-24 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <Sun className="text-slate-300 mb-3" size={48} />
-                      <p className="text-base font-medium">No drying batches recorded yet.</p>
-                      <p className="text-sm mt-1">Click "Record Batch" to get started.</p>
+                      <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                        <Sun className="text-slate-200" size={48} />
+                      </div>
+                      <p className="text-xl font-black text-slate-900">No drying batches yet</p>
+                      <p className="text-slate-400 font-medium mt-1">Start recording your production batches.</p>
                     </div>
                   </td>
                 </tr>
@@ -417,55 +469,47 @@ export const Conversions: React.FC = () => {
                   const yieldPercent = (c.dryQuantityProduced / c.wetQuantityUsed) * 100;
                   const purchase = state.purchases.find(p => p.id === c.purchaseId);
                   return (
-                    <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
-                      <td className="px-6 py-4 text-sm text-slate-700">{c.date}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">
+                    <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-8 py-5 text-sm font-bold text-slate-600">{c.date}</td>
+                      <td className="px-8 py-5">
                         {purchase ? (
-                          <>
-                            <div className="font-medium">{purchase.supplierName}</div>
-                            <div className="text-xs text-slate-500">{purchase.date}</div>
-                            <div className="text-xs text-blue-600 mt-1">
-                              Remain: {c.remainBags || 0} bags | {(c.remainQuantity || 0).toFixed(2)} kg
-                            </div>
-                          </>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-black text-slate-900">{purchase.supplierName}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{purchase.date}</span>
+                          </div>
                         ) : (
-                          <span className="text-slate-400 italic">No purchase linked</span>
+                          <span className="text-xs font-bold text-slate-300 italic">Unlinked</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-semibold text-right">{c.bagsUsed || 0}</td>
-                      <td className="px-6 py-4 text-sm text-blue-600 font-semibold text-right">{(c.wetQuantityUsed || 0).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-medium text-right">
-                        ৳{((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        <br/>
-                        <span className="text-xs text-slate-400">@ ৳{c.purchasePrice || 0}/kg</span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-yellow-600 font-semibold text-right">{(c.dryQuantityProduced || 0).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          yieldPercent >= 80 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      <td className="px-8 py-5 text-sm text-slate-900 text-right font-black">{c.bagsUsed || 0}</td>
+                      <td className="px-8 py-5 text-sm text-blue-600 text-right font-black">{(c.wetQuantityUsed || 0).toFixed(1)}</td>
+                      <td className="px-8 py-5 text-sm text-amber-600 text-right font-black">{(c.dryQuantityProduced || 0).toFixed(1)}</td>
+                      <td className="px-8 py-5 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          yieldPercent >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                         }`}>
                           {(yieldPercent || 0).toFixed(1)}%
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-center print:hidden">
-                        <div className="flex items-center justify-center space-x-2 transition-opacity">
+                      <td className="px-8 py-5 text-center print:hidden">
+                        <div className="flex items-center justify-center space-x-2">
                           <button 
                             onClick={() => setSelectedReceipt(c)}
-                            className="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-md hover:bg-emerald-50 transition-colors"
+                            className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all flex items-center justify-center active:scale-90"
                             title="View Receipt"
                           >
                             <FileText size={18} />
                           </button>
                           <button 
                             onClick={() => handleEdit(c)}
-                            className="text-blue-600 hover:text-blue-800 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
+                            className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center active:scale-90"
                             title="Edit"
                           >
                             <Pencil size={18} />
                           </button>
                           <button 
                             onClick={() => deleteConversion(c.id)}
-                            className="text-red-600 hover:text-red-800 p-1.5 rounded-md hover:bg-red-50 transition-colors"
+                            className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                             title="Delete"
                           >
                             <Trash2 size={18} />
@@ -481,170 +525,132 @@ export const Conversions: React.FC = () => {
         </div>
         
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
-            <div className="text-sm text-slate-500">
-              Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, sortedConversions.length)}</span> of <span className="font-medium">{sortedConversions.length}</span> results
+          <div className="px-8 py-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <div className="text-xs font-black text-slate-400 uppercase tracking-widest">
+              Page <span className="text-slate-900">{currentPage}</span> of <span className="text-slate-900">{totalPages}</span>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-white disabled:opacity-30 transition-all active:scale-90"
               >
-                Previous
+                <ChevronLeft size={20} />
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-white disabled:opacity-30 transition-all active:scale-90"
               >
-                Next
+                <ChevronRight size={20} />
               </button>
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Receipt Modal */}
-      {selectedReceipt && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center shrink-0">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center">
-                <FileText className="mr-2 text-emerald-600" /> Drying Process Receipt
-              </h3>
-              <button 
-                onClick={() => setSelectedReceipt(null)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-8 overflow-y-auto" id="drying-receipt-print">
-              {/* Header */}
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-slate-900">{state.companyInfo.name || 'PowderBiz'}</h2>
-                {state.companyInfo.address && <p className="text-sm text-slate-500">{state.companyInfo.address}</p>}
-                {state.companyInfo.phone && <p className="text-sm text-slate-500">Phone: {state.companyInfo.phone}</p>}
-                <div className="mt-4 inline-block px-4 py-1 bg-slate-100 rounded-full text-xs font-bold uppercase tracking-widest text-slate-600">
-                  Drying Process Receipt
+      <AnimatePresence>
+        {selectedReceipt && (
+          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[110] p-4 backdrop-blur-md print-modal-container">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] print-modal-content"
+            >
+              <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50 print:hidden">
+                <h3 className="text-xl font-black text-slate-900">Batch Receipt</h3>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={() => exportToPDF('drying-receipt-print', `drying-receipt-${selectedReceipt.id}.pdf`)}
+                    className="bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-2xl flex items-center transition-all text-sm font-bold shadow-lg active:scale-95"
+                  >
+                    <Printer size={18} className="mr-2" /> PDF
+                  </button>
+                  <button 
+                    onClick={() => setSelectedReceipt(null)}
+                    className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center active:scale-90"
+                  >
+                    <X size={24} />
+                  </button>
                 </div>
               </div>
-
-              {/* Details */}
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Batch Date</p>
-                  <p className="text-sm font-semibold text-slate-800">{selectedReceipt.date}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt ID</p>
-                  <p className="text-sm font-semibold text-slate-800">DRY-{selectedReceipt.id.toUpperCase()}</p>
-                </div>
-              </div>
-
-              {/* Purchase Info */}
-              {selectedReceipt.purchaseId && (
-                <div className="mb-8 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                  <p className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">Linked Purchase Info</p>
-                  {(() => {
-                    const p = state.purchases.find(p => p.id === selectedReceipt.purchaseId);
-                    return p ? (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs text-blue-600">Supplier</p>
-                          <p className="text-sm font-bold text-slate-800">{p.supplierName}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-blue-600">Purchase Date</p>
-                          <p className="text-sm font-bold text-slate-800">{p.date}</p>
-                        </div>
-                      </div>
-                    ) : null;
-                  })()}
-                </div>
-              )}
-
-              {/* Table */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden mb-8">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-bold text-slate-600">Description</th>
-                      <th className="px-4 py-3 text-right font-bold text-slate-600">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    <tr>
-                      <td className="px-4 py-3 text-slate-600">Bags Used</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-800">{selectedReceipt.bagsUsed || 0} bags</td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-3 text-slate-600">Wet Powder Used</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-800">{(selectedReceipt.wetQuantityUsed || 0).toFixed(2)} kg</td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-3 text-slate-600">Purchase Price</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-800">৳{(selectedReceipt.purchasePrice || 0).toFixed(2)} /kg</td>
-                    </tr>
-                    <tr className="bg-slate-50/50">
-                      <td className="px-4 py-3 text-slate-600 font-semibold">Total Wet Cost</td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-600">
-                        ৳{((selectedReceipt.wetQuantityUsed || 0) * (selectedReceipt.purchasePrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-3 text-slate-600">Dry Powder Produced</td>
-                      <td className="px-4 py-3 text-right font-bold text-yellow-600">{(selectedReceipt.dryQuantityProduced || 0).toFixed(2)} kg</td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-3 text-slate-600">Yield Percentage</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-800">
-                        {((selectedReceipt.dryQuantityProduced / selectedReceipt.wetQuantityUsed) * 100).toFixed(1)}%
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Stock Remaining Info */}
-              {selectedReceipt.purchaseId && (
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dashed border-slate-200">
-                  <div className="text-center p-3 bg-slate-50 rounded-lg">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Remain Bags</p>
-                    <p className="text-lg font-bold text-slate-800">{selectedReceipt.remainBags || 0}</p>
-                  </div>
-                  <div className="text-center p-3 bg-slate-50 rounded-lg">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Remain Quantity</p>
-                    <p className="text-lg font-bold text-slate-800">{(selectedReceipt.remainQuantity || 0).toFixed(2)} kg</p>
+              
+              <div className="p-12 overflow-y-auto custom-scrollbar print:p-0" id="drying-receipt-print">
+                <div className="text-center mb-12 border-b-4 border-slate-900 pb-8">
+                  <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter mb-2">{state.companyInfo.name}</h1>
+                  <p className="text-slate-500 font-bold">{state.companyInfo.address}</p>
+                  <div className="mt-6 inline-block bg-slate-900 text-white px-6 py-1.5 rounded-full">
+                    <span className="font-black uppercase tracking-[0.2em] text-xs">Drying Process Batch</span>
                   </div>
                 </div>
-              )}
 
-              <div className="mt-12 text-center">
-                <p className="text-xs text-slate-400 italic">Thank you for your business!</p>
-                <p className="text-[10px] text-slate-300 mt-1">Generated on {new Date().toLocaleString()}</p>
+                <div className="flex justify-between mb-12">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Batch Info</p>
+                    <p className="font-black text-slate-900">Date: {selectedReceipt.date}</p>
+                    <p className="font-black text-amber-600">ID: DRY-{selectedReceipt.id.slice(0,6).toUpperCase()}</p>
+                  </div>
+                </div>
+
+                {selectedReceipt.purchaseId && (
+                  <div className="mb-12 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Linked Purchase</p>
+                    {(() => {
+                      const p = state.purchases.find(p => p.id === selectedReceipt.purchaseId);
+                      return p ? (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">Supplier</p>
+                            <p className="font-black text-slate-900">{p.supplierName}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">Source Date</p>
+                            <p className="font-black text-slate-900">{p.date}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+
+                <div className="space-y-6 mb-12">
+                  <div className="flex justify-between items-center py-4 border-b border-slate-100">
+                    <span className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">Bags Used</span>
+                    <span className="font-black text-slate-900 text-lg">{selectedReceipt.bagsUsed || 0} bags</span>
+                  </div>
+                  <div className="flex justify-between items-center py-4 border-b border-slate-100">
+                    <span className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">Wet Powder Used</span>
+                    <span className="font-black text-blue-600 text-lg">{(selectedReceipt.wetQuantityUsed || 0).toFixed(2)} kg</span>
+                  </div>
+                  <div className="flex justify-between items-center py-4 border-b border-slate-100">
+                    <span className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">Dry Powder Produced</span>
+                    <span className="font-black text-amber-600 text-lg">{(selectedReceipt.dryQuantityProduced || 0).toFixed(2)} kg</span>
+                  </div>
+                  <div className="flex justify-between items-center py-6">
+                    <span className="font-black text-slate-900 uppercase tracking-widest text-xs">Yield Percentage</span>
+                    <span className="font-black text-slate-900 text-3xl">
+                      {((selectedReceipt.dryQuantityProduced / selectedReceipt.wetQuantityUsed) * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between mt-24">
+                  <div className="text-center">
+                    <div className="w-40 border-b-2 border-slate-200 mb-3"></div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Production Head</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-40 border-b-2 border-slate-200 mb-3"></div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Authorized Sign</p>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end space-x-3 shrink-0">
-              <button 
-                onClick={() => setSelectedReceipt(null)}
-                className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-200 rounded-lg transition-colors"
-              >
-                Close
-              </button>
-              <button 
-                onClick={() => exportToPDF('drying-receipt-print', `drying-receipt-${selectedReceipt.id}.pdf`)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm flex items-center"
-              >
-                <Printer size={18} className="mr-2" /> Download PDF
-              </button>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };

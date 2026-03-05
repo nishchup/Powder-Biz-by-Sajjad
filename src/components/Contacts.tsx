@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Plus, Trash2, Pencil, X, Users, Tags, Database, Download, Upload, AlertTriangle, Settings, Printer } from 'lucide-react';
+import { Plus, Trash2, Pencil, X, Users, Tags, Database, Download, Upload, AlertTriangle, Settings, Printer, Shield, History, ChevronLeft, ChevronRight, CheckCircle2, Info, DollarSign } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Contacts: React.FC = () => {
   const { 
@@ -13,7 +14,7 @@ export const Contacts: React.FC = () => {
     resetState, importState
   } = useAppStore();
   
-  const [activeTab, setActiveTab] = useState<'suppliers' | 'customers' | 'categories' | 'backup' | 'general'>('suppliers');
+  const [activeTab, setActiveTab] = useState<'suppliers' | 'customers' | 'categories' | 'backup' | 'general'>('general');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
@@ -148,7 +149,6 @@ export const Contacts: React.FC = () => {
       });
       showMessage("Data imported successfully!", 'success');
       setImportData(null);
-      // Reset file input if possible or just clear state
     } catch (err) {
       showMessage("Failed to import data!", 'error');
     }
@@ -180,397 +180,440 @@ export const Contacts: React.FC = () => {
     return 'Category';
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="space-y-6 relative">
-      {message && (
-        <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg font-medium z-50 animate-in slide-in-from-top-4 flex items-center gap-3 ${
-          message.type === 'success' ? 'bg-green-600 text-white' : 
-          message.type === 'error' ? 'bg-red-600 text-white' : 
-          'bg-blue-600 text-white'
-        }`}>
-          {message.text}
-          {message.type === 'info' && (
-            <button 
-              onClick={() => setMessage(null)}
-              className="ml-2 bg-white/20 hover:bg-white/30 rounded p-1 transition-colors"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-      )}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Settings & Contacts</h2>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto print:hidden">
-          {activeTab !== 'backup' && activeTab !== 'general' && (
-            <button 
-              onClick={() => exportToPDF('contacts-content', `${activeTab}-report.pdf`)}
-              className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
-            >
-              <Printer size={18} className="mr-2" />
-              Print
-            </button>
-          )}
-          {!isFormOpen && activeTab !== 'backup' && activeTab !== 'general' && (
-            <button 
-              onClick={() => setIsFormOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium"
-            >
-              <Plus size={20} className="mr-2" />
-              Add {getTabTitle()}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex overflow-x-auto border-b border-slate-200 mb-6 scrollbar-hide">
-        <button
-          onClick={() => { setActiveTab('general'); handleCancel(); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'general' 
-              ? 'border-b-2 border-blue-600 text-blue-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Settings size={18} className="mr-2" />
-          General Settings
-        </button>
-        <button
-          onClick={() => { setActiveTab('suppliers'); handleCancel(); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'suppliers' 
-              ? 'border-b-2 border-blue-600 text-blue-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Users size={18} className="mr-2" />
-          Suppliers
-        </button>
-        <button
-          onClick={() => { setActiveTab('customers'); handleCancel(); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'customers' 
-              ? 'border-b-2 border-blue-600 text-blue-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Users size={18} className="mr-2" />
-          Customers
-        </button>
-        <button
-          onClick={() => { setActiveTab('categories'); handleCancel(); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'categories' 
-              ? 'border-b-2 border-blue-600 text-blue-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Tags size={18} className="mr-2" />
-          Expense Categories
-        </button>
-        <button
-          onClick={() => { setActiveTab('backup'); handleCancel(); }}
-          className={`pb-3 px-5 flex items-center font-semibold transition-colors whitespace-nowrap ${
-            activeTab === 'backup' 
-              ? 'border-b-2 border-blue-600 text-blue-600' 
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Database size={18} className="mr-2" />
-          Data Backup
-        </button>
-      </div>
-
-      {isFormOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
-              <h3 className="text-lg font-bold text-slate-800">
-                {editingId ? `Edit ${getTabTitle()}` : `New ${getTabTitle()}`}
-              </h3>
-              <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X size={20} />
+    <motion.div 
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-8 relative"
+    >
+      <AnimatePresence>
+        {message && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className={`fixed top-8 right-8 px-6 py-4 rounded-[1.5rem] shadow-2xl font-black z-[200] flex items-center gap-4 backdrop-blur-md ${
+              message.type === 'success' ? 'bg-emerald-600/90 text-white' : 
+              message.type === 'error' ? 'bg-rose-600/90 text-white' : 
+              'bg-indigo-600/90 text-white'
+            }`}
+          >
+            {message.type === 'success' && <CheckCircle2 size={24} />}
+            {message.type === 'error' && <AlertTriangle size={24} />}
+            {message.type === 'info' && <Info size={24} />}
+            <span className="tracking-tight">{message.text}</span>
+            {message.type === 'info' && (
+              <button 
+                onClick={() => setMessage(null)}
+                className="ml-4 bg-white/20 hover:bg-white/30 rounded-xl p-1.5 transition-colors"
+              >
+                <X size={18} />
               </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto">
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Name</label>
-              <input 
-                type="text" 
-                required
-                placeholder={`Enter ${getTabTitle().toLowerCase()} name`}
-                value={formData.name}
-                onChange={e => setFormData({...formData, name: e.target.value})}
-                className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-            {activeTab !== 'categories' && (
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Phone Number (Optional)</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. 017XXXXXXXX"
-                  value={formData.phone}
-                  onChange={e => setFormData({...formData, phone: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
             )}
-                <div className="flex justify-end space-x-3 mt-4 pt-4 border-t border-slate-100">
-                  <button 
-                    type="button" 
-                    onClick={handleCancel}
-                    className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
-                  >
-                    {editingId ? `Update ${getTabTitle()}` : `Save ${getTabTitle()}`}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Settings & Contacts</h2>
+          <p className="text-slate-500 font-medium">Manage your business profile, contacts, and data.</p>
         </div>
-      )}
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto print:hidden">
+          {activeTab !== 'backup' && activeTab !== 'general' && (
+            <>
+              <button 
+                onClick={() => exportToPDF('contacts-content', `${activeTab}-report.pdf`)}
+                className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-sm font-bold active:scale-95"
+              >
+                <Printer size={20} className="mr-2" />
+                Print
+              </button>
+              <button 
+                onClick={() => setIsFormOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-indigo-100 font-bold active:scale-95"
+              >
+                <Plus size={24} className="mr-2" />
+                Add {getTabTitle()}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="flex overflow-x-auto border-b border-slate-100 mb-8 scrollbar-hide bg-white/50 p-1 rounded-2xl">
+        {[
+          { id: 'general', icon: Settings, label: 'General' },
+          { id: 'suppliers', icon: Users, label: 'Suppliers' },
+          { id: 'customers', icon: Users, label: 'Customers' },
+          { id: 'categories', icon: Tags, label: 'Categories' },
+          { id: 'backup', icon: Database, label: 'Backup' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => { setActiveTab(tab.id as any); handleCancel(); }}
+            className={`py-3 px-6 flex items-center font-black uppercase tracking-widest text-[10px] transition-all rounded-xl whitespace-nowrap ${
+              activeTab === tab.id 
+                ? 'bg-slate-900 text-white shadow-lg' 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <tab.icon size={16} className="mr-2" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {isFormOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">
+                    {editingId ? `Edit ${getTabTitle()}` : `New ${getTabTitle()}`}
+                  </h3>
+                  <p className="text-slate-500 font-medium">Enter details for this {getTabTitle().toLowerCase()}</p>
+                </div>
+                <button onClick={handleCancel} className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center active:scale-90">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto custom-scrollbar">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Name</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder={`Enter ${getTabTitle().toLowerCase()} name`}
+                      value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                    />
+                  </div>
+                  {activeTab !== 'categories' && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. 017XXXXXXXX"
+                        value={formData.phone}
+                        onChange={e => setFormData({...formData, phone: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                      />
+                    </div>
+                  )}
+                  <div className="flex justify-end space-x-4 pt-4 border-t border-slate-100">
+                    <button 
+                      type="button" 
+                      onClick={handleCancel}
+                      className="px-8 py-3.5 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="bg-slate-900 hover:bg-black text-white font-black px-10 py-3.5 rounded-2xl transition-all shadow-lg active:scale-95"
+                    >
+                      {editingId ? 'Update' : 'Save'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {activeTab === 'general' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">General Settings</h3>
+        <motion.div variants={item} className="glass-panel p-10 rounded-[2.5rem]">
+          <h3 className="text-2xl font-black text-slate-900 mb-10 flex items-center">
+            <Settings className="mr-4 text-indigo-500" size={28} />
+            General Settings
+          </h3>
           
-          <form onSubmit={handleSaveGeneral} className="space-y-6 max-w-2xl">
-            <div className="bg-slate-50 p-5 rounded-lg border border-slate-100">
-              <h4 className="font-semibold text-slate-800 mb-4">Financial Setup</h4>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Initial Capital (মূলধন)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">৳</span>
-                  <input 
-                    type="number" 
-                    value={capitalData}
-                    onChange={e => setCapitalData(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg pl-8 pr-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="Enter initial capital amount"
-                  />
+          <form onSubmit={handleSaveGeneral} className="space-y-10 max-w-4xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-8">
+                <div className="bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center">
+                    <DollarSign className="mr-2 text-emerald-500" size={16} /> Financial Setup
+                  </h4>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Initial Capital (মূলধন)</label>
+                    <div className="relative">
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black">৳</span>
+                      <input 
+                        type="number" 
+                        value={capitalData}
+                        onChange={e => setCapitalData(e.target.value)}
+                        className="w-full bg-white border border-slate-100 rounded-2xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-black text-slate-900 text-lg"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1 mt-2">This amount will be added to your Inhand Cash.</p>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">This amount will be added to your Inhand Cash.</p>
+
+                <div className="bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center">
+                    <Shield className="mr-2 text-indigo-500" size={16} /> Security Settings
+                  </h4>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">App Lock PIN</label>
+                    <input 
+                      type="password" 
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
+                      value={pinData}
+                      onChange={e => setPinData(e.target.value)}
+                      className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono tracking-[0.5em] text-2xl text-slate-900"
+                      placeholder="****"
+                    />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1 mt-2">Set a 4-digit PIN to secure your application.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100">
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center">
+                  <Users className="mr-2 text-indigo-500" size={16} /> Company Information
+                </h4>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Company Name</label>
+                    <input 
+                      type="text" 
+                      value={companyData.name}
+                      onChange={e => setCompanyData({...companyData, name: e.target.value})}
+                      className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
+                      placeholder="e.g. PowderBiz"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Address</label>
+                    <input 
+                      type="text" 
+                      value={companyData.address}
+                      onChange={e => setCompanyData({...companyData, address: e.target.value})}
+                      className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
+                      placeholder="Company Address"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Phone</label>
+                      <input 
+                        type="text" 
+                        value={companyData.phone}
+                        onChange={e => setCompanyData({...companyData, phone: e.target.value})}
+                        className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
+                        placeholder="Phone Number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Email</label>
+                      <input 
+                        type="email" 
+                        value={companyData.email}
+                        onChange={e => setCompanyData({...companyData, email: e.target.value})}
+                        className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
+                        placeholder="Email Address"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-5 rounded-lg border border-slate-100">
-              <h4 className="font-semibold text-slate-800 mb-4">Company Information</h4>
-              <p className="text-sm text-slate-500 mb-4">This information will appear on your invoices and receipts.</p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Company Name</label>
-                  <input 
-                    type="text" 
-                    value={companyData.name}
-                    onChange={e => setCompanyData({...companyData, name: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="e.g. PowderBiz"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Address</label>
-                  <input 
-                    type="text" 
-                    value={companyData.address}
-                    onChange={e => setCompanyData({...companyData, address: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="Company Address"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Phone</label>
-                  <input 
-                    type="text" 
-                    value={companyData.phone}
-                    onChange={e => setCompanyData({...companyData, phone: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="Phone Number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
-                  <input 
-                    type="email" 
-                    value={companyData.email}
-                    onChange={e => setCompanyData({...companyData, email: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="Email Address"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-5 rounded-lg border border-slate-100">
-              <h4 className="font-semibold text-slate-800 mb-4">Security Settings</h4>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">App Lock PIN</label>
-                <input 
-                  type="password" 
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={4}
-                  value={pinData}
-                  onChange={e => setPinData(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono tracking-widest text-lg"
-                  placeholder="Enter 4-digit PIN"
-                />
-                <p className="text-xs text-slate-500 mt-1.5">Set a 4-digit PIN to secure your application. Default is 1234.</p>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-10 border-t border-slate-100">
               <button 
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+                className="bg-slate-900 hover:bg-black text-white px-12 py-4 rounded-2xl font-black transition-all shadow-xl active:scale-95"
               >
-                Save Settings
+                Save All Settings
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
       )}
 
       {activeTab === 'backup' && (
-        <div className="bg-white p-5 sm:p-8 rounded-xl shadow-sm border border-slate-200 animate-in fade-in duration-300">
-          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
-            <Database className="mr-2 text-blue-600" /> Data Management
+        <motion.div variants={item} className="glass-panel p-10 rounded-[2.5rem]">
+          <h3 className="text-2xl font-black text-slate-900 mb-10 flex items-center">
+            <Database className="mr-4 text-indigo-500" size={28} />
+            Data Management
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div className="p-5 bg-blue-50 border border-blue-100 rounded-xl">
-                <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-8">
+              <div className="p-8 bg-indigo-50/50 border border-indigo-100 rounded-[2rem]">
+                <h4 className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-4 flex items-center">
                   <Download size={18} className="mr-2" /> Export Data
                 </h4>
-                <p className="text-sm text-blue-700 mb-4">Download a complete backup of all your records (purchases, sales, contacts, etc.) as a JSON file.</p>
+                <p className="text-sm text-slate-500 font-medium mb-8">Download a complete backup of all your records as a secure JSON file.</p>
                 <button 
                   onClick={handleExport}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black transition-all w-full shadow-lg shadow-indigo-100 active:scale-95"
                 >
                   Download Backup
                 </button>
               </div>
 
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl">
-                <h4 className="font-semibold text-slate-800 mb-2 flex items-center">
+              <div className="p-8 bg-slate-50/50 border border-slate-100 rounded-[2rem]">
+                <h4 className="text-xs font-black text-slate-600 uppercase tracking-widest mb-4 flex items-center">
                   <Upload size={18} className="mr-2" /> Import Data
                 </h4>
-                <p className="text-sm text-slate-600 mb-4">Restore your records from a previously downloaded JSON backup file.</p>
-                <div className="space-y-3">
+                <p className="text-sm text-slate-500 font-medium mb-8">Restore your records from a previously downloaded backup file.</p>
+                <div className="space-y-6">
                   <input 
                     type="file" 
                     accept=".json" 
                     onChange={handleImportFile}
-                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
+                    className="block w-full text-xs text-slate-400 font-black uppercase tracking-widest file:mr-6 file:py-3 file:px-6 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-slate-900 file:text-white hover:file:bg-black transition-all"
                   />
                   <button 
                     onClick={handleSaveImport}
                     disabled={!importData}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto flex items-center justify-center ${
+                    className={`px-8 py-4 rounded-2xl font-black transition-all w-full flex items-center justify-center ${
                       importData 
-                        ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm' 
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-100 active:scale-95' 
+                        : 'bg-slate-100 text-slate-300 cursor-not-allowed'
                     }`}
                   >
-                    <Plus size={18} className="mr-2" /> Save Imported Data
+                    <Plus size={20} className="mr-2" /> Save Imported Data
                   </button>
                   {importData && (
-                    <p className="text-xs text-green-600 font-medium">✓ File ready to import. Click "Save" to apply.</p>
+                    <motion.p 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-[10px] text-emerald-600 font-black uppercase tracking-widest text-center"
+                    >
+                      ✓ File ready to import. Click Save to apply.
+                    </motion.p>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="p-5 bg-red-50 border border-red-100 rounded-xl flex flex-col justify-center">
-              <div className="flex items-center text-red-700 font-bold text-lg mb-2">
-                <AlertTriangle className="mr-2" size={24} /> Danger Zone
+            <div className="p-8 bg-rose-50/50 border border-rose-100 rounded-[2rem] flex flex-col justify-center">
+              <div className="w-20 h-20 bg-rose-100 rounded-[1.5rem] flex items-center justify-center text-rose-600 mb-8">
+                <AlertTriangle size={40} />
               </div>
-              <p className="text-sm text-red-600 mb-6">
+              <h4 className="text-xl font-black text-rose-900 mb-4">Danger Zone</h4>
+              <p className="text-sm text-rose-700 font-medium mb-10 leading-relaxed">
                 This action will permanently delete all your purchases, sales, expenses, and contacts. This cannot be undone unless you have a backup.
               </p>
               <button 
                 onClick={() => setIsResetConfirmOpen(true)}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-bold transition-colors w-full"
+                className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-4 rounded-2xl font-black transition-all w-full shadow-lg shadow-rose-100 active:scale-95"
               >
                 Reset All Data
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Reset Confirmation Modal */}
-      {isResetConfirmOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center text-red-600 mb-4">
-              <AlertTriangle size={32} className="mr-3" />
-              <h3 className="text-xl font-bold">Confirm Reset</h3>
-            </div>
-            <p className="text-slate-600 mb-6">
-              WARNING: This will delete ALL your data permanently. This action cannot be undone unless you have a backup. Are you absolutely sure?
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button 
-                onClick={() => setIsResetConfirmOpen(false)}
-                className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleReset}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                Yes, Delete Everything
-              </button>
-            </div>
+      <AnimatePresence>
+        {isResetConfirmOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[150] p-4 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 text-center"
+            >
+              <div className="w-20 h-20 bg-rose-100 rounded-[1.5rem] flex items-center justify-center text-rose-600 mx-auto mb-8">
+                <AlertTriangle size={40} />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 mb-4">Confirm Reset</h3>
+              <p className="text-slate-500 font-medium mb-10">
+                Are you absolutely sure? This will delete ALL your data permanently. This action cannot be undone.
+              </p>
+              <div className="flex flex-col space-y-4">
+                <button 
+                  onClick={handleReset}
+                  className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg shadow-rose-100 active:scale-95"
+                >
+                  Yes, Delete Everything
+                </button>
+                <button 
+                  onClick={() => setIsResetConfirmOpen(false)}
+                  className="px-8 py-4 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {activeTab !== 'backup' && activeTab !== 'general' && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" id="contacts-content">
-          <div className="overflow-x-auto">
+        <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden" id="contacts-content">
+          <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 className="text-xl font-black text-slate-900 flex items-center uppercase tracking-tight">
+              {activeTab === 'categories' ? <Tags className="mr-3 text-indigo-500" size={24} /> : <Users className="mr-3 text-indigo-500" size={24} />}
+              {activeTab} List
+            </h3>
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total: {currentList.length}</span>
+          </div>
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                  {activeTab !== 'categories' && <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Phone</th>}
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Actions</th>
+                <tr className="bg-slate-50/50">
+                  <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Name</th>
+                  {activeTab !== 'categories' && <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Phone</th>}
+                  <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {currentList.length === 0 ? (
                   <tr>
-                    <td colSpan={activeTab !== 'categories' ? 3 : 2} className="px-6 py-12 text-center text-slate-500">
+                    <td colSpan={activeTab !== 'categories' ? 3 : 2} className="px-8 py-24 text-center">
                       <div className="flex flex-col items-center justify-center">
-                        {activeTab === 'categories' ? <Tags className="text-slate-300 mb-3" size={48} /> : <Users className="text-slate-300 mb-3" size={48} />}
-                        <p className="text-base font-medium">No {activeTab} added yet.</p>
-                        <p className="text-sm mt-1">Click "Add {getTabTitle()}" to get started.</p>
+                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                          {activeTab === 'categories' ? <Tags className="text-slate-200" size={48} /> : <Users className="text-slate-200" size={48} />}
+                        </div>
+                        <p className="text-xl font-black text-slate-900">No {activeTab} yet</p>
+                        <p className="text-slate-400 font-medium mt-1">Start by adding your first {getTabTitle().toLowerCase()}.</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   currentList.map((item: any) => (
-                    <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
-                      <td className="px-6 py-4 text-sm text-slate-900 font-semibold">{item.name}</td>
-                      {activeTab !== 'categories' && <td className="px-6 py-4 text-sm text-slate-700">{item.phone || '-'}</td>}
-                      <td className="px-6 py-4 text-sm text-center">
-                        <div className="flex items-center justify-center space-x-2 transition-opacity">
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-8 py-5 text-sm font-black text-slate-900">{item.name}</td>
+                      {activeTab !== 'categories' && <td className="px-8 py-5 text-sm font-bold text-slate-600">{item.phone || '-'}</td>}
+                      <td className="px-8 py-5 text-center">
+                        <div className="flex items-center justify-center space-x-2">
                           <button 
                             onClick={() => handleEdit(item)}
-                            className="text-blue-600 hover:text-blue-800 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
-                            title="Edit"
+                            className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center active:scale-90"
                           >
                             <Pencil size={18} />
                           </button>
@@ -580,8 +623,7 @@ export const Contacts: React.FC = () => {
                               else if (activeTab === 'customers') deleteCustomer(item.id);
                               else deleteExpenseCategory(item.id);
                             }}
-                            className="text-red-600 hover:text-red-800 p-1.5 rounded-md hover:bg-red-50 transition-colors"
-                            title="Delete"
+                            className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -593,8 +635,8 @@ export const Contacts: React.FC = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
-import { PieChart, TrendingUp, Wallet, Package, Sun, Filter, FileText, ShoppingCart, Droplets, Receipt, Printer } from 'lucide-react';
+import { PieChart, TrendingUp, Wallet, Package, Sun, Filter, FileText, ShoppingCart, Droplets, Receipt, Printer, Clock } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
 import { ProductionCharts } from './ProductionCharts';
@@ -79,40 +79,43 @@ export const Reports: React.FC = () => {
   const netProfit = totalSales + totalCompanyAdvances - (totalPurchases + totalExpenses + totalLabor + totalLoans + totalProfitWithdrawals);
 
   return (
-    <div className="space-y-6" id="reports-content">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
-        <h2 className="text-2xl font-bold text-gray-800">Reports & Analytics</h2>
+    <div className="space-y-8" id="reports-content">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
+        <div>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Reports & Analytics</h2>
+          <p className="text-slate-500 font-medium mt-1 text-sm">Detailed financial insights and production tracking</p>
+        </div>
         
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
           <button 
-            onClick={() => exportToPDF('reports-content', 'business-report.pdf')} 
-            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors shadow-sm"
+            onClick={() => exportToPDF('reports-content', `powderBiz-report-${new Date().toISOString().split('T')[0]}.pdf`)} 
+            className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-slate-900/20 font-bold text-sm"
           >
             <Printer size={18} className="mr-2" /> {t('print')}
           </button>
           
-          <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-200 flex flex-wrap items-center gap-2">
-            <div className="flex items-center text-gray-500 px-2">
-              <Filter size={16} className="mr-2" />
-              <span className="text-sm font-medium">Filter by Date:</span>
+          <div className="bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center gap-2">
+            <div className="flex items-center text-slate-500 px-3">
+              <Filter size={16} className="mr-2 text-blue-500" />
+              <span className="text-xs font-bold uppercase tracking-wider">Filter</span>
             </div>
             <input 
               type="date" 
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500"
+              className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
             />
-            <span className="text-gray-400">to</span>
+            <span className="text-slate-400 font-bold text-xs">TO</span>
             <input 
               type="date" 
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-500"
+              className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             {(startDate || endDate) && (
               <button 
                 onClick={() => { setStartDate(''); setEndDate(''); }}
-                className="text-sm text-blue-600 hover:text-blue-800 px-2"
+                className="text-xs font-bold text-rose-600 hover:text-rose-700 px-3 py-1.5 bg-rose-50 rounded-lg transition-colors"
               >
                 Clear
               </button>
@@ -121,166 +124,204 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      <div className="hidden print:block mb-8 text-center">
-        <h1 className="text-3xl font-bold text-slate-800">{state.companyInfo.name} Financial Report</h1>
-        <p className="text-slate-500 mt-2">
-          Date Range: {startDate ? new Date(startDate).toLocaleDateString() : 'All Time'} to {endDate ? new Date(endDate).toLocaleDateString() : 'All Time'}
-        </p>
+      <div className="hidden print:block mb-10 text-center border-b-2 border-slate-100 pb-8">
+        <div className="flex items-center justify-center mb-4">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mr-4">
+            <Package className="text-white" size={28} />
+          </div>
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight uppercase">{state.companyInfo.name}</h1>
+        </div>
+        <h2 className="text-xl font-bold text-slate-600 uppercase tracking-[0.2em]">Financial Performance Report</h2>
+        <div className="mt-4 flex items-center justify-center gap-6 text-sm font-bold text-slate-500">
+          <div className="flex items-center">
+            <Clock size={16} className="mr-2" />
+            Generated: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
+          </div>
+          <div className="flex items-center">
+            <Filter size={16} className="mr-2" />
+            Period: {startDate ? new Date(startDate).toLocaleDateString() : 'All Time'} - {endDate ? new Date(endDate).toLocaleDateString() : 'Present'}
+          </div>
+        </div>
       </div>
 
       {/* Report Tabs */}
-      <div className="flex overflow-x-auto space-x-2 border-b border-gray-200 pb-2 print:hidden scrollbar-hide">
-        <button onClick={() => setReportTab('summary')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'summary' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Summary</button>
-        <button onClick={() => setReportTab('purchases')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'purchases' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Purchases Report</button>
-        <button onClick={() => setReportTab('drying')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'drying' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Drying Report</button>
-        <button onClick={() => setReportTab('sales')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'sales' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Sales Report</button>
-        <button onClick={() => setReportTab('expenses')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'expenses' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Expenses Report</button>
-        <button onClick={() => setReportTab('labor')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'labor' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Labor Report</button>
-        <button onClick={() => setReportTab('due')} className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${reportTab === 'due' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}>Due Report</button>
+      <div className="flex overflow-x-auto space-x-2 border-b border-slate-200 pb-3 print:hidden scrollbar-hide">
+        {[
+          { id: 'summary', label: 'Summary', icon: PieChart },
+          { id: 'purchases', label: 'Purchases', icon: ShoppingCart },
+          { id: 'drying', label: 'Drying', icon: Sun },
+          { id: 'sales', label: 'Sales', icon: TrendingUp },
+          { id: 'expenses', label: 'Expenses', icon: Wallet },
+          { id: 'labor', label: 'Labor', icon: Clock },
+          { id: 'due', label: 'Dues', icon: Receipt },
+        ].map((tab) => (
+          <button 
+            key={tab.id}
+            onClick={() => setReportTab(tab.id as any)} 
+            className={`flex items-center px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+              reportTab === tab.id 
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                : 'text-slate-500 hover:bg-white hover:text-slate-900'
+            }`}
+          >
+            <tab.icon size={16} className="mr-2" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {reportTab === 'summary' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Income vs Expense Summary */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center mb-6">
-              <PieChart className="text-blue-600 mr-2" size={24} />
-              <h3 className="text-lg font-semibold text-gray-800">Income & Expenses</h3>
+          <div className="glass-panel p-8 rounded-3xl">
+            <div className="flex items-center mb-8">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                <PieChart className="text-blue-600" size={20} />
+              </div>
+              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Income & Expenses</h3>
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Total Sales (Revenue)</span>
-                  <span className="font-semibold text-green-600">৳{(totalSales || 0).toLocaleString()}</span>
+            <div className="space-y-6">
+              <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-slate-600 font-semibold">Total Sales (Revenue)</span>
+                  <span className="font-bold text-emerald-600">৳{(totalSales || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Company Advances (In)</span>
-                  <span className="font-semibold text-green-600">৳{(totalCompanyAdvances || 0).toLocaleString()}</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-slate-600 font-semibold">Company Advances (In)</span>
+                  <span className="font-bold text-emerald-600">৳{(totalCompanyAdvances || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mt-2 pt-2 border-t border-gray-100">
-                  <span className="font-medium text-gray-800">Total Inflow</span>
-                  <span className="font-bold text-green-600">৳{((totalSales || 0) + (totalCompanyAdvances || 0)).toLocaleString()}</span>
+                <div className="flex justify-between text-base mt-3 pt-3 border-t border-emerald-200/50">
+                  <span className="font-extrabold text-slate-900 uppercase tracking-wider text-xs">Total Inflow</span>
+                  <span className="font-black text-emerald-700">৳{((totalSales || 0) + (totalCompanyAdvances || 0)).toLocaleString()}</span>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-100">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Purchases (Wet Powder)</span>
-                  <span className="font-semibold text-red-500">৳{(totalPurchases || 0).toLocaleString()}</span>
+              <div className="bg-rose-50/50 p-5 rounded-2xl border border-rose-100">
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-slate-600 font-semibold">Purchases (Wet Powder)</span>
+                  <span className="font-bold text-rose-500">৳{(totalPurchases || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Total Expenses</span>
-                  <span className="font-semibold text-red-500">৳{(totalExpenses || 0).toLocaleString()}</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-slate-600 font-semibold">Total Expenses</span>
+                  <span className="font-bold text-rose-500">৳{(totalExpenses || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Labor Costs</span>
-                  <span className="font-semibold text-red-500">৳{(totalLabor || 0).toLocaleString()}</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-slate-600 font-semibold">Labor Costs</span>
+                  <span className="font-bold text-rose-500">৳{(totalLabor || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Total Loans</span>
-                  <span className="font-semibold text-red-500">৳{(totalLoans || 0).toLocaleString()}</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-slate-600 font-semibold">Total Loans</span>
+                  <span className="font-bold text-rose-500">৳{(totalLoans || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Profit Withdrawals</span>
-                  <span className="font-semibold text-red-500">৳{(totalProfitWithdrawals || 0).toLocaleString()}</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-slate-600 font-semibold">Profit Withdrawals</span>
+                  <span className="font-bold text-rose-500">৳{(totalProfitWithdrawals || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mt-2 pt-2 border-t border-gray-100">
-                  <span className="font-medium text-gray-800">Total Outflow</span>
-                  <span className="font-bold text-red-600">৳{((totalPurchases || 0) + (totalExpenses || 0) + (totalLabor || 0) + (totalLoans || 0) + (totalProfitWithdrawals || 0)).toLocaleString()}</span>
+                <div className="flex justify-between text-base mt-3 pt-3 border-t border-rose-200/50">
+                  <span className="font-extrabold text-slate-900 uppercase tracking-wider text-xs">Total Outflow</span>
+                  <span className="font-black text-rose-700">৳{((totalPurchases || 0) + (totalExpenses || 0) + (totalLabor || 0) + (totalLoans || 0) + (totalProfitWithdrawals || 0)).toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Profitability */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center mb-6">
-              <TrendingUp className="text-green-600 mr-2" size={24} />
-              <h3 className="text-lg font-semibold text-gray-800">Profitability</h3>
+          <div className="glass-panel p-8 rounded-3xl flex flex-col">
+            <div className="flex items-center mb-8">
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mr-4">
+                <TrendingUp className="text-emerald-600" size={20} />
+              </div>
+              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Profitability</h3>
             </div>
             
-            <div className="flex flex-col items-center justify-center h-48 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-gray-500 mb-2">Net Profit / Loss</p>
-              <h1 className={`text-4xl font-bold ${(netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`flex-1 flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all ${
+              (netProfit || 0) >= 0 
+                ? 'bg-emerald-50/30 border-emerald-200' 
+                : 'bg-rose-50/30 border-rose-200'
+            }`}>
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-4">Net Performance</p>
+              <h1 className={`text-5xl font-black tracking-tighter ${(netProfit || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                 {(netProfit || 0) >= 0 ? '+' : ''}৳{(netProfit || 0).toLocaleString()}
               </h1>
-              <div className="mt-4 flex items-center text-sm text-gray-500">
-                <Wallet size={16} className="mr-1" />
-                <span>Filtered Balance</span>
+              <div className="mt-6 flex items-center px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
+                <Wallet size={16} className="mr-2 text-blue-500" />
+                <span className="text-xs font-extrabold text-slate-600 uppercase tracking-wider">Filtered Balance</span>
               </div>
             </div>
           </div>
 
           {/* Inventory Valuation (Estimated) */}
-          <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Current Inventory Status (All Time)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 flex items-center">
-                <div className="bg-blue-100 p-3 rounded-full mr-4">
-                  <Package className="text-blue-600" size={24} />
+          <div className="md:col-span-2 glass-panel p-8 rounded-3xl">
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-6">Current Inventory Status</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 flex items-center text-white">
+                <div className="bg-white/20 p-4 rounded-xl mr-5 backdrop-blur-md">
+                  <Package className="text-white" size={28} />
                 </div>
                 <div>
-                  <p className="text-sm text-blue-600 font-medium">Wet Powder in Stock</p>
-                  <p className="text-2xl font-bold text-blue-900">{(wetStock || 0).toFixed(2)} kg</p>
+                  <p className="text-xs font-bold text-blue-100 uppercase tracking-widest mb-1">Wet Powder Stock</p>
+                  <p className="text-3xl font-black">{(wetStock || 0).toFixed(2)} <span className="text-lg font-medium opacity-80">kg</span></p>
                 </div>
               </div>
-              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-100 flex items-center">
-                <div className="bg-yellow-100 p-3 rounded-full mr-4">
-                  <Sun className="text-yellow-600" size={24} />
+              <div className="p-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg shadow-amber-500/20 flex items-center text-white">
+                <div className="bg-white/20 p-4 rounded-xl mr-5 backdrop-blur-md">
+                  <Sun className="text-white" size={28} />
                 </div>
                 <div>
-                  <p className="text-sm text-yellow-700 font-medium">Dry Powder in Stock</p>
-                  <p className="text-2xl font-bold text-yellow-900">{(dryStock || 0).toFixed(2)} kg</p>
+                  <p className="text-xs font-bold text-amber-100 uppercase tracking-widest mb-1">Dry Powder Stock</p>
+                  <p className="text-3xl font-black">{(dryStock || 0).toFixed(2)} <span className="text-lg font-medium opacity-80">kg</span></p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 glass-panel p-8 rounded-3xl overflow-hidden">
             <FinancialCharts startDate={startDate} endDate={endDate} />
           </div>
         </div>
       )}
 
       {reportTab === 'purchases' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Purchases Report</h3>
-            <span className="text-sm font-medium text-gray-600">Total: ৳{(totalPurchases || 0).toLocaleString()}</span>
+        <div className="glass-panel rounded-3xl overflow-hidden">
+          <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Purchases Report</h3>
+            <div className="bg-rose-100 text-rose-700 px-4 py-1.5 rounded-xl font-black text-sm">
+              Total: ৳{(totalPurchases || 0).toLocaleString()}
+            </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white border-b border-gray-100">
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Supplier</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Qty (kg)</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Price/kg</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Total</th>
+                <tr className="bg-slate-50/50">
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Supplier</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Qty (kg)</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Price/kg</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {filteredPurchases.length === 0 ? (
-                  <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
+                  <tr><td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-bold italic">No data found for selected dates.</td></tr>
                 ) : (
                   <>
                     {filteredPurchases.map(p => (
-                      <tr key={p.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm">{p.date}</td>
-                        <td className="px-6 py-3 text-sm font-medium">{p.supplierName}</td>
-                        <td className="px-6 py-3 text-sm text-right">{(p.quantity || 0).toFixed(2)}</td>
-                        <td className="px-6 py-3 text-sm text-right">৳{(p.pricePerKg || 0).toFixed(2)}</td>
-                        <td className="px-6 py-3 text-sm text-right font-semibold">৳{(p.totalCost || 0).toLocaleString()}</td>
+                      <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
+                        <td className="px-8 py-4 text-sm font-bold text-slate-600">{p.date}</td>
+                        <td className="px-8 py-4 text-sm font-extrabold text-slate-900">{p.supplierName}</td>
+                        <td className="px-8 py-4 text-sm text-right font-bold text-blue-600">{(p.quantity || 0).toFixed(2)}</td>
+                        <td className="px-8 py-4 text-sm text-right font-medium text-slate-500">৳{(p.pricePerKg || 0).toFixed(2)}</td>
+                        <td className="px-8 py-4 text-sm text-right font-black text-slate-900">৳{(p.totalCost || 0).toLocaleString()}</td>
                       </tr>
                     ))}
-                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
-                      <td colSpan={2} className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
-                      <td className="px-6 py-4 text-sm text-right text-slate-800">
-                        {filteredPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0).toFixed(2)}
+                    <tr className="bg-slate-900 text-white font-bold">
+                      <td colSpan={2} className="px-8 py-5 text-xs font-black uppercase tracking-[0.2em]">Summary Total</td>
+                      <td className="px-8 py-5 text-sm text-right font-black">
+                        {filteredPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0).toFixed(2)} kg
                       </td>
-                      <td className="px-6 py-4 text-sm text-right text-slate-400 font-normal">Average: ৳{(totalPurchases / (filteredPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0) || 1)).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-sm text-right text-red-700">৳{totalPurchases.toLocaleString()}</td>
+                      <td className="px-8 py-5 text-xs text-right text-slate-400 font-bold uppercase tracking-widest">Avg: ৳{(totalPurchases / (filteredPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0) || 1)).toFixed(2)}</td>
+                      <td className="px-8 py-5 text-lg text-right font-black text-rose-400">৳{totalPurchases.toLocaleString()}</td>
                     </tr>
                   </>
                 )}
@@ -291,43 +332,45 @@ export const Reports: React.FC = () => {
       )}
 
       {reportTab === 'sales' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Sales Report</h3>
-            <span className="text-sm font-medium text-gray-600">Total: ৳{(totalSales || 0).toLocaleString()}</span>
+        <div className="glass-panel rounded-3xl overflow-hidden">
+          <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Sales Report</h3>
+            <div className="bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-xl font-black text-sm">
+              Total: ৳{(totalSales || 0).toLocaleString()}
+            </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white border-b border-gray-100">
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Qty (kg)</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Price/kg</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Revenue</th>
+                <tr className="bg-slate-50/50">
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Customer</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Qty (kg)</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Price/kg</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Revenue</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {filteredSales.length === 0 ? (
-                  <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
+                  <tr><td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-bold italic">No data found for selected dates.</td></tr>
                 ) : (
                   <>
                     {filteredSales.map(s => (
-                      <tr key={s.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm">{s.date}</td>
-                        <td className="px-6 py-3 text-sm font-medium">{s.customerName}</td>
-                        <td className="px-6 py-3 text-sm text-right">{(s.quantity || 0).toFixed(2)}</td>
-                        <td className="px-6 py-3 text-sm text-right">৳{(s.pricePerKg || 0).toFixed(2)}</td>
-                        <td className="px-6 py-3 text-sm text-right font-semibold text-green-600">৳{(s.totalRevenue || 0).toLocaleString()}</td>
+                      <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
+                        <td className="px-8 py-4 text-sm font-bold text-slate-600">{s.date}</td>
+                        <td className="px-8 py-4 text-sm font-extrabold text-slate-900">{s.customerName}</td>
+                        <td className="px-8 py-4 text-sm text-right font-bold text-emerald-600">{(s.quantity || 0).toFixed(2)}</td>
+                        <td className="px-8 py-4 text-sm text-right font-medium text-slate-500">৳{(s.pricePerKg || 0).toFixed(2)}</td>
+                        <td className="px-8 py-4 text-sm text-right font-black text-emerald-700">৳{(s.totalRevenue || 0).toLocaleString()}</td>
                       </tr>
                     ))}
-                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
-                      <td colSpan={2} className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
-                      <td className="px-6 py-4 text-sm text-right text-slate-800">
-                        {filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0).toFixed(2)}
+                    <tr className="bg-slate-900 text-white font-bold">
+                      <td colSpan={2} className="px-8 py-5 text-xs font-black uppercase tracking-[0.2em]">Summary Total</td>
+                      <td className="px-8 py-5 text-sm text-right font-black">
+                        {filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0).toFixed(2)} kg
                       </td>
-                      <td className="px-6 py-4 text-sm text-right text-slate-400 font-normal">Average: ৳{(totalSales / (filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0) || 1)).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-sm text-right text-green-700">৳{totalSales.toLocaleString()}</td>
+                      <td className="px-8 py-5 text-xs text-right text-slate-400 font-bold uppercase tracking-widest">Avg: ৳{(totalSales / (filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0) || 1)).toFixed(2)}</td>
+                      <td className="px-8 py-5 text-lg text-right font-black text-emerald-400">৳{totalSales.toLocaleString()}</td>
                     </tr>
                   </>
                 )}
@@ -338,113 +381,125 @@ export const Reports: React.FC = () => {
       )}
 
       {reportTab === 'drying' && (
-        <div className="space-y-6">
-          <ProductionCharts startDate={startDate} endDate={endDate} />
+        <div className="space-y-8">
+          <div className="glass-panel p-8 rounded-3xl overflow-hidden">
+            <ProductionCharts startDate={startDate} endDate={endDate} />
+          </div>
           
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <h3 className="font-semibold text-gray-800">Drying Process Report</h3>
-            <div className="flex flex-col text-right">
-              <span className="text-sm font-medium text-gray-600">
-                Total Dry Produced: {filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0).toFixed(2)} kg
-              </span>
-              <span className="text-sm font-medium text-blue-600">
-                Total Wet Used: {filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0).toFixed(2)} kg
-              </span>
-              <span className="text-sm font-bold text-emerald-600">
-                Total Wet Cost: ৳{filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+          <div className="glass-panel rounded-3xl overflow-hidden">
+            <div className="p-6 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+              <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Drying Process Report</h3>
+              <div className="flex flex-wrap gap-3 justify-end">
+                <div className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider">
+                  Wet Used: {filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0).toFixed(2)} kg
+                </div>
+                <div className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider">
+                  Dry Produced: {filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0).toFixed(2)} kg
+                </div>
+                <div className="bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider">
+                  Total Cost: ৳{filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50">
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Wet Used (kg)</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Wet Cost (৳)</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Yield %</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Dry Produced (kg)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredConversions.length === 0 ? (
+                    <tr><td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-bold italic">No data found for selected dates.</td></tr>
+                  ) : (
+                    <>
+                      {filteredConversions.map(c => {
+                        const yieldPercent = (c.dryQuantityProduced / c.wetQuantityUsed) * 100;
+                        const wetCost = (c.wetQuantityUsed || 0) * (c.purchasePrice || 0);
+                        return (
+                          <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="px-8 py-4 text-sm font-bold text-slate-600">{c.date}</td>
+                            <td className="px-8 py-4 text-sm text-right font-bold text-blue-600">{(c.wetQuantityUsed || 0).toFixed(2)}</td>
+                            <td className="px-8 py-4 text-sm text-right font-bold text-emerald-600">৳{wetCost.toLocaleString()}</td>
+                            <td className="px-8 py-4 text-sm text-center">
+                              <span className="px-3 py-1 bg-slate-100 rounded-full font-black text-xs text-slate-700">
+                                {(yieldPercent || 0).toFixed(1)}%
+                              </span>
+                            </td>
+                            <td className="px-8 py-4 text-sm text-right font-black text-amber-600">{(c.dryQuantityProduced || 0).toFixed(2)}</td>
+                          </tr>
+                        );
+                      })}
+                      <tr className="bg-slate-900 text-white font-bold">
+                        <td className="px-8 py-5 text-xs font-black uppercase tracking-[0.2em]">Summary Total</td>
+                        <td className="px-8 py-5 text-sm text-right font-black text-blue-400">
+                          {filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0).toFixed(2)} kg
+                        </td>
+                        <td className="px-8 py-5 text-sm text-right font-black text-emerald-400">
+                          ৳{filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0).toLocaleString()}
+                        </td>
+                        <td className="px-8 py-5 text-sm text-center font-black">
+                          {(() => {
+                            const totalWet = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+                            const totalDry = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+                            return totalWet > 0 ? ((totalDry / totalWet) * 100).toFixed(1) + '%' : '0%';
+                          })()}
+                        </td>
+                        <td className="px-8 py-5 text-lg text-right font-black text-amber-400">
+                          {filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0).toFixed(2)} kg
+                        </td>
+                      </tr>
+                    </>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white border-b border-gray-100">
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Wet Used (kg)</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Wet Cost (৳)</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-center">Yield %</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Dry Produced (kg)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredConversions.length === 0 ? (
-                  <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
-                ) : (
-                  <>
-                    {filteredConversions.map(c => {
-                      const yieldPercent = (c.dryQuantityProduced / c.wetQuantityUsed) * 100;
-                      const wetCost = (c.wetQuantityUsed || 0) * (c.purchasePrice || 0);
-                      return (
-                        <tr key={c.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-3 text-sm">{c.date}</td>
-                          <td className="px-6 py-3 text-sm text-right text-blue-600">{(c.wetQuantityUsed || 0).toFixed(2)}</td>
-                          <td className="px-6 py-3 text-sm text-right text-emerald-600 font-medium">৳{wetCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                          <td className="px-6 py-3 text-sm text-center">{(yieldPercent || 0).toFixed(1)}%</td>
-                          <td className="px-6 py-3 text-sm text-right font-semibold text-yellow-600">{(c.dryQuantityProduced || 0).toFixed(2)}</td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
-                      <td className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
-                      <td className="px-6 py-4 text-sm text-right text-blue-700">
-                        {filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-right text-emerald-700">
-                        ৳{filteredConversions.reduce((sum, c) => sum + ((c.wetQuantityUsed || 0) * (c.purchasePrice || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-center text-slate-700">
-                        {(() => {
-                          const totalWet = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-                          const totalDry = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
-                          return totalWet > 0 ? ((totalDry / totalWet) * 100).toFixed(1) + '%' : '0%';
-                        })()}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-right text-yellow-700">
-                        {filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0).toFixed(2)}
-                      </td>
-                    </tr>
-                  </>
-                )}
-              </tbody>
-            </table>
-          </div>
         </div>
-      </div>
       )}
 
       {reportTab === 'expenses' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Expenses Report</h3>
-            <span className="text-sm font-medium text-gray-600">Total: ৳{(totalExpenses || 0).toLocaleString()}</span>
+        <div className="glass-panel rounded-3xl overflow-hidden">
+          <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Expenses Report</h3>
+            <div className="bg-rose-100 text-rose-700 px-4 py-1.5 rounded-xl font-black text-sm">
+              Total: ৳{(totalExpenses || 0).toLocaleString()}
+            </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white border-b border-gray-100">
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Category</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Description</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Amount</th>
+                <tr className="bg-slate-50/50">
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Category</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Description</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {filteredExpenses.length === 0 ? (
-                  <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No data found for selected dates.</td></tr>
+                  <tr><td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold italic">No data found for selected dates.</td></tr>
                 ) : (
                   <>
                     {filteredExpenses.map(e => (
-                      <tr key={e.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm">{e.date}</td>
-                        <td className="px-6 py-3 text-sm"><span className="px-2 py-1 bg-gray-100 rounded-full text-xs">{e.category}</span></td>
-                        <td className="px-6 py-3 text-sm">{e.description}</td>
-                        <td className="px-6 py-3 text-sm text-right font-semibold text-red-600">৳{(e.amount || 0).toLocaleString()}</td>
+                      <tr key={e.id} className="hover:bg-slate-50 transition-colors group">
+                        <td className="px-8 py-4 text-sm font-bold text-slate-600">{e.date}</td>
+                        <td className="px-8 py-4 text-sm">
+                          <span className="px-3 py-1 bg-slate-100 rounded-full font-black text-[10px] text-slate-600 uppercase tracking-wider">
+                            {e.category}
+                          </span>
+                        </td>
+                        <td className="px-8 py-4 text-sm font-medium text-slate-500">{e.description}</td>
+                        <td className="px-8 py-4 text-sm text-right font-black text-rose-600">৳{(e.amount || 0).toLocaleString()}</td>
                       </tr>
                     ))}
-                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
-                      <td colSpan={3} className="px-6 py-4 text-sm text-slate-800 uppercase tracking-wider">Total</td>
-                      <td className="px-6 py-4 text-sm text-right text-red-700">৳{totalExpenses.toLocaleString()}</td>
+                    <tr className="bg-slate-900 text-white font-bold">
+                      <td colSpan={3} className="px-8 py-5 text-xs font-black uppercase tracking-[0.2em]">Summary Total</td>
+                      <td className="px-8 py-5 text-lg text-right font-black text-rose-400">৳{totalExpenses.toLocaleString()}</td>
                     </tr>
                   </>
                 )}
@@ -454,39 +509,51 @@ export const Reports: React.FC = () => {
         </div>
       )}
       {reportTab === 'labor' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Labor Report</h3>
-            <span className="text-sm font-medium text-gray-600">Total: ৳{(totalLabor || 0).toLocaleString()}</span>
+        <div className="glass-panel rounded-3xl overflow-hidden">
+          <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Labor Report</h3>
+            <div className="bg-teal-100 text-teal-700 px-4 py-1.5 rounded-xl font-black text-sm">
+              Total: ৳{(totalLabor || 0).toLocaleString()}
+            </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white border-b border-gray-100">
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Worker</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Process</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Hours</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Rate</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Total</th>
+                <tr className="bg-slate-50/50">
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Worker</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Process</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Hours</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Rate</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {filteredLabor.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">No labor records for this period.</td>
+                    <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-bold italic">No labor records for this period.</td>
                   </tr>
                 ) : (
-                  filteredLabor.map(record => (
-                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm text-gray-600">{record.date}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-800">{record.workerName}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{record.processName}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 text-center">{record.hours}h</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 text-right">৳{record.hourlyRate.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm font-bold text-gray-800 text-right">৳{record.totalCost.toLocaleString()}</td>
+                  <>
+                    {filteredLabor.map(record => (
+                      <tr key={record.id} className="hover:bg-slate-50 transition-colors group">
+                        <td className="px-8 py-4 text-sm font-bold text-slate-600">{record.date}</td>
+                        <td className="px-8 py-4 text-sm font-extrabold text-slate-900">{record.workerName}</td>
+                        <td className="px-8 py-4 text-sm font-medium text-slate-500">{record.processName}</td>
+                        <td className="px-8 py-4 text-sm text-center">
+                          <span className="px-3 py-1 bg-teal-50 text-teal-700 rounded-full font-black text-[10px] uppercase tracking-wider">
+                            {record.hours}h
+                          </span>
+                        </td>
+                        <td className="px-8 py-4 text-sm text-right font-medium text-slate-500">৳{record.hourlyRate.toLocaleString()}</td>
+                        <td className="px-8 py-4 text-sm font-black text-slate-900 text-right">৳{record.totalCost.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-900 text-white font-bold">
+                      <td colSpan={5} className="px-8 py-5 text-xs font-black uppercase tracking-[0.2em]">Summary Total</td>
+                      <td className="px-8 py-5 text-lg text-right font-black text-teal-400">৳{totalLabor.toLocaleString()}</td>
                     </tr>
-                  ))
+                  </>
                 )}
               </tbody>
             </table>
@@ -495,22 +562,25 @@ export const Reports: React.FC = () => {
       )}
 
       {reportTab === 'due' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-800">Customer Dues (Sales)</h3>
+        <div className="space-y-8">
+          <div className="glass-panel rounded-3xl overflow-hidden">
+            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Customer Dues (Sales)</h3>
+              <div className="bg-rose-100 text-rose-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest">
+                Action Required
+              </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white border-b border-gray-100">
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Total Billed</th>
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Total Paid</th>
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Due Amount</th>
+                  <tr className="bg-slate-50/50">
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Customer</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Total Billed</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Total Paid</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Due Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100">
                   {state.customers.map(c => {
                     const customerSales = state.sales.filter(s => s.customerName === c.name);
                     const totalBilled = customerSales.reduce((sum, s) => sum + s.totalRevenue, 0);
@@ -522,37 +592,40 @@ export const Reports: React.FC = () => {
                     if (due <= 0) return null;
                     
                     return (
-                      <tr key={c.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm font-semibold text-slate-800">{c.name}</td>
-                        <td className="px-6 py-3 text-sm text-right">৳{totalBilled.toLocaleString()}</td>
-                        <td className="px-6 py-3 text-sm text-right text-green-600">৳{totalPaid.toLocaleString()}</td>
-                        <td className="px-6 py-3 text-sm text-right font-bold text-red-600">৳{due.toLocaleString()}</td>
+                      <tr key={c.id} className="hover:bg-rose-50/30 transition-colors group">
+                        <td className="px-8 py-4 text-sm font-extrabold text-slate-900">{c.name}</td>
+                        <td className="px-8 py-4 text-sm text-right font-bold text-slate-600">৳{totalBilled.toLocaleString()}</td>
+                        <td className="px-8 py-4 text-sm text-right font-bold text-emerald-600">৳{totalPaid.toLocaleString()}</td>
+                        <td className="px-8 py-4 text-sm text-right font-black text-rose-600">৳{due.toLocaleString()}</td>
                       </tr>
                     );
                   })}
                   {state.customers.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No customers found.</td></tr>
+                    <tr><td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold italic">No customers found.</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-800">Supplier Advances & Dues (Purchases)</h3>
+          <div className="glass-panel rounded-3xl overflow-hidden">
+            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Supplier Advances & Dues</h3>
+              <div className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest">
+                Balance Tracking
+              </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white border-b border-gray-100">
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Supplier</th>
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Total Billed</th>
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Total Paid</th>
-                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Balance</th>
+                  <tr className="bg-slate-50/50">
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Supplier</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Total Billed</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Total Paid</th>
+                    <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Balance Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100">
                   {state.suppliers.map(s => {
                     const supplierPurchases = state.purchases.filter(p => p.supplierName === s.name);
                     const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
@@ -564,18 +637,20 @@ export const Reports: React.FC = () => {
                     if (balance === 0) return null;
                     
                     return (
-                      <tr key={s.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm font-semibold text-slate-800">{s.name}</td>
-                        <td className="px-6 py-3 text-sm text-right">৳{totalBilled.toLocaleString()}</td>
-                        <td className="px-6 py-3 text-sm text-right text-green-600">৳{totalPaid.toLocaleString()}</td>
-                        <td className={`px-6 py-3 text-sm text-right font-bold ${balance > 0 ? 'text-indigo-600' : 'text-red-600'}`}>
-                          {balance > 0 ? `Advance: ৳${balance.toLocaleString()}` : `Due: ৳${Math.abs(balance).toLocaleString()}`}
+                      <tr key={s.id} className={`hover:bg-slate-50 transition-colors group ${balance > 0 ? 'bg-indigo-50/10' : 'bg-rose-50/10'}`}>
+                        <td className="px-8 py-4 text-sm font-extrabold text-slate-900">{s.name}</td>
+                        <td className="px-8 py-4 text-sm text-right font-bold text-slate-600">৳{totalBilled.toLocaleString()}</td>
+                        <td className="px-8 py-4 text-sm text-right font-bold text-emerald-600">৳{totalPaid.toLocaleString()}</td>
+                        <td className={`px-8 py-4 text-sm text-right font-black ${balance > 0 ? 'text-indigo-600' : 'text-rose-600'}`}>
+                          <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wider ${balance > 0 ? 'bg-indigo-100' : 'bg-rose-100'}`}>
+                            {balance > 0 ? `Advance: ৳${balance.toLocaleString()}` : `Due: ৳${Math.abs(balance).toLocaleString()}`}
+                          </span>
                         </td>
                       </tr>
                     );
                   })}
                   {state.suppliers.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No suppliers found.</td></tr>
+                    <tr><td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold italic">No suppliers found.</td></tr>
                   )}
                 </tbody>
               </table>

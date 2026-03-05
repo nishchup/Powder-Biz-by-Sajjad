@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAppStore } from '../store';
-import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle } from 'lucide-react';
+import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { ProductionCharts } from './ProductionCharts';
 import { FinancialCharts } from './FinancialCharts';
+import { motion } from 'framer-motion';
 
 export const Dashboard: React.FC = () => {
   const { state, wetStock, dryStock } = useAppStore();
@@ -26,150 +27,228 @@ export const Dashboard: React.FC = () => {
 
   const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments + totalCompanyAdvances - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans - totalProfitWithdrawals;
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="space-y-6" id="dashboard-content">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+    <motion.div 
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-8" 
+      id="dashboard-content"
+    >
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Dashboard</h2>
+          <p className="text-slate-500 font-medium">Welcome back! Here's what's happening today.</p>
+        </div>
         <button 
           onClick={() => exportToPDF('dashboard-content', 'dashboard-report.pdf')}
-          className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-center transition-colors shadow-sm font-medium print:hidden w-full sm:w-auto"
+          className="bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:shadow-slate-200 font-bold print:hidden w-full sm:w-auto active:scale-95"
         >
-          <Printer size={18} className="mr-2" />
-          Print Dashboard
+          <Printer size={20} className="mr-2" />
+          Export Report
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <StatCard 
           title="Wet Powder Stock" 
           value={`${(wetStock || 0).toFixed(2)} kg`} 
           icon={Package} 
-          color="bg-blue-100 text-blue-600" 
+          color="bg-blue-500" 
+          variants={item}
         />
         <StatCard 
           title="Dry Powder Stock" 
           value={`${(dryStock || 0).toFixed(2)} kg`} 
           icon={Sun} 
-          color="bg-yellow-100 text-yellow-600" 
+          color="bg-amber-500" 
+          variants={item}
         />
         <StatCard 
           title="Total Sales" 
           value={`৳${(totalSales || 0).toLocaleString()}`} 
           icon={TrendingUp} 
-          color="bg-green-100 text-green-600" 
+          color="bg-emerald-500" 
+          variants={item}
         />
         <StatCard 
           title="Inhand Cash" 
           value={`৳${(inhandCash || 0).toLocaleString()}`} 
           icon={DollarSign} 
-          color="bg-indigo-100 text-indigo-600" 
+          color="bg-indigo-500" 
+          variants={item}
         />
         <StatCard 
           title="Net Profit" 
           value={`৳${(netProfit || 0).toLocaleString()}`} 
           icon={Wallet} 
-          color={(netProfit || 0) >= 0 ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"} 
+          color={(netProfit || 0) >= 0 ? "bg-emerald-600" : "bg-rose-600"} 
+          variants={item}
         />
         <StatCard 
           title="Total Loan" 
           value={`৳${(totalLoans || 0).toLocaleString()}`} 
           icon={Landmark} 
-          color="bg-purple-100 text-purple-600" 
+          color="bg-violet-500" 
+          variants={item}
         />
         <StatCard 
           title="Customer Due" 
           value={`৳${(totalCustomerDue || 0).toLocaleString()}`} 
           icon={AlertCircle} 
-          color="bg-orange-100 text-orange-600" 
+          color="bg-orange-500" 
+          variants={item}
         />
         <StatCard 
           title="Supplier Due" 
           value={`৳${(totalSupplierDue || 0).toLocaleString()}`} 
           icon={CreditCard} 
-          color="bg-rose-100 text-rose-600" 
-        />
-        <StatCard 
-          title="Company Advance" 
-          value={`৳${(totalCompanyAdvances || 0).toLocaleString()}`} 
-          icon={Landmark} 
-          color="bg-teal-100 text-teal-600" 
+          color="bg-rose-500" 
+          variants={item}
         />
       </div>
 
-      <ProductionCharts />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem]">
+          <ProductionCharts />
+        </motion.div>
+        <motion.div variants={item} className="glass-panel p-8 rounded-[2rem]">
+          <FinancialCharts />
+        </motion.div>
+      </div>
 
-      <FinancialCharts />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">Recent Activity</h3>
-          <div className="space-y-4">
-            {state.sales.slice(-3).map(s => (
-              <div key={s.id} className="flex justify-between items-center pb-3 border-b border-gray-50">
-                <div>
-                  <p className="font-medium text-gray-800">Sale to {s.customerName}</p>
-                  <p className="text-sm text-gray-500">{s.date}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden">
+          <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 className="text-xl font-black text-slate-900 flex items-center">
+              <Activity className="mr-3 text-indigo-500" size={24} />
+              Recent Activity
+            </h3>
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">Latest Records</span>
+          </div>
+          <div className="p-8 space-y-6">
+            {[...state.sales].reverse().slice(0, 3).map(s => (
+              <div key={s.id} className="flex justify-between items-center group">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 mr-4 group-hover:scale-110 transition-transform">
+                    <ArrowUpRight size={24} />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-slate-900">Sale to {s.customerName}</p>
+                    <p className="text-sm text-slate-500 font-bold">{s.date}</p>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-green-600">+৳{s.totalRevenue}</p>
-                  <p className="text-sm text-gray-500">{s.quantity} kg</p>
+                  <p className="font-black text-emerald-600 text-lg">+৳{s.totalRevenue.toLocaleString()}</p>
+                  <p className="text-xs text-slate-400 font-black uppercase tracking-tighter">{s.quantity} kg</p>
                 </div>
               </div>
             ))}
-            {state.purchases.slice(-3).map(p => (
-              <div key={p.id} className="flex justify-between items-center pb-3 border-b border-gray-50">
-                <div>
-                  <p className="font-medium text-gray-800">Purchase from {p.supplierName}</p>
-                  <p className="text-sm text-gray-500">{p.date}</p>
+            {[...state.purchases].reverse().slice(0, 3).map(p => (
+              <div key={p.id} className="flex justify-between items-center group">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-600 mr-4 group-hover:scale-110 transition-transform">
+                    <ArrowDownRight size={24} />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-slate-900">Purchase from {p.supplierName}</p>
+                    <p className="text-sm text-slate-500 font-bold">{p.date}</p>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-red-600">-৳{p.totalCost}</p>
-                  <p className="text-sm text-gray-500">{p.quantity} kg</p>
+                  <p className="font-black text-rose-600 text-lg">-৳{p.totalCost.toLocaleString()}</p>
+                  <p className="text-xs text-slate-400 font-black uppercase tracking-tighter">{p.quantity} kg</p>
                 </div>
               </div>
             ))}
             {state.sales.length === 0 && state.purchases.length === 0 && (
-              <p className="text-gray-500 text-center py-4">No recent activity</p>
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Activity className="text-slate-300" size={40} />
+                </div>
+                <p className="text-slate-400 font-bold italic">No recent activity found</p>
+              </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">Financial Summary</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Revenue</span>
-              <span className="font-semibold text-gray-800">৳{(totalSales || 0).toLocaleString()}</span>
+        <motion.div variants={item} className="glass-panel rounded-[2rem] overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-xl font-black text-slate-900">Financial Summary</h3>
+            <p className="text-slate-500 text-sm font-medium">Overall performance overview</p>
+          </div>
+          <div className="p-8 flex-1 flex flex-col justify-between">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
+                  <span className="text-slate-600 font-bold">Total Revenue</span>
+                </div>
+                <span className="font-black text-slate-900">৳{(totalSales || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-rose-500 mr-3" />
+                  <span className="text-slate-600 font-bold">Total Purchases</span>
+                </div>
+                <span className="font-black text-rose-500">-৳{(totalPurchases || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 mr-3" />
+                  <span className="text-slate-600 font-bold">Total Expenses</span>
+                </div>
+                <span className="font-black text-rose-500">-৳{(totalExpenses || 0).toLocaleString()}</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Purchases</span>
-              <span className="font-semibold text-red-500">-৳{(totalPurchases || 0).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Expenses</span>
-              <span className="font-semibold text-red-500">-৳{(totalExpenses || 0).toLocaleString()}</span>
-            </div>
-            <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
-              <span className="font-bold text-gray-800">Net Profit</span>
-              <span className={`font-bold text-xl ${(netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                ৳{(netProfit || 0).toLocaleString()}
-              </span>
+            
+            <div className="mt-8 pt-8 border-t border-slate-100">
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Net Profit</p>
+                  <h4 className={`text-4xl font-black ${(netProfit || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    ৳{(netProfit || 0).toLocaleString()}
+                  </h4>
+                </div>
+                <div className={`px-4 py-2 rounded-2xl font-black text-sm ${(netProfit || 0) >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                  {(netProfit / (totalSales || 1) * 100).toFixed(1)}% Margin
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-const StatCard = ({ title, value, icon: Icon, color }: any) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-    <div className={`p-4 rounded-lg ${color} mr-4`}>
-      <Icon size={24} />
+const StatCard = ({ title, value, icon: Icon, color, variants }: any) => (
+  <motion.div 
+    variants={variants}
+    whileHover={{ y: -5, scale: 1.02 }}
+    className="glass-panel p-6 rounded-3xl flex items-center group cursor-default"
+  >
+    <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center text-white shadow-lg shadow-${color.split('-')[1]}-200 mr-5 group-hover:rotate-6 transition-transform`}>
+      <Icon size={28} />
     </div>
     <div>
-      <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-      <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+      <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+      <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
     </div>
-  </div>
+  </motion.div>
 );

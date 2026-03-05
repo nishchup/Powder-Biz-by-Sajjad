@@ -19,6 +19,8 @@ export const ProductDelivery: React.FC = () => {
     startDate: '',
     endDate: new Date().toISOString().split('T')[0],
     description: '',
+    totalWetUsed: '',
+    totalDryProduced: '',
   });
 
   const [withdrawData, setWithdrawData] = useState({
@@ -39,21 +41,21 @@ export const ProductDelivery: React.FC = () => {
 
     // 1. Production in period
     const filteredConversions = state.conversions.filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
-    const filteredDryPurchases = state.purchases.filter(p => p.type === 'dry' && p.date >= formData.startDate && p.date <= formData.endDate);
-    
-    const actualDryProducedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0) +
-                                     filteredDryPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0);
-
-    // User Rule: Displayed Dry Produced = Actual Production - Current Stock
-    const displayedDryProduced = actualDryProducedInPeriod - dryStock;
-    
-    // User Rule: Total Wet Used = Total Dry Produced + (Total Dry Produced * 0.20)
-    const displayedWetUsed = displayedDryProduced + (displayedDryProduced * 0.20);
+    const totalWetUsedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalDryProducedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
 
     // 2. Sales in period
     const filteredSales = state.sales.filter(s => s.date >= formData.startDate && s.date <= formData.endDate);
     const totalSalesQty = filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0);
     const totalSales = filteredSales.reduce((sum, s) => sum + s.totalRevenue, 0);
+
+    // User Rule: Total Wet Used = (totalWetUsedInPeriod * totalSalesQty) / totalDryProducedInPeriod
+    const displayedWetUsed = totalDryProducedInPeriod > 0 
+      ? (totalWetUsedInPeriod * totalSalesQty) / totalDryProducedInPeriod 
+      : 0;
+
+    // User Rule: Displayed Dry Produced = Total Sales Quantity
+    const displayedDryProduced = totalSalesQty;
 
     // User Rule: Total Purchases/Cost = Sales Qty * Average Purchase Price (COGS)
     const totalPurchases = totalSalesQty * averageCostPerKg;
@@ -75,13 +77,33 @@ export const ProductDelivery: React.FC = () => {
     };
   }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses, state.conversions, dryStock]);
 
+  React.useEffect(() => {
+    if (summary) {
+      setFormData(prev => ({
+        ...prev,
+        totalWetUsed: summary.totalWetUsed.toFixed(2),
+        totalDryProduced: summary.totalDryProduced.toFixed(2),
+      }));
+    }
+  }, [summary]);
+
+  const productionRatio = useMemo(() => {
+    if (!formData.startDate || !formData.endDate) return 1.2;
+    const filteredConversions = state.conversions.filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
+    const totalWetUsedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalDryProducedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+    return totalDryProducedInPeriod > 0 ? totalWetUsedInPeriod / totalDryProducedInPeriod : 1.2;
+  }, [formData.startDate, formData.endDate, state.conversions]);
+
   const handleCancel = () => {
     setIsFormOpen(false);
     setFormData({ 
       date: new Date().toISOString().split('T')[0], 
       startDate: '', 
       endDate: new Date().toISOString().split('T')[0], 
-      description: '' 
+      description: '',
+      totalWetUsed: '',
+      totalDryProduced: ''
     });
   };
 
@@ -190,19 +212,19 @@ export const ProductDelivery: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (summary && formData.startDate && formData.endDate) {
+    if (formData.startDate && formData.endDate) {
       addProductDelivery({
         date: formData.date,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        totalPurchases: summary.totalPurchases,
-        wetPowderCost: summary.wetPowderCost,
-        dryPowderCost: summary.dryPowderCost,
-        totalSales: summary.totalSales,
-        totalExpenses: summary.totalExpenses,
-        netProfit: summary.netProfit,
-        totalWetUsed: summary.totalWetUsed,
-        totalDryProduced: summary.totalDryProduced,
+        totalPurchases: summary?.totalPurchases || 0,
+        wetPowderCost: summary?.wetPowderCost || 0,
+        dryPowderCost: summary?.dryPowderCost || 0,
+        totalSales: summary?.totalSales || 0,
+        totalExpenses: summary?.totalExpenses || 0,
+        netProfit: summary?.netProfit || 0,
+        totalWetUsed: parseFloat(formData.totalWetUsed) || 0,
+        totalDryProduced: parseFloat(formData.totalDryProduced) || 0,
         description: formData.description,
       });
       handleCancel();
@@ -311,6 +333,38 @@ export const ProductDelivery: React.FC = () => {
                 </div>
               </div>
             )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Total Dry Produced (kg)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  required
+                  value={formData.totalDryProduced}
+                  onChange={e => {
+                    const dry = parseFloat(e.target.value) || 0;
+                    setFormData({
+                      ...formData,
+                      totalDryProduced: e.target.value,
+                      totalWetUsed: (dry * productionRatio).toFixed(2)
+                    });
+                  }}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Total Wet Used (kg)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  required
+                  value={formData.totalWetUsed}
+                  onChange={e => setFormData({...formData, totalWetUsed: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-slate-50"
+                />
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description / Notes (Optional)</label>
