@@ -15,6 +15,7 @@ export const Chatbot: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,28 +69,21 @@ export const Chatbot: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const businessContext = generateBusinessContext();
       
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          {
-            role: "user",
-            parts: [{
-              text: `You are a business consultant for a Wood Powder (Sawdust) production business in Bangladesh. 
-              The user's language preference is ${state.language === 'bn' ? 'Bengali' : 'English'}.
-              
-              Context about the business:
-              ${businessContext}
-              
-              User Question: ${userMessage}
-              
-              Please provide a helpful, data-driven response. If they ask in Bengali, reply in Bengali. Be professional and encouraging.`
-            }]
+      if (!chatRef.current) {
+        chatRef.current = ai.chats.create({
+          model: "gemini-3-flash-preview",
+          config: {
+            systemInstruction: `You are an expert business analyst for a sawdust production company. Use the provided data to give specific advice. Be concise but thorough.
+            
+            Context about the business:
+            ${businessContext}
+            
+            The user's language preference is ${state.language === 'bn' ? 'Bengali' : 'English'}. If they ask in Bengali, reply in Bengali. Be professional and encouraging.`
           }
-        ],
-        config: {
-          systemInstruction: "You are an expert business analyst for a sawdust production company. Use the provided data to give specific advice. Be concise but thorough."
-        }
-      });
+        });
+      }
+      
+      const response = await chatRef.current.sendMessage({ message: userMessage });
 
       const botResponse = response.text || "I'm sorry, I couldn't process that request.";
       setMessages(prev => [...prev, { role: 'bot', content: botResponse }]);

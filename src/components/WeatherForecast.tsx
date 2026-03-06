@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Cloud, CloudRain, CloudLightning, Sun, CloudSun, Wind, Droplets, Thermometer, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { Cloud, CloudRain, CloudLightning, Sun, CloudSun, Wind, Droplets, Thermometer, AlertTriangle, CheckCircle2, Info, MapPin, Navigation, Search } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 
@@ -11,18 +11,19 @@ interface WeatherData {
 }
 
 export const WeatherForecast: React.FC = () => {
-  const { state } = useAppStore();
+  const { state, setWeatherLocation } = useAppStore();
   const t = useTranslation(state.language);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [locationInput, setLocationInput] = useState(state.weatherLocation || 'Jamalpur');
 
   useEffect(() => {
     const fetchWeather = async () => {
       try {
         setLoading(true);
-        // Default to Jamalpur, Bangladesh
-        const response = await fetch('https://wttr.in/Jamalpur?format=j1');
+        const loc = state.weatherLocation || 'Jamalpur';
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(loc)}?format=j1`);
         if (!response.ok) throw new Error('Failed to fetch weather data');
         const data = await response.json();
         setWeather(data);
@@ -38,7 +39,35 @@ export const WeatherForecast: React.FC = () => {
     fetchWeather();
     const interval = setInterval(fetchWeather, 30 * 60 * 1000); // Update every 30 mins
     return () => clearInterval(interval);
-  }, []);
+  }, [state.weatherLocation]);
+
+  const handleLocationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (locationInput.trim()) {
+      setWeatherLocation(locationInput.trim());
+    }
+  };
+
+  const handleCurrentLocation = () => {
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const coords = `${latitude},${longitude}`;
+          setWeatherLocation(coords);
+          setLocationInput('Current Location');
+        },
+        (err) => {
+          console.error('Geolocation error:', err);
+          setError('Could not get your current location. Please allow location access or type your city.');
+          setLoading(false);
+        }
+      );
+    } else {
+      setError('Geolocation is not supported by your browser.');
+    }
+  };
 
   const getWeatherIcon = (code: string) => {
     const c = parseInt(code);
@@ -121,6 +150,38 @@ export const WeatherForecast: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+            <MapPin size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900">Weather Location</h3>
+            <p className="text-sm text-slate-500">Select your location for accurate forecasts</p>
+          </div>
+        </div>
+        
+        <div className="flex w-full sm:w-auto items-center gap-3">
+          <form onSubmit={handleLocationSubmit} className="relative flex-1 sm:w-64">
+            <input
+              type="text"
+              value={locationInput}
+              onChange={(e) => setLocationInput(e.target.value)}
+              placeholder="Enter city name..."
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          </form>
+          <button
+            onClick={handleCurrentLocation}
+            className="p-2.5 bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors"
+            title="Use Current Location"
+          >
+            <Navigation size={20} />
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Current Weather Card */}
         <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">

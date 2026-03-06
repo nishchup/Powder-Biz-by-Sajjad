@@ -155,6 +155,7 @@ export const Contacts: React.FC = () => {
         appPin: importData.appPin || '1234',
         lastBackupTime: importData.lastBackupTime || null,
         language: importData.language || 'en',
+        weatherLocation: importData.weatherLocation || 'Jamalpur',
       });
       showMessage("Data imported successfully!", 'success');
       setImportData(null);

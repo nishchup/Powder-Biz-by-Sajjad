@@ -173,6 +173,7 @@ export interface AppState {
   appPin: string;
   lastBackupTime: string | null;
   language: 'en' | 'bn';
+  weatherLocation: string;
 }
 
 const initialState: AppState = {
@@ -201,6 +202,7 @@ const initialState: AppState = {
   appPin: '1234',
   lastBackupTime: null,
   language: 'en',
+  weatherLocation: 'Jamalpur',
 };
 
 interface AppContextType {
@@ -260,6 +262,7 @@ interface AppContextType {
   resetState: () => void;
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
+  setWeatherLocation: (location: string) => void;
   isOnline: boolean;
   isSyncing: boolean;
   hasPendingSync: boolean;
@@ -310,6 +313,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           appPin: parsed.appPin || '1234',
           lastBackupTime: parsed.lastBackupTime || null,
           language: parsed.language || 'en',
+          weatherLocation: parsed.weatherLocation || 'Jamalpur',
         };
       }
     } catch (e) {
@@ -614,6 +618,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, language: lang }));
   };
 
+  const setWeatherLocation = (location: string) => {
+    setState(s => ({ ...s, weatherLocation: location }));
+  };
+
   const wetStock = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.quantity || 0), 0) -
                    state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
 
@@ -682,6 +690,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       resetState,
       importState,
       setLanguage,
+      setWeatherLocation,
       isOnline,
       isSyncing,
       hasPendingSync,

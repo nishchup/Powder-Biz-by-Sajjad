@@ -17,7 +17,8 @@ export const WeatherBanner: React.FC = () => {
     const fetchWeather = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://wttr.in/Jamalpur?format=j1');
+        const loc = state.weatherLocation || 'Jamalpur';
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(loc)}?format=j1`);
         if (!response.ok) throw new Error('Failed to fetch weather data');
         const data = await response.json();
         setWeather(data);
@@ -31,7 +32,7 @@ export const WeatherBanner: React.FC = () => {
     fetchWeather();
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [state.weatherLocation]);
 
   if (loading || !weather) return null;
 
@@ -86,7 +87,9 @@ export const WeatherBanner: React.FC = () => {
           <CloudRain size={14} className="text-blue-200" />
           <span className="text-xs font-black">{rainChance}%</span>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-tighter opacity-70 hidden lg:block">Jamalpur</span>
+        <span className="text-[10px] font-black uppercase tracking-tighter opacity-70 hidden lg:block">
+          {state.weatherLocation || 'Jamalpur'}
+        </span>
       </div>
     </div>
   );
