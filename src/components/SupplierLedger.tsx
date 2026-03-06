@@ -33,12 +33,14 @@ export const SupplierLedger: React.FC = () => {
       .map(p => ({
         id: p.id,
         date: p.date,
-        type: 'Payment',
+        type: (p.remarks && (p.remarks.includes('Adjusted from existing payments') || p.remarks.includes('Offset for adjustment'))) 
+              ? 'Adjusted Payment' 
+              : 'Payment',
         description: p.purchaseId 
           ? `${p.remarks || 'Due Payment'} (Ref: PR-${p.purchaseId.substring(0, 6).toUpperCase()})`
           : p.remarks || 'Supplier Payment',
-        debit: 0,
-        credit: p.amount,
+        debit: p.amount < 0 ? Math.abs(p.amount) : 0,
+        credit: p.amount > 0 ? p.amount : 0,
         reference: `PY-${p.id.substring(0, 6).toUpperCase()}`
       }));
 
