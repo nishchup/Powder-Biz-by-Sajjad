@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Plus, Trash2, Pencil, X, ShoppingCart, Receipt, Printer, Share2, Filter, Search, ChevronLeft, ChevronRight, Wallet } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
+import { ConfirmModal } from './ConfirmModal';
 
 export const Purchases: React.FC = () => {
   const { state, addPurchase, editPurchase, deletePurchase, addSupplierPayment } = useAppStore();
@@ -12,6 +13,8 @@ export const Purchases: React.FC = () => {
   const [selectedPurchaseForDue, setSelectedPurchaseForDue] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const itemsPerPage = 10;
 
   const [duePaymentData, setDuePaymentData] = useState({
@@ -481,7 +484,10 @@ export const Purchases: React.FC = () => {
                           <Pencil size={18} />
                         </button>
                         <button 
-                          onClick={() => deletePurchase(p.id)}
+                          onClick={() => {
+                            setItemToDelete(p.id);
+                            setIsConfirmOpen(true);
+                          }}
                           className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                           title="Delete"
                         >
@@ -709,6 +715,17 @@ export const Purchases: React.FC = () => {
             </div>
           </div>
         )}
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        title="Delete Purchase"
+        message="Are you sure you want to delete this purchase record? This action cannot be undone."
+        onConfirm={() => itemToDelete && deletePurchase(itemToDelete)}
+        onCancel={() => {
+          setIsConfirmOpen(false);
+          setItemToDelete(null);
+        }}
+      />
     </div>
   );
 };

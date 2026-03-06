@@ -3,12 +3,14 @@ import { useAppStore } from '../store';
 import { Plus, Trash2, CheckCircle2, Circle, Calendar, AlertCircle, Clock, Pencil, X } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmModal } from './ConfirmModal';
 
 export const Tasks: React.FC = () => {
   const { state, addTask, editTask, toggleTask, deleteTask } = useAppStore();
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
@@ -222,7 +224,7 @@ export const Tasks: React.FC = () => {
                   <Pencil size={18} />
                 </button>
                 <button 
-                  onClick={() => deleteTask(task.id)}
+                  onClick={() => setDeleteId(task.id)}
                   className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                   title="Delete Task"
                 >
@@ -233,6 +235,18 @@ export const Tasks: React.FC = () => {
           ))
         )}
       </div>
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            deleteTask(deleteId);
+            setDeleteId(null);
+          }
+        }}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+      />
     </motion.div>
   );
 };

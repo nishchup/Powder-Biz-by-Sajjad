@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { Plus, Trash2, Pencil, X, Wallet, Printer, Search, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
+import { ConfirmModal } from './ConfirmModal';
 
 export const Expenses: React.FC = () => {
   const { state, addExpense, editExpense, deleteExpense } = useAppStore();
@@ -11,6 +12,8 @@ export const Expenses: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
@@ -266,7 +269,10 @@ export const Expenses: React.FC = () => {
                           <Pencil size={18} />
                         </button>
                         <button 
-                          onClick={() => deleteExpense(e.id)}
+                          onClick={() => {
+                            setItemToDelete(e.id);
+                            setIsConfirmOpen(true);
+                          }}
                           className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                         >
                           <Trash2 size={18} />
@@ -304,6 +310,17 @@ export const Expenses: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        title="Delete Expense"
+        message="Are you sure you want to delete this expense record? This action cannot be undone."
+        onConfirm={() => itemToDelete && deleteExpense(itemToDelete)}
+        onCancel={() => {
+          setIsConfirmOpen(false);
+          setItemToDelete(null);
+        }}
+      />
     </div>
   );
 };

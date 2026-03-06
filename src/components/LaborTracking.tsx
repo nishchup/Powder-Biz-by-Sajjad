@@ -3,6 +3,7 @@ import { useAppStore, LaborRecord } from '../store';
 import { Plus, Trash2, Pencil, Clock, User, Briefcase, DollarSign, Calendar, Search, Filter, X, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmModal } from './ConfirmModal';
 
 export const LaborTracking: React.FC = () => {
   const { state, addLaborRecord, editLaborRecord, deleteLaborRecord } = useAppStore();
@@ -11,6 +12,7 @@ export const LaborTracking: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [processFilter, setProcessFilter] = useState('All');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -358,7 +360,7 @@ export const LaborTracking: React.FC = () => {
                           <Pencil size={18} />
                         </button>
                         <button 
-                          onClick={() => deleteLaborRecord(record.id)}
+                          onClick={() => setDeleteId(record.id)}
                           className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                         >
                           <Trash2 size={18} />
@@ -372,6 +374,18 @@ export const LaborTracking: React.FC = () => {
           </table>
         </div>
       </motion.div>
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            deleteLaborRecord(deleteId);
+            setDeleteId(null);
+          }
+        }}
+        title="Delete Labor Entry"
+        message="Are you sure you want to delete this labor entry? This action cannot be undone."
+      />
     </motion.div>
   );
 };

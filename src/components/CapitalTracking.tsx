@@ -287,6 +287,52 @@ export const CapitalTracking: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              <div className="mt-8 pt-8 border-t border-white/10">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Calculation Breakdown</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] font-medium text-slate-400">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Wet Stock Value</span>
+                      <span className="text-white">৳{stats.wetStockValue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dry Stock Value</span>
+                      <span className="text-white">৳{stats.dryStockValue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Supplier Advances</span>
+                      <span className="text-white">৳{stats.supplierAdvances.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>In-hand Cash</span>
+                      <span className="text-white">৳{stats.inhandCash.toLocaleString()}</span>
+                    </div>
+                    {dateRange.start && dateRange.end && (
+                      <div className="flex justify-between text-indigo-400">
+                        <span>Period Expenses (+)</span>
+                        <span>৳{stats.filteredExpenses.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
+                    <div className="flex justify-between font-bold text-slate-300">
+                      <span>Current Total Assets</span>
+                      <span>৳{stats.totalAssets.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Initial Capital (-)</span>
+                      <span className="text-rose-400">৳{state.initialCapital.toLocaleString()}</span>
+                    </div>
+                    <div className="pt-2 border-t border-white/5 flex justify-between font-black text-sm">
+                      <span className="text-slate-200">Net Performance</span>
+                      <span className={stats.difference >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                        ৳{stats.difference.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

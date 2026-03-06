@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { Plus, Trash2, X, Truck, Calendar, TrendingUp, TrendingDown, Wallet, ShoppingCart, Printer, FileText, Banknote, Edit2 } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
+import { ConfirmModal } from './ConfirmModal';
 
 export const ProductDelivery: React.FC = () => {
   const { state, addProductDelivery, deleteProductDelivery, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal, dryStock } = useAppStore();
@@ -13,6 +14,7 @@ export const ProductDelivery: React.FC = () => {
   const [withdrawDelivery, setWithdrawDelivery] = useState<any>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [editingWithdrawalId, setEditingWithdrawalId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; type: 'delivery' | 'withdrawal' } | null>(null);
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -183,24 +185,7 @@ export const ProductDelivery: React.FC = () => {
   };
 
   const handleDeleteWithdrawal = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this withdrawal?')) {
-      deleteProfitWithdrawal(id);
-      
-      // Calculate new remaining profit after this deletion
-      const totalWithdrawnAfterDelete = state.profitWithdrawals
-        .filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== id)
-        .reduce((sum, pw) => sum + pw.amount, 0);
-      const newRemainingProfit = withdrawDelivery.netProfit - totalWithdrawnAfterDelete;
-
-      if (editingWithdrawalId === id) {
-        setEditingWithdrawalId(null);
-      }
-      
-      setWithdrawData(prev => ({
-        ...prev,
-        amount: newRemainingProfit > 0 ? newRemainingProfit.toString() : '',
-      }));
-    }
+    setDeleteConfirm({ id, type: 'withdrawal' });
   };
 
   const openWithdrawModal = (delivery: any) => {
@@ -484,7 +469,7 @@ export const ProductDelivery: React.FC = () => {
                           <FileText size={18} />
                         </button>
                         <button 
-                          onClick={() => deleteProductDelivery(d.id)}
+                          onClick={() => setDeleteConfirm({ id: d.id, type: 'delivery' })}
                           className="text-red-600 hover:text-red-800 p-1.5 rounded-md hover:bg-red-50 transition-colors"
                           title="Delete"
                         >
@@ -761,6 +746,39 @@ export const ProductDelivery: React.FC = () => {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          if (deleteConfirm) {
+            if (deleteConfirm.type === 'delivery') {
+              deleteProductDelivery(deleteConfirm.id);
+            } else if (deleteConfirm.type === 'withdrawal') {
+              deleteProfitWithdrawal(deleteConfirm.id);
+              
+              // Update remaining profit in modal if it's open
+              if (withdrawDelivery) {
+                const totalWithdrawnAfterDelete = state.profitWithdrawals
+                  .filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== deleteConfirm.id)
+                  .reduce((sum, pw) => sum + pw.amount, 0);
+                const newRemainingProfit = withdrawDelivery.netProfit - totalWithdrawnAfterDelete;
+
+                if (editingWithdrawalId === deleteConfirm.id) {
+                  setEditingWithdrawalId(null);
+                }
+                
+                setWithdrawData(prev => ({
+                  ...prev,
+                  amount: newRemainingProfit > 0 ? newRemainingProfit.toString() : '',
+                }));
+              }
+            }
+            setDeleteConfirm(null);
+          }
+        }}
+        title={`Delete ${deleteConfirm?.type === 'delivery' ? 'Delivery Report' : 'Profit Withdrawal'}`}
+        message={`Are you sure you want to delete this ${deleteConfirm?.type === 'delivery' ? 'delivery report' : 'withdrawal'}? This action cannot be undone.`}
+      />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { Plus, Trash2, CreditCard, ArrowDownCircle, ArrowUpCircle, HandCoins, Pencil, Printer, X, Search, ChevronLeft, ChevronRight, DollarSign, History } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
+import { ConfirmModal } from './ConfirmModal';
 
 export const Payments: React.FC = () => {
   const { state, addSupplierPayment, editSupplierPayment, deleteSupplierPayment, addCustomerPayment, editCustomerPayment, deleteCustomerPayment, addLoan, editLoan, deleteLoan, addCompanyAdvance, editCompanyAdvance, deleteCompanyAdvance, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal } = useAppStore();
@@ -12,6 +13,8 @@ export const Payments: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
@@ -363,11 +366,8 @@ export const Payments: React.FC = () => {
                           </button>
                           <button 
                             onClick={() => {
-                              if (activeTab === 'supplier') deleteSupplierPayment(p.id);
-                              else if (activeTab === 'customer') deleteCustomerPayment(p.id);
-                              else if (activeTab === 'companyAdvance') deleteCompanyAdvance(p.id);
-                              else if (activeTab === 'profitWithdraw') deleteProfitWithdrawal(p.id);
-                              else deleteLoan(p.id);
+                              setItemToDelete(p.id);
+                              setIsConfirmOpen(true);
                             }}
                             className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                             title="Delete"
@@ -408,6 +408,25 @@ export const Payments: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        title={`Delete ${activeTab === 'supplier' ? 'Supplier Payment' : activeTab === 'customer' ? 'Customer Payment' : activeTab === 'loan' ? 'Loan' : activeTab === 'companyAdvance' ? 'Company Advance' : 'Profit Withdrawal'}`}
+        message="Are you sure you want to delete this payment record? This action cannot be undone."
+        onConfirm={() => {
+          if (itemToDelete) {
+            if (activeTab === 'supplier') deleteSupplierPayment(itemToDelete);
+            else if (activeTab === 'customer') deleteCustomerPayment(itemToDelete);
+            else if (activeTab === 'companyAdvance') deleteCompanyAdvance(itemToDelete);
+            else if (activeTab === 'profitWithdraw') deleteProfitWithdrawal(itemToDelete);
+            else deleteLoan(itemToDelete);
+          }
+        }}
+        onCancel={() => {
+          setIsConfirmOpen(false);
+          setItemToDelete(null);
+        }}
+      />
     </div>
   );
 };

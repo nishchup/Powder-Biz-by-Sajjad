@@ -4,6 +4,7 @@ import { Plus, Trash2, Pencil, X, StickyNote, Calendar, Printer, History, Search
 import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmModal } from './ConfirmModal';
 
 export const Notes: React.FC = () => {
   const { state, addNote, editNote, deleteNote } = useAppStore();
@@ -11,6 +12,7 @@ export const Notes: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -225,7 +227,7 @@ export const Notes: React.FC = () => {
                       <Pencil size={14} />
                     </button>
                     <button 
-                      onClick={() => deleteNote(note.id)}
+                      onClick={() => setDeleteId(note.id)}
                       className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                     >
                       <Trash2 size={14} />
@@ -240,6 +242,18 @@ export const Notes: React.FC = () => {
           ))
         )}
       </div>
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            deleteNote(deleteId);
+            setDeleteId(null);
+          }
+        }}
+        title="Delete Note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+      />
     </motion.div>
   );
 };

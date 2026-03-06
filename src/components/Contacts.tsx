@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { Plus, Trash2, Pencil, X, Users, Tags, Database, Download, Upload, AlertTriangle, Settings, Printer, Shield, History, ChevronLeft, ChevronRight, CheckCircle2, Info, DollarSign } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmModal } from './ConfirmModal';
 
 export const Contacts: React.FC = () => {
   const { 
@@ -20,6 +21,7 @@ export const Contacts: React.FC = () => {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [message, setMessage] = useState<{text: string, type: 'success' | 'error' | 'info'} | null>(null);
   const [importData, setImportData] = useState<any>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; type: 'supplier' | 'customer' | 'category' } | null>(null);
 
   // Check for backup notification
   React.useEffect(() => {
@@ -619,9 +621,9 @@ export const Contacts: React.FC = () => {
                           </button>
                           <button 
                             onClick={() => {
-                              if (activeTab === 'suppliers') deleteSupplier(item.id);
-                              else if (activeTab === 'customers') deleteCustomer(item.id);
-                              else deleteExpenseCategory(item.id);
+                              if (activeTab === 'suppliers') setDeleteConfirm({ id: item.id, type: 'supplier' });
+                              else if (activeTab === 'customers') setDeleteConfirm({ id: item.id, type: 'customer' });
+                              else setDeleteConfirm({ id: item.id, type: 'category' });
                             }}
                             className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
                           >
@@ -637,6 +639,20 @@ export const Contacts: React.FC = () => {
           </div>
         </motion.div>
       )}
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          if (deleteConfirm) {
+            if (deleteConfirm.type === 'supplier') deleteSupplier(deleteConfirm.id);
+            if (deleteConfirm.type === 'customer') deleteCustomer(deleteConfirm.id);
+            if (deleteConfirm.type === 'category') deleteExpenseCategory(deleteConfirm.id);
+            setDeleteConfirm(null);
+          }
+        }}
+        title={`Delete ${deleteConfirm?.type === 'category' ? 'Category' : deleteConfirm?.type === 'supplier' ? 'Supplier' : 'Customer'}`}
+        message={`Are you sure you want to delete this ${deleteConfirm?.type}? This action cannot be undone.`}
+      />
     </motion.div>
   );
 };
