@@ -609,10 +609,33 @@ export const Reports: React.FC = () => {
           </div>
 
           <div className="glass-panel rounded-3xl overflow-hidden">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <div className="p-6 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
               <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Supplier Advances & Dues</h3>
-              <div className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest">
-                Balance Tracking
+              <div className="flex items-center gap-3">
+                {(() => {
+                  const supplierBalances = state.suppliers.map(s => {
+                    const supplierPurchases = state.purchases.filter(p => p.supplierName === s.name);
+                    const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
+                    const totalPaidPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
+                    const totalPayments = state.supplierPayments.filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
+                    const totalPaid = totalPaidPurchases + totalPayments;
+                    return totalPaid - totalBilled;
+                  });
+
+                  const totalAdvance = supplierBalances.filter(b => b > 0).reduce((sum, b) => sum + b, 0);
+                  const totalDues = supplierBalances.filter(b => b < 0).reduce((sum, b) => sum + Math.abs(b), 0);
+
+                  return (
+                    <>
+                      <div className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest">
+                        Total Advance: ৳{totalAdvance.toLocaleString()}
+                      </div>
+                      <div className="bg-rose-100 text-rose-700 px-4 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest">
+                        Total Dues: ৳{totalDues.toLocaleString()}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             <div className="overflow-x-auto custom-scrollbar">

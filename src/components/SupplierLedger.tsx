@@ -11,6 +11,14 @@ export const SupplierLedger: React.FC = () => {
     end: ''
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSupplier, dateRange]);
+
   const suppliers = state.suppliers;
 
   const ledgerData = useMemo(() => {
@@ -44,14 +52,24 @@ export const SupplierLedger: React.FC = () => {
         reference: `PY-${p.id.substring(0, 6).toUpperCase()}`
       }));
 
-    const combined = [...purchases, ...payments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Sort ascending first to calculate running balance correctly
+    const chronological = [...purchases, ...payments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    let runningBalance = 0;
+    const withBalance = chronological.map(item => {
+      runningBalance += (item.debit - item.credit);
+      return { ...item, balance: runningBalance };
+    });
 
     // Filter by date
-    return combined.filter(item => {
+    const filtered = withBalance.filter(item => {
       if (dateRange.start && item.date < dateRange.start) return false;
       if (dateRange.end && item.date > dateRange.end) return false;
       return true;
     });
+
+    // Sort descending for display (newest first)
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.purchases, state.supplierPayments, selectedSupplier, dateRange]);
 
   const totals = useMemo(() => {
@@ -62,6 +80,8 @@ export const SupplierLedger: React.FC = () => {
   }, [ledgerData]);
 
   const balance = totals.debit - totals.credit;
+  const totalPages = Math.ceil(ledgerData.length / itemsPerPage);
+  const paginatedData = ledgerData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-8" id="supplier-ledger-content">
@@ -155,7 +175,7 @@ export const SupplierLedger: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {ledgerData.length === 0 ? (
+                  {paginatedData.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-8 py-24 text-center">
                         <div className="flex flex-col items-center justify-center">
@@ -165,33 +185,27 @@ export const SupplierLedger: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    (() => {
-                      let runningBalance = 0;
-                      return ledgerData.map((item) => {
-                        runningBalance += (item.debit - item.credit);
-                        return (
-                          <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-8 py-5 text-sm font-bold text-slate-600">{item.date}</td>
-                            <td className="px-8 py-5 text-sm">
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${item.type === 'Purchase' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                {item.type}
-                              </span>
-                            </td>
-                            <td className="px-8 py-5 text-sm font-black text-slate-400">{item.reference}</td>
-                            <td className="px-8 py-5 text-sm font-medium text-slate-700">{item.description}</td>
-                            <td className="px-8 py-5 text-sm text-right font-black text-slate-900">
-                              {item.debit > 0 ? `৳${item.debit.toLocaleString()}` : '—'}
-                            </td>
-                            <td className="px-8 py-5 text-sm text-right font-black text-emerald-600">
-                              {item.credit > 0 ? `৳${item.credit.toLocaleString()}` : '—'}
-                            </td>
-                            <td className={`px-8 py-5 text-sm text-right font-black ${runningBalance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                              ৳{Math.abs(runningBalance).toLocaleString()} {runningBalance > 0 ? '(Dr)' : '(Cr)'}
-                            </td>
-                          </tr>
-                        );
-                      });
-                    })()
+                    paginatedData.map((item: any) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className={`px-8 py-5 text-sm font-bold ${item.type === 'Payment' ? 'text-rose-600' : (item.type === 'Adjusted Payment' ? 'text-emerald-600' : 'text-slate-600')}`}>{item.date}</td>
+                        <td className="px-8 py-5 text-sm">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${item.type === 'Purchase' ? 'bg-blue-100 text-blue-700' : (item.type === 'Payment' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')}`}>
+                            {item.type}
+                          </span>
+                        </td>
+                        <td className={`px-8 py-5 text-sm font-black ${item.type === 'Payment' ? 'text-rose-400' : (item.type === 'Adjusted Payment' ? 'text-emerald-400' : 'text-slate-400')}`}>{item.reference}</td>
+                        <td className={`px-8 py-5 text-sm font-medium ${item.type === 'Payment' ? 'text-rose-700' : (item.type === 'Adjusted Payment' ? 'text-emerald-700' : 'text-slate-700')}`}>{item.description}</td>
+                        <td className="px-8 py-5 text-sm text-right font-black text-slate-900">
+                          {item.debit > 0 ? `৳${item.debit.toLocaleString()}` : '—'}
+                        </td>
+                        <td className="px-8 py-5 text-sm text-right font-black text-emerald-600">
+                          {item.credit > 0 ? `৳${item.credit.toLocaleString()}` : '—'}
+                        </td>
+                        <td className={`px-8 py-5 text-sm text-right font-black ${item.balance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                          ৳{Math.abs(item.balance).toLocaleString()} {item.balance > 0 ? '(Dr)' : '(Cr)'}
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
                 {ledgerData.length > 0 && (
@@ -208,6 +222,34 @@ export const SupplierLedger: React.FC = () => {
                 )}
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="text-sm text-slate-500 font-medium">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, ledgerData.length)} of {ledgerData.length} entries
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm font-bold text-slate-700">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       ) : (
