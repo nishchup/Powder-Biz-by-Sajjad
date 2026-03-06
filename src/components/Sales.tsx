@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, X, Receipt, Printer, TrendingUp, Share2, Download, Search, ChevronLeft, ChevronRight, Sun, AlertCircle } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { ConfirmModal } from './ConfirmModal';
@@ -17,7 +18,7 @@ export const Sales: React.FC = () => {
   const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     customerName: '',
     quantity: '',
     pricePerKg: '',
@@ -42,7 +43,7 @@ export const Sales: React.FC = () => {
     setIsFormOpen(false);
     setEditingId(null);
     setError(null);
-    setFormData({ date: new Date().toISOString().split('T')[0], customerName: '', quantity: '', pricePerKg: '', paidAmount: '', discount: '' });
+    setFormData({ date: getTodayDate(), customerName: '', quantity: '', pricePerKg: '', paidAmount: '', discount: '' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {

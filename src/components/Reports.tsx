@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { PieChart, TrendingUp, Wallet, Package, Sun, Filter, FileText, ShoppingCart, Droplets, Receipt, Printer, Clock, DollarSign } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
@@ -88,7 +89,7 @@ export const Reports: React.FC = () => {
         
         <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
           <button 
-            onClick={() => exportToPDF('reports-content', `powderBiz-report-${new Date().toISOString().split('T')[0]}.pdf`)} 
+            onClick={() => exportToPDF('reports-content', `powderBiz-report-${getTodayDate()}.pdf`)} 
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-slate-900/20 font-bold text-sm"
           >
             <Printer size={18} className="mr-2" /> {t('print')}

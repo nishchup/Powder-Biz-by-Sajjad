@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, X, Truck, Calendar, TrendingUp, TrendingDown, Wallet, ShoppingCart, Printer, FileText, Banknote, Edit2 } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
@@ -17,16 +18,16 @@ export const ProductDelivery: React.FC = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; type: 'delivery' | 'withdrawal' } | null>(null);
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     startDate: '',
-    endDate: new Date().toISOString().split('T')[0],
+    endDate: getTodayDate(),
     description: '',
     totalWetUsed: '',
     totalDryProduced: '',
   });
 
   const [withdrawData, setWithdrawData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     amount: '',
     notes: '',
   });

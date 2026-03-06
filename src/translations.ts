@@ -55,6 +55,8 @@ export const translations = {
     authorizedSignature: 'Authorized Signature',
     cancel: 'Cancel',
     save: 'Save',
+    weather: 'Weather',
+    weatherForecast: 'Weather Forecast',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -111,6 +113,8 @@ export const translations = {
     authorizedSignature: 'অনুমোদিত স্বাক্ষর',
     cancel: 'বাতিল',
     save: 'সংরক্ষণ করুন',
+    weather: 'আবহাওয়া',
+    weatherForecast: 'আবহাওয়ার পূর্বাভাস',
   }
 };
 

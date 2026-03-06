@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, CreditCard, ArrowDownCircle, ArrowUpCircle, HandCoins, Pencil, Printer, X, Search, ChevronLeft, ChevronRight, DollarSign, History } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
@@ -18,7 +19,7 @@ export const Payments: React.FC = () => {
   const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     name: '',
     amount: '',
     description: '',
@@ -38,7 +39,7 @@ export const Payments: React.FC = () => {
   const handleCancel = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ date: new Date().toISOString().split('T')[0], name: '', amount: '', description: '' });
+    setFormData({ date: getTodayDate(), name: '', amount: '', description: '' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {

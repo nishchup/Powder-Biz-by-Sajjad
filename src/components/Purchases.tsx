@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, X, ShoppingCart, Receipt, Printer, Share2, Filter, Search, ChevronLeft, ChevronRight, Wallet } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { ConfirmModal } from './ConfirmModal';
@@ -24,7 +25,7 @@ export const Purchases: React.FC = () => {
   });
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     supplierName: '',
     quantity: '',
     pricePerKg: '',
@@ -86,7 +87,7 @@ export const Purchases: React.FC = () => {
     if (!isAdjust) {
       // Cash payment
       addSupplierPayment({
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayDate(),
         supplierName: selectedPurchaseForDue.supplierName,
         amount: amount,
         remarks: duePaymentData.remarks || `Due payment for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}`,
@@ -96,7 +97,7 @@ export const Purchases: React.FC = () => {
       // Adjust from existing payments (surplus)
       // 1. Add allocated payment
       addSupplierPayment({
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayDate(),
         supplierName: selectedPurchaseForDue.supplierName,
         amount: amount,
         remarks: `Adjusted from existing payments for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`,
@@ -134,7 +135,7 @@ export const Purchases: React.FC = () => {
     setIsFormOpen(false);
     setEditingId(null);
     setFormData({ 
-      date: new Date().toISOString().split('T')[0], 
+      date: getTodayDate(), 
       supplierName: '', 
       quantity: '', 
       pricePerKg: '', 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, CheckCircle2, Circle, Calendar, AlertCircle, Clock, Pencil, X } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +15,7 @@ export const Tasks: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    date: new Date().toISOString().split('T')[0]
+    date: getTodayDate()
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,7 +51,7 @@ export const Tasks: React.FC = () => {
   };
 
   const handleCloseForm = () => {
-    setFormData({ title: '', priority: 'medium', date: new Date().toISOString().split('T')[0] });
+    setFormData({ title: '', priority: 'medium', date: getTodayDate() });
     setEditingId(null);
     setIsFormOpen(false);
   };

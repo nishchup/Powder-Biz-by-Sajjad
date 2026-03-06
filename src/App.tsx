@@ -22,6 +22,7 @@ import { LockScreen } from './components/LockScreen';
 import { Inventory } from './components/Inventory';
 import { SupplierLedger } from './components/SupplierLedger';
 import { CapitalTracking } from './components/CapitalTracking';
+import { WeatherForecast } from './components/WeatherForecast';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -48,6 +49,7 @@ function AppContent() {
       case 'productDelivery': return <ProductDelivery />;
       case 'tasks': return <Tasks />;
       case 'notes': return <Notes />;
+      case 'weather': return <WeatherForecast />;
       default: return <Dashboard />;
     }
   };

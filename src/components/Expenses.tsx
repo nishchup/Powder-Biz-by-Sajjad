@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, X, Wallet, Printer, Search, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
@@ -17,7 +18,7 @@ export const Expenses: React.FC = () => {
   const itemsPerPage = 10;
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     category: '',
     amount: '',
     description: '',
@@ -37,7 +38,7 @@ export const Expenses: React.FC = () => {
   const handleCancel = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ date: new Date().toISOString().split('T')[0], category: '', amount: '', description: '' });
+    setFormData({ date: getTodayDate(), category: '', amount: '', description: '' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock, ArrowUpCircle, PieChart } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock, ArrowUpCircle, PieChart, CloudSun } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 
@@ -37,6 +37,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     { id: 'productDelivery', label: t('productDelivery'), icon: Truck },
     { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
     { id: 'notes', label: t('notes'), icon: StickyNote },
+    { id: 'weather', label: t('weather'), icon: CloudSun },
   ];
 
   // Close mobile menu on resize

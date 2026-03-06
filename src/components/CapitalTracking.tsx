@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Wallet, TrendingUp, TrendingDown, PieChart, ArrowRightLeft, Package, Users, Receipt, DollarSign, Plus, Edit2, Calendar, X } from 'lucide-react';
 import { useTranslation } from '../translations';
 
@@ -11,7 +12,7 @@ export const CapitalTracking: React.FC = () => {
 
   const [dateRange, setDateRange] = useState({
     start: '',
-    end: new Date().toISOString().split('T')[0]
+    end: getTodayDate()
   });
 
   // Auto-select start date based on last sale date

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore, LaborRecord } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, Clock, User, Briefcase, DollarSign, Calendar, Search, Filter, X, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,7 +16,7 @@ export const LaborTracking: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     workerName: '',
     processName: 'Drying',
     hours: 0,
@@ -53,7 +54,7 @@ export const LaborTracking: React.FC = () => {
 
   const handleCloseForm = () => {
     setFormData({
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDate(),
       workerName: '',
       processName: 'Drying',
       hours: 0,

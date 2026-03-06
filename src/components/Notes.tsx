@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
+import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, X, StickyNote, Calendar, Printer, History, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
@@ -15,7 +16,7 @@ export const Notes: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     title: '',
     content: '',
   });
@@ -34,7 +35,7 @@ export const Notes: React.FC = () => {
     setIsFormOpen(false);
     setEditingId(null);
     setFormData({ 
-      date: new Date().toISOString().split('T')[0], 
+      date: getTodayDate(), 
       title: '', 
       content: '' 
     });
