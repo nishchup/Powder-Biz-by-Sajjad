@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
-import { Wallet, TrendingUp, TrendingDown, PieChart, ArrowRightLeft, Package, Users, Receipt, DollarSign, Plus, Edit2, Calendar } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, PieChart, ArrowRightLeft, Package, Users, Receipt, DollarSign, Plus, Edit2, Calendar, X } from 'lucide-react';
 import { useTranslation } from '../translations';
 
 export const CapitalTracking: React.FC = () => {
@@ -79,15 +79,16 @@ export const CapitalTracking: React.FC = () => {
       + totalLoans 
       + totalCompanyAdvances;
 
-    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash;
-    const difference = totalAssets - state.initialCapital;
-
     // Filtered Expenses for the period
     const filteredExpenses = state.expenses.filter(e => {
       if (dateRange.start && e.date < dateRange.start) return false;
       if (dateRange.end && e.date > dateRange.end) return false;
       return true;
     }).reduce((sum, e) => sum + e.amount, 0);
+
+    const isDateSelected = dateRange.start !== '' && dateRange.end !== '';
+    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + (isDateSelected ? filteredExpenses : 0);
+    const difference = totalAssets - state.initialCapital;
 
     return {
       wetStockValue,
@@ -129,6 +130,15 @@ export const CapitalTracking: React.FC = () => {
                 onChange={e => setDateRange({...dateRange, end: e.target.value})}
                 className="bg-transparent text-xs font-black text-slate-900 outline-none"
               />
+              {(dateRange.start || dateRange.end) && (
+                <button 
+                  onClick={() => setDateRange({ start: '', end: '' })}
+                  className="ml-2 p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-rose-500 transition-colors"
+                  title="Clear Dates"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -257,6 +267,7 @@ export const CapitalTracking: React.FC = () => {
                 { label: 'Dry Stock', value: stats.dryStockValue, color: 'bg-amber-500' },
                 { label: 'Supplier Advances', value: stats.supplierAdvances, color: 'bg-indigo-500' },
                 { label: 'In-hand Cash', value: stats.inhandCash, color: 'bg-emerald-500' },
+                ...(dateRange.start && dateRange.end ? [{ label: 'Period Expenses', value: stats.filteredExpenses, color: 'bg-rose-500' }] : [])
               ].map((item, idx) => {
                 const percentage = stats.totalAssets > 0 ? (item.value / stats.totalAssets) * 100 : 0;
                 return (
