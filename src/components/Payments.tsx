@@ -309,45 +309,52 @@ export const Payments: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((p: any) => (
-                  <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5 text-sm font-bold text-slate-600">{p.date}</td>
-                    {activeTab !== 'companyAdvance' && (
-                      <td className="px-8 py-5 text-sm font-black text-slate-900">
-                        {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : p.personName}
+                paginatedData.map((p: any) => {
+                  const isAdjusted = activeTab === 'supplier' && p.remarks && (p.remarks.includes('Adjusted from existing payments') || p.remarks.includes('Offset for adjustment'));
+                  const rowColor = activeTab === 'supplier' 
+                    ? (isAdjusted ? 'text-blue-600' : 'text-emerald-600')
+                    : 'text-slate-900';
+                  
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className={`px-8 py-5 text-sm font-bold ${activeTab === 'supplier' ? rowColor : 'text-slate-600'}`}>{p.date}</td>
+                      {activeTab !== 'companyAdvance' && (
+                        <td className={`px-8 py-5 text-sm font-black ${rowColor}`}>
+                          {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : p.personName}
+                        </td>
+                      )}
+                      <td className="px-8 py-5 text-sm text-right">
+                        <span className={`font-black ${rowColor}`}>৳{(p.amount || 0).toLocaleString()}</span>
                       </td>
-                    )}
-                    <td className="px-8 py-5 text-sm text-right">
-                      <span className="font-black text-slate-900">৳{(p.amount || 0).toLocaleString()}</span>
-                    </td>
-                    {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && <td className="px-8 py-5 text-sm font-medium text-slate-500">
-                      {activeTab === 'supplier' ? p.remarks : p.description}
-                    </td>}
-                    <td className="px-8 py-5 text-center print:hidden">
-                      <div className="flex justify-center space-x-2">
-                        <button 
-                          onClick={() => handleEdit(p)}
-                          className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center active:scale-90"
-                          title="Edit"
-                        >
-                          <Pencil size={18} />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (activeTab === 'supplier') deleteSupplierPayment(p.id);
-                            else if (activeTab === 'customer') deleteCustomerPayment(p.id);
-                            else if (activeTab === 'companyAdvance') deleteCompanyAdvance(p.id);
-                            else deleteLoan(p.id);
-                          }}
-                          className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && <td className={`px-8 py-5 text-sm font-medium ${activeTab === 'supplier' ? rowColor : 'text-slate-500'}`}>
+                        {activeTab === 'supplier' ? p.remarks : p.description}
+                      </td>}
+                      <td className="px-8 py-5 text-center print:hidden">
+                        <div className="flex justify-center space-x-2">
+                          <button 
+                            onClick={() => handleEdit(p)}
+                            className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center active:scale-90"
+                            title="Edit"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if (activeTab === 'supplier') deleteSupplierPayment(p.id);
+                              else if (activeTab === 'customer') deleteCustomerPayment(p.id);
+                              else if (activeTab === 'companyAdvance') deleteCompanyAdvance(p.id);
+                              else deleteLoan(p.id);
+                            }}
+                            className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
+                            title="Delete"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
