@@ -178,9 +178,14 @@ export const CapitalTracking: React.FC = () => {
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Dry Stock Value</p>
           <p className="text-3xl font-black text-slate-900">৳{stats.dryStockValue.toLocaleString()}</p>
-          <p className="text-xs font-bold text-slate-400 mt-2">
-            {dryStock.toFixed(2)} kg (Eq. {(dryStock * (stats.conversionRatio || 1)).toFixed(2)} kg Wet) @ ৳{stats.avgWetPrice.toFixed(2)}/kg
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs font-bold text-slate-400">
+              {dryStock.toFixed(2)} kg (Eq. {(dryStock * (stats.conversionRatio || 1)).toFixed(2)} kg Wet)
+            </p>
+            <p className="text-xs font-bold text-amber-600">
+              Avg Purchase Price: ৳{stats.avgWetPrice.toFixed(2)}/kg
+            </p>
+          </div>
         </div>
 
         <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group">
