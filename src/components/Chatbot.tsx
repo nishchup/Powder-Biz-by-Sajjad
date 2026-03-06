@@ -62,14 +62,17 @@ export const Chatbot: React.FC = () => {
       - Today's Sales: ${todaySalesAmount} BDT (${todaySalesQty} kg)
       
       Recent Activity:
-      - Last Purchase: ${state.purchases[0]?.date || 'None'}
-      - Last Sale: ${state.sales[0]?.date || 'None'}
+      - Last Purchase: ${[...state.purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.date || 'None'}
+      - Last Sale: ${[...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.date || 'None'}
       
-      Recent Purchases (JSON):
-      ${JSON.stringify(state.purchases.slice(0, 10))}
+      Recent Purchases (Last 30 records):
+      ${JSON.stringify([...state.purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30))}
       
-      Recent Sales (JSON):
-      ${JSON.stringify(state.sales.slice(0, 10))}
+      Recent Sales (Last 30 records):
+      ${JSON.stringify([...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30))}
+      
+      Recent Conversions (Last 10 records):
+      ${JSON.stringify([...state.conversions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10))}
     `;
   };
 
