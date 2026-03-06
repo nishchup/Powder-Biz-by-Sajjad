@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../store';
 import { Plus, Trash2, Pencil, X, Users, Tags, Database, Download, Upload, AlertTriangle, Settings, Printer, Shield, History, ChevronLeft, ChevronRight, CheckCircle2, Info, DollarSign } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from './ConfirmModal';
 
 export const Contacts: React.FC = () => {
@@ -146,7 +147,13 @@ export const Contacts: React.FC = () => {
         customerPayments: Array.isArray(importData.customerPayments) ? importData.customerPayments : [],
         notes: Array.isArray(importData.notes) ? importData.notes : [],
         loans: Array.isArray(importData.loans) ? importData.loans : [],
+        companyAdvances: Array.isArray(importData.companyAdvances) ? importData.companyAdvances : [],
         productDeliveries: Array.isArray(importData.productDeliveries) ? importData.productDeliveries : [],
+        profitWithdrawals: Array.isArray(importData.profitWithdrawals) ? importData.profitWithdrawals : [],
+        tasks: Array.isArray(importData.tasks) ? importData.tasks : [],
+        laborRecords: Array.isArray(importData.laborRecords) ? importData.laborRecords : [],
+        appPin: importData.appPin || '1234',
+        lastBackupTime: importData.lastBackupTime || null,
         language: importData.language || 'en',
       });
       showMessage("Data imported successfully!", 'success');
@@ -641,7 +648,7 @@ export const Contacts: React.FC = () => {
       )}
       <ConfirmModal
         isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        onCancel={() => setDeleteConfirm(null)}
         onConfirm={() => {
           if (deleteConfirm) {
             if (deleteConfirm.type === 'supplier') deleteSupplier(deleteConfirm.id);

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../store';
 import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, CreditCard, ArrowDownCircle, ArrowUpCircle, HandCoins, Pencil, Printer, X, Search, ChevronLeft, ChevronRight, DollarSign, History } from 'lucide-react';
@@ -96,11 +97,11 @@ export const Payments: React.FC = () => {
 
   const activeData = getActiveData();
   
-  const filteredData = activeData.filter(p => {
+  const filteredData = activeData.filter((p: any) => {
     const name = activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : activeTab === 'profitWithdraw' ? p.deliveryId : '';
     const description = p.description || p.remarks || p.notes || '';
-    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           description.toLowerCase().includes(searchTerm.toLowerCase());
+    return (name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+           (description || '').toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const sortedData = [...filteredData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

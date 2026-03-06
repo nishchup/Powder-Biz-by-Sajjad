@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { Cloud, CloudRain, CloudLightning, Sun, CloudSun, Wind, Droplets, Thermometer, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
@@ -20,8 +21,8 @@ export const WeatherForecast: React.FC = () => {
     const fetchWeather = async () => {
       try {
         setLoading(true);
-        // Default to Dhaka, Bangladesh if location not available
-        const response = await fetch('https://wttr.in/Dhaka?format=j1');
+        // Default to Jamalpur, Bangladesh
+        const response = await fetch('https://wttr.in/Jamalpur?format=j1');
         if (!response.ok) throw new Error('Failed to fetch weather data');
         const data = await response.json();
         setWeather(data);

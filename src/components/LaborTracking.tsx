@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useAppStore, LaborRecord } from '../store';
 import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, Clock, User, Briefcase, DollarSign, Calendar, Search, Filter, X, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { useTranslation } from '../translations';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from './ConfirmModal';
 
 export const LaborTracking: React.FC = () => {
@@ -377,7 +378,7 @@ export const LaborTracking: React.FC = () => {
       </motion.div>
       <ConfirmModal
         isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
+        onCancel={() => setDeleteId(null)}
         onConfirm={() => {
           if (deleteId) {
             deleteLaborRecord(deleteId);

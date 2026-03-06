@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import * as React from 'react';
+import { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
 import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, X, Truck, Calendar, TrendingUp, TrendingDown, Wallet, ShoppingCart, Printer, FileText, Banknote, Edit2 } from 'lucide-react';
@@ -749,7 +750,7 @@ export const ProductDelivery: React.FC = () => {
       )}
       <ConfirmModal
         isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        onCancel={() => setDeleteConfirm(null)}
         onConfirm={() => {
           if (deleteConfirm) {
             if (deleteConfirm.type === 'delivery') {

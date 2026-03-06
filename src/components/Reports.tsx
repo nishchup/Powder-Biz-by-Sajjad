@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import * as React from 'react';
+import { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
 import { getTodayDate } from '../utils/dateUtils';
 import { PieChart, TrendingUp, Wallet, Package, Sun, Filter, FileText, ShoppingCart, Droplets, Receipt, Printer, Clock, DollarSign } from 'lucide-react';

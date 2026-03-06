@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useAppStore } from '../store';
 import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';

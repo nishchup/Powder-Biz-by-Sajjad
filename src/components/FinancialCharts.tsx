@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react';
 import { 
   BarChart, 
   Bar, 
@@ -81,7 +82,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ startDate, end
                 axisLine={false} 
                 tickLine={false} 
                 tick={{fill: '#64748b', fontSize: 12}}
-                formatter={(value: number) => `৳${value.toLocaleString()}`}
+                tickFormatter={(value: number) => `৳${value.toLocaleString()}`}
               />
               <Tooltip 
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}

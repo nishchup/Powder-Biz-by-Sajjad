@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react';
 import { useAppStore } from '../store';
 import { Package, Sun, ArrowDownRight, ArrowUpRight, Printer, History } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 export const Inventory: React.FC = () => {
   const { state, wetStock, dryStock } = useAppStore();

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { AppProvider } from './store';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
@@ -23,6 +24,9 @@ import { Inventory } from './components/Inventory';
 import { SupplierLedger } from './components/SupplierLedger';
 import { CapitalTracking } from './components/CapitalTracking';
 import { WeatherForecast } from './components/WeatherForecast';
+import { WeatherBanner } from './components/WeatherBanner';
+import { Chatbot } from './components/Chatbot';
+import { AnimatePresence } from 'motion/react';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -56,7 +60,9 @@ function AppContent() {
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} onLock={() => setIsLocked(true)}>
+      <WeatherBanner />
       {renderContent()}
+      <Chatbot />
     </Layout>
   );
 }

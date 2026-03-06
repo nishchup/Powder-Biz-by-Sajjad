@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../store';
 import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, X, StickyNote, Calendar, Printer, History, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../translations';
 import { exportToPDF } from '../services/pdfService';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from './ConfirmModal';
 
 export const Notes: React.FC = () => {
@@ -245,7 +246,7 @@ export const Notes: React.FC = () => {
       </div>
       <ConfirmModal
         isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
+        onCancel={() => setDeleteId(null)}
         onConfirm={() => {
           if (deleteId) {
             deleteNote(deleteId);

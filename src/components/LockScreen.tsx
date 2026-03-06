@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { Lock, Unlock, AlertCircle, RotateCcw } from 'lucide-react';
 import { useAppStore } from '../store';
 

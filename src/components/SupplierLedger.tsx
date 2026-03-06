@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import * as React from 'react';
+import { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
 import { Search, Filter, Printer, Calendar, User, ArrowUpCircle, ShoppingCart, Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';

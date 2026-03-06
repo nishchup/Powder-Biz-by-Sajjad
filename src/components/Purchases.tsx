@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../store';
 import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, X, ShoppingCart, Receipt, Printer, Share2, Filter, Search, ChevronLeft, ChevronRight, Wallet } from 'lucide-react';

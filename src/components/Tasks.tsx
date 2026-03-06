@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../store';
 import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, CheckCircle2, Circle, Calendar, AlertCircle, Clock, Pencil, X } from 'lucide-react';
 import { useTranslation } from '../translations';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from './ConfirmModal';
 
 export const Tasks: React.FC = () => {
@@ -238,7 +239,7 @@ export const Tasks: React.FC = () => {
       </div>
       <ConfirmModal
         isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
+        onCancel={() => setDeleteId(null)}
         onConfirm={() => {
           if (deleteId) {
             deleteTask(deleteId);

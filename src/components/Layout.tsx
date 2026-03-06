@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock, ArrowUpCircle, PieChart, CloudSun } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
