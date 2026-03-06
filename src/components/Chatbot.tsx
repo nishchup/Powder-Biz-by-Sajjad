@@ -82,7 +82,17 @@ export const Chatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      // Handle both Vite env (Vercel) and AI Studio injected env
+      // @ts-ignore
+      const apiKey = (import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : ''))?.trim();
+      
+      if (!apiKey) {
+        setMessages(prev => [...prev, { role: 'bot', content: "API key is missing. If you are on Vercel, please add VITE_GEMINI_API_KEY to your environment variables." }]);
+        setIsLoading(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       const businessContext = generateBusinessContext();
       
       const historyContents = messages
@@ -112,9 +122,10 @@ export const Chatbot: React.FC = () => {
       
       const botResponse = response.text || "I'm sorry, I couldn't process that request.";
       setMessages(prev => [...prev, { role: 'bot', content: botResponse }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chatbot error:', error);
-      setMessages(prev => [...prev, { role: 'bot', content: "Sorry, I'm having trouble connecting to my brain right now. Please try again later." }]);
+      const errorMessage = error?.message || "Unknown error occurred";
+      setMessages(prev => [...prev, { role: 'bot', content: `Sorry, I'm having trouble connecting to my brain right now. Error details: ${errorMessage}` }]);
     } finally {
       setIsLoading(false);
     }
