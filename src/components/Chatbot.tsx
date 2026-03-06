@@ -15,7 +15,6 @@ export const Chatbot: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -26,16 +25,28 @@ export const Chatbot: React.FC = () => {
   }, [messages]);
 
   const generateBusinessContext = () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    const todayPurchases = state.purchases.filter(p => p.date === today);
+    const todaySales = state.sales.filter(s => s.date === today);
+    
+    const todayPurchasesAmount = todayPurchases.reduce((sum, p) => sum + (p.totalCost || 0), 0);
+    const todaySalesAmount = todaySales.reduce((sum, s) => sum + (s.totalRevenue || 0), 0);
+    const todayPurchasesQty = todayPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0);
+    const todaySalesQty = todaySales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+
     const totalPurchases = state.purchases.reduce((sum, p) => sum + (p.totalCost || 0), 0);
     const totalSales = state.sales.reduce((sum, s) => sum + (s.totalRevenue || 0), 0);
     const totalExpenses = state.expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
     const totalLabor = state.laborRecords.reduce((sum, l) => sum + (l.totalCost || 0), 0);
     
-    const wetStock = state.purchases.filter(p => p.type === 'wet').reduce((sum, p) => sum + p.quantity, 0) - 
-                    state.conversions.reduce((sum, c) => sum + c.wetQuantityUsed, 0);
+    const wetStock = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.quantity || 0), 0) - 
+                    state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
     
-    const dryStock = state.conversions.reduce((sum, c) => sum + c.dryQuantityProduced, 0) - 
-                    state.sales.reduce((sum, s) => sum + s.quantity, 0);
+    const dryStock = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0) +
+                    state.purchases.filter(p => p.type === 'dry').reduce((sum, p) => sum + (p.quantity || 0), 0) - 
+                    state.sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
 
     return `
       Business Data Summary:
@@ -45,15 +56,20 @@ export const Chatbot: React.FC = () => {
       - Total Labor Cost: ${totalLabor} BDT
       - Current Wet Stock: ${wetStock} kg
       - Current Dry Stock: ${dryStock} kg
-      - Number of Purchases: ${state.purchases.length}
-      - Number of Sales: ${state.sales.length}
-      - Number of Conversions: ${state.conversions.length}
-      - Number of Suppliers: ${state.suppliers.length}
-      - Number of Customers: ${state.customers.length}
+      
+      Today's Activity (${today}):
+      - Today's Purchases: ${todayPurchasesAmount} BDT (${todayPurchasesQty} kg)
+      - Today's Sales: ${todaySalesAmount} BDT (${todaySalesQty} kg)
       
       Recent Activity:
       - Last Purchase: ${state.purchases[0]?.date || 'None'}
       - Last Sale: ${state.sales[0]?.date || 'None'}
+      
+      Recent Purchases (JSON):
+      ${JSON.stringify(state.purchases.slice(0, 10))}
+      
+      Recent Sales (JSON):
+      ${JSON.stringify(state.sales.slice(0, 10))}
     `;
   };
 
@@ -69,22 +85,31 @@ export const Chatbot: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const businessContext = generateBusinessContext();
       
-      if (!chatRef.current) {
-        chatRef.current = ai.chats.create({
-          model: "gemini-3-flash-preview",
-          config: {
-            systemInstruction: `You are an expert business analyst for a sawdust production company. Use the provided data to give specific advice. Be concise but thorough.
-            
-            Context about the business:
-            ${businessContext}
-            
-            The user's language preference is ${state.language === 'bn' ? 'Bengali' : 'English'}. If they ask in Bengali, reply in Bengali. Be professional and encouraging.`
-          }
-        });
-      }
-      
-      const response = await chatRef.current.sendMessage({ message: userMessage });
+      const historyContents = messages
+        .filter((msg, idx) => idx > 0) // Skip the initial greeting
+        .map(msg => ({
+          role: msg.role === 'bot' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        }));
+        
+      historyContents.push({
+        role: 'user',
+        parts: [{ text: userMessage }]
+      });
 
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: historyContents,
+        config: {
+          systemInstruction: `You are an expert business analyst for a sawdust production company. Use the provided data to give specific advice. Be concise but thorough.
+          
+          Context about the business:
+          ${businessContext}
+          
+          The user's language preference is ${state.language === 'bn' ? 'Bengali' : 'English'}. If they ask in Bengali, reply in Bengali. Be professional and encouraging.`
+        }
+      });
+      
       const botResponse = response.text || "I'm sorry, I couldn't process that request.";
       setMessages(prev => [...prev, { role: 'bot', content: botResponse }]);
     } catch (error) {
