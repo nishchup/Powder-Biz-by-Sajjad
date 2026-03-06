@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
-import { PieChart, TrendingUp, Wallet, Package, Sun, Filter, FileText, ShoppingCart, Droplets, Receipt, Printer, Clock } from 'lucide-react';
+import { PieChart, TrendingUp, Wallet, Package, Sun, Filter, FileText, ShoppingCart, Droplets, Receipt, Printer, Clock, DollarSign } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
 import { ProductionCharts } from './ProductionCharts';
@@ -12,7 +12,7 @@ export const Reports: React.FC = () => {
   
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [reportTab, setReportTab] = useState<'summary' | 'purchases' | 'drying' | 'sales' | 'expenses' | 'labor' | 'due'>('summary');
+  const [reportTab, setReportTab] = useState<'summary' | 'purchases' | 'drying' | 'sales' | 'expenses' | 'labor' | 'due' | 'profitWithdraw'>('summary');
 
   const filteredPurchases = useMemo(() => {
     return state.purchases.filter(p => {
@@ -154,6 +154,7 @@ export const Reports: React.FC = () => {
           { id: 'expenses', label: 'Expenses', icon: Wallet },
           { id: 'labor', label: 'Labor', icon: Clock },
           { id: 'due', label: 'Dues', icon: Receipt },
+          { id: 'profitWithdraw', label: 'Profit Withdraw', icon: DollarSign },
         ].map((tab) => (
           <button 
             key={tab.id}
@@ -679,6 +680,89 @@ export const Reports: React.FC = () => {
               </table>
             </div>
           </div>
+        </div>
+      )}
+      {reportTab === 'profitWithdraw' && (
+        <div className="glass-panel rounded-3xl overflow-hidden">
+          <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Profit Withdrawal Report</h3>
+            <div className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl font-black text-sm">
+              Total Withdrawn: ৳{(totalProfitWithdrawals || 0).toLocaleString()}
+            </div>
+          </div>
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Delivery Date</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Delivery Description</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Net Profit</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Withdrawn</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Remaining</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {state.productDeliveries.length === 0 ? (
+                  <tr><td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-bold italic">No product deliveries found.</td></tr>
+                ) : (
+                  <>
+                    {state.productDeliveries.map(d => {
+                      const withdrawn = state.profitWithdrawals
+                        .filter(pw => pw.deliveryId === d.id)
+                        .reduce((sum, pw) => sum + pw.amount, 0);
+                      const remaining = d.netProfit - withdrawn;
+                      
+                      return (
+                        <tr key={d.id} className="hover:bg-slate-50 transition-colors group">
+                          <td className="px-8 py-4 text-sm font-bold text-slate-600">{d.date}</td>
+                          <td className="px-8 py-4 text-sm font-extrabold text-slate-900">{d.description}</td>
+                          <td className="px-8 py-4 text-sm text-right font-bold text-emerald-600">৳{d.netProfit.toLocaleString()}</td>
+                          <td className="px-8 py-4 text-sm text-right font-bold text-rose-500">৳{withdrawn.toLocaleString()}</td>
+                          <td className={`px-8 py-4 text-sm text-right font-black ${remaining >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>
+                            ৳{remaining.toLocaleString()}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-slate-900 text-white font-bold">
+                      <td colSpan={2} className="px-8 py-5 text-xs font-black uppercase tracking-[0.2em]">Overall Summary</td>
+                      <td className="px-8 py-5 text-sm text-right font-black text-emerald-400">
+                        ৳{state.productDeliveries.reduce((sum, d) => sum + d.netProfit, 0).toLocaleString()}
+                      </td>
+                      <td className="px-8 py-5 text-sm text-right font-black text-rose-400">
+                        ৳{state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
+                      </td>
+                      <td className="px-8 py-5 text-lg text-right font-black text-indigo-400">
+                        ৳{(state.productDeliveries.reduce((sum, d) => sum + d.netProfit, 0) - state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
+                      </td>
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {state.profitWithdrawals.length > 0 && (
+            <div className="mt-8 p-8 border-t border-slate-100">
+              <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Withdrawal History</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {state.profitWithdrawals
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map(pw => (
+                    <div key={pw.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold text-slate-500">{pw.date}</span>
+                        <span className="text-sm font-black text-rose-600">৳{pw.amount.toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs font-black text-slate-900 mb-1">
+                        Ref: {state.productDeliveries.find(d => d.id === pw.deliveryId)?.description || 'Unknown'}
+                      </p>
+                      {pw.notes && <p className="text-[10px] text-slate-500 italic">"{pw.notes}"</p>}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

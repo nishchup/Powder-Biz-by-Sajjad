@@ -70,8 +70,8 @@ export const CapitalTracking: React.FC = () => {
     // Dry Stock Value = (Wet Equivalent of Dry Stock) * Avg Wet Price
     const dryStockValue = (dryStock * conversionRatio) * avgWetPrice;
 
-    // 3. Supplier Advances (Surplus payments)
-    const supplierAdvances = state.suppliers.reduce((total, supplier) => {
+    // 3. Supplier Advances & Dues
+    const supplierBalances = state.suppliers.map(supplier => {
       const supplierPurchases = state.purchases.filter(p => p.supplierName === supplier.name);
       const supplierPayments = state.supplierPayments.filter(p => p.supplierName === supplier.name);
       
@@ -79,9 +79,11 @@ export const CapitalTracking: React.FC = () => {
       const totalPaidInPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
       const totalStandalonePayments = supplierPayments.reduce((sum, p) => sum + p.amount, 0);
       
-      const balance = (totalPaidInPurchases + totalStandalonePayments) - totalCost;
-      return total + (balance > 0 ? balance : 0);
-    }, 0);
+      return (totalPaidInPurchases + totalStandalonePayments) - totalCost;
+    });
+
+    const supplierAdvances = supplierBalances.reduce((total, balance) => total + (balance > 0 ? balance : 0), 0);
+    const totalDues = supplierBalances.reduce((total, balance) => total + (balance < 0 ? Math.abs(balance) : 0), 0);
 
     // 4. In-hand Cash Calculation
     const totalPurchasePaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
@@ -121,6 +123,7 @@ export const CapitalTracking: React.FC = () => {
       wetStockValue,
       dryStockValue,
       supplierAdvances,
+      totalDues,
       inhandCash,
       totalAssets,
       difference,
@@ -231,7 +234,10 @@ export const CapitalTracking: React.FC = () => {
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Supplier Advances</p>
           <p className="text-3xl font-black text-slate-900">৳{stats.supplierAdvances.toLocaleString()}</p>
-          <p className="text-xs font-bold text-slate-400 mt-2">Prepaid to suppliers</p>
+          <div className="mt-2 pt-2 border-t border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Dues</p>
+            <p className="text-xl font-black text-rose-600">৳{stats.totalDues.toLocaleString()}</p>
+          </div>
         </div>
 
         <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group">

@@ -5,9 +5,9 @@ import { exportToPDF } from '../services/pdfService';
 import { useTranslation } from '../translations';
 
 export const Payments: React.FC = () => {
-  const { state, addSupplierPayment, editSupplierPayment, deleteSupplierPayment, addCustomerPayment, editCustomerPayment, deleteCustomerPayment, addLoan, editLoan, deleteLoan, addCompanyAdvance, editCompanyAdvance, deleteCompanyAdvance } = useAppStore();
+  const { state, addSupplierPayment, editSupplierPayment, deleteSupplierPayment, addCustomerPayment, editCustomerPayment, deleteCustomerPayment, addLoan, editLoan, deleteLoan, addCompanyAdvance, editCompanyAdvance, deleteCompanyAdvance, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal } = useAppStore();
   const t = useTranslation(state.language);
-  const [activeTab, setActiveTab] = useState<'supplier' | 'customer' | 'loan' | 'companyAdvance'>('supplier');
+  const [activeTab, setActiveTab] = useState<'supplier' | 'customer' | 'loan' | 'companyAdvance' | 'profitWithdraw'>('supplier');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,9 +24,9 @@ export const Payments: React.FC = () => {
   const handleEdit = (p: any) => {
     setFormData({
       date: p.date,
-      name: activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : '',
+      name: activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : activeTab === 'profitWithdraw' ? p.deliveryId : '',
       amount: p.amount.toString(),
-      description: p.description || '',
+      description: activeTab === 'profitWithdraw' ? p.notes : (p.description || p.remarks || ''),
     });
     setEditingId(p.id);
     setIsFormOpen(true);
@@ -71,6 +71,13 @@ export const Payments: React.FC = () => {
           addCompanyAdvance({ date: formData.date, amount, description: formData.description });
         }
         handleCancel();
+      } else if (activeTab === 'profitWithdraw') {
+        if (editingId) {
+          editProfitWithdrawal(editingId, { date: formData.date, amount, deliveryId: formData.name, notes: formData.description });
+        } else {
+          addProfitWithdrawal({ date: formData.date, amount, deliveryId: formData.name, notes: formData.description });
+        }
+        handleCancel();
       }
     }
   };
@@ -79,14 +86,15 @@ export const Payments: React.FC = () => {
     if (activeTab === 'supplier') return state.supplierPayments;
     if (activeTab === 'customer') return state.customerPayments;
     if (activeTab === 'companyAdvance') return state.companyAdvances;
+    if (activeTab === 'profitWithdraw') return state.profitWithdrawals;
     return state.loans;
   };
 
   const activeData = getActiveData();
   
   const filteredData = activeData.filter(p => {
-    const name = activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : '';
-    const description = p.description || '';
+    const name = activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : activeTab === 'profitWithdraw' ? p.deliveryId : '';
+    const description = p.description || p.remarks || p.notes || '';
     return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
            description.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -129,6 +137,7 @@ export const Payments: React.FC = () => {
           { id: 'customer', icon: ArrowDownCircle, label: 'Customer (In)' },
           { id: 'loan', icon: HandCoins, label: 'Loans (Deduction)' },
           { id: 'companyAdvance', icon: CreditCard, label: 'Advance (In)' },
+          { id: 'profitWithdraw', icon: DollarSign, label: 'Profit Withdraw' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -191,7 +200,7 @@ export const Payments: React.FC = () => {
                     {activeTab !== 'companyAdvance' && (
                       <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
-                          {activeTab === 'supplier' ? 'Supplier' : activeTab === 'customer' ? 'Customer' : 'Person Name'}
+                          {activeTab === 'supplier' ? 'Supplier' : activeTab === 'customer' ? 'Customer' : activeTab === 'profitWithdraw' ? 'Delivery Reference' : 'Person Name'}
                         </label>
                         {activeTab === 'loan' ? (
                           <input 
@@ -202,6 +211,20 @@ export const Payments: React.FC = () => {
                             onChange={e => setFormData({...formData, name: e.target.value})}
                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
                           />
+                        ) : activeTab === 'profitWithdraw' ? (
+                          <select 
+                            required
+                            value={formData.name}
+                            onChange={e => setFormData({...formData, name: e.target.value})}
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none"
+                          >
+                            <option value="" disabled>Select Delivery</option>
+                            {state.productDeliveries.map(d => (
+                              <option key={d.id} value={d.id}>
+                                {d.date} - {d.description} (Profit: ৳{d.netProfit.toLocaleString()})
+                              </option>
+                            ))}
+                          </select>
                         ) : (
                           <select 
                             required
@@ -234,14 +257,14 @@ export const Payments: React.FC = () => {
                         />
                       </div>
                     </div>
-                    {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && (
+                    {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier' || activeTab === 'profitWithdraw') && (
                       <div className="sm:col-span-2 lg:col-span-3 space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
-                          {activeTab === 'supplier' ? 'Remarks' : 'Description'}
+                          {activeTab === 'supplier' ? 'Remarks' : activeTab === 'profitWithdraw' ? 'Notes' : 'Description'}
                         </label>
                         <input 
                           type="text" 
-                          placeholder={activeTab === 'loan' ? "Loan details..." : activeTab === 'supplier' ? "Payment notes..." : "Advance details..."}
+                          placeholder={activeTab === 'loan' ? "Loan details..." : activeTab === 'supplier' ? "Payment notes..." : activeTab === 'profitWithdraw' ? "Withdrawal notes..." : "Advance details..."}
                           value={formData.description}
                           onChange={e => setFormData({...formData, description: e.target.value})}
                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
@@ -285,12 +308,12 @@ export const Payments: React.FC = () => {
                 <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
                 {activeTab !== 'companyAdvance' && (
                   <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">
-                    {activeTab === 'supplier' ? 'Supplier' : activeTab === 'customer' ? 'Customer' : 'Person'}
+                    {activeTab === 'supplier' ? 'Supplier' : activeTab === 'customer' ? 'Customer' : activeTab === 'profitWithdraw' ? 'Delivery Ref' : 'Person'}
                   </th>
                 )}
                 <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Amount</th>
-                {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">
-                  {activeTab === 'supplier' ? 'Remarks' : 'Description'}
+                {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier' || activeTab === 'profitWithdraw') && <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">
+                  {activeTab === 'supplier' ? 'Remarks' : activeTab === 'profitWithdraw' ? 'Notes' : 'Description'}
                 </th>}
                 <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center print:hidden">Actions</th>
               </tr>
@@ -320,14 +343,14 @@ export const Payments: React.FC = () => {
                       <td className={`px-8 py-5 text-sm font-bold ${activeTab === 'supplier' ? rowColor : 'text-slate-600'}`}>{p.date}</td>
                       {activeTab !== 'companyAdvance' && (
                         <td className={`px-8 py-5 text-sm font-black ${rowColor}`}>
-                          {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : p.personName}
+                          {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'profitWithdraw' ? (state.productDeliveries.find(d => d.id === p.deliveryId)?.description || p.deliveryId) : p.personName}
                         </td>
                       )}
                       <td className="px-8 py-5 text-sm text-right">
                         <span className={`font-black ${rowColor}`}>৳{(p.amount || 0).toLocaleString()}</span>
                       </td>
-                      {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier') && <td className={`px-8 py-5 text-sm font-medium ${activeTab === 'supplier' ? rowColor : 'text-slate-500'}`}>
-                        {activeTab === 'supplier' ? p.remarks : p.description}
+                      {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier' || activeTab === 'profitWithdraw') && <td className={`px-8 py-5 text-sm font-medium ${activeTab === 'supplier' ? rowColor : 'text-slate-500'}`}>
+                        {activeTab === 'supplier' ? p.remarks : activeTab === 'profitWithdraw' ? p.notes : p.description}
                       </td>}
                       <td className="px-8 py-5 text-center print:hidden">
                         <div className="flex justify-center space-x-2">
@@ -343,6 +366,7 @@ export const Payments: React.FC = () => {
                               if (activeTab === 'supplier') deleteSupplierPayment(p.id);
                               else if (activeTab === 'customer') deleteCustomerPayment(p.id);
                               else if (activeTab === 'companyAdvance') deleteCompanyAdvance(p.id);
+                              else if (activeTab === 'profitWithdraw') deleteProfitWithdrawal(p.id);
                               else deleteLoan(p.id);
                             }}
                             className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
