@@ -21,6 +21,7 @@ import { LaborTracking } from './components/LaborTracking';
 import { LockScreen } from './components/LockScreen';
 import { Inventory } from './components/Inventory';
 import { SupplierLedger } from './components/SupplierLedger';
+import { CapitalTracking } from './components/CapitalTracking';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -42,6 +43,7 @@ function AppContent() {
       case 'labor': return <LaborTracking />;
       case 'payments': return <Payments />;
       case 'reports': return <Reports />;
+      case 'capitalTracking': return <CapitalTracking />;
       case 'supplierLedger': return <SupplierLedger />;
       case 'productDelivery': return <ProductDelivery />;
       case 'tasks': return <Tasks />;
