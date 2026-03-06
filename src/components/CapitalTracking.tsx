@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { Wallet, TrendingUp, TrendingDown, PieChart, ArrowRightLeft, Package, Users, Receipt, DollarSign, Plus, Edit2, Calendar, X } from 'lucide-react';
 import { useTranslation } from '../translations';
@@ -10,9 +10,36 @@ export const CapitalTracking: React.FC = () => {
   const [newCapital, setNewCapital] = useState(state.initialCapital.toString());
 
   const [dateRange, setDateRange] = useState({
-    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+    start: '',
     end: new Date().toISOString().split('T')[0]
   });
+
+  // Auto-select start date based on last sale date
+  useEffect(() => {
+    if (state.sales.length > 0) {
+      const dates = state.sales.map(s => new Date(s.date).getTime());
+      const lastSaleTime = Math.max(...dates);
+      const lastSaleDate = new Date(lastSaleTime);
+      
+      // Calculate next day
+      const nextDay = new Date(lastSaleDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      
+      const nextDayStr = nextDay.toISOString().split('T')[0];
+      
+      setDateRange(prev => ({
+        ...prev,
+        start: nextDayStr
+      }));
+    } else {
+      // Fallback to first day of current month if no sales
+      const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+      setDateRange(prev => ({
+        ...prev,
+        start: firstDay
+      }));
+    }
+  }, [state.sales.length]); // Re-run if sales count changes
 
   const handleSaveCapital = () => {
     const amount = parseFloat(newCapital) || 0;
