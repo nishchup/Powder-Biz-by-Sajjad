@@ -85,7 +85,17 @@ export const CapitalTracking: React.FC = () => {
     });
 
     const supplierAdvances = supplierBalances.reduce((total, balance) => total + (balance > 0 ? balance : 0), 0);
-    const totalDues = supplierBalances.reduce((total, balance) => total + (balance < 0 ? Math.abs(balance) : 0), 0);
+    const supplierDues = supplierBalances.reduce((total, balance) => total + (balance < 0 ? Math.abs(balance) : 0), 0);
+
+    const totalCustomerDue = state.customers.reduce((sum, c) => {
+      const customerSales = state.sales.filter(s => s.customerName === c.name);
+      const totalBilled = customerSales.reduce((sum, s) => sum + s.totalRevenue, 0);
+      const totalPaidSales = customerSales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
+      const totalPayments = state.customerPayments.filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
+      return sum + (totalBilled - (totalPaidSales + totalPayments));
+    }, 0);
+
+    const totalDues = supplierDues + totalCustomerDue;
 
     // 4. In-hand Cash Calculation
     const totalPurchasePaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
@@ -277,6 +287,10 @@ export const CapitalTracking: React.FC = () => {
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">In-hand Cash</p>
           <p className="text-3xl font-black text-emerald-600">৳{stats.inhandCash.toLocaleString()}</p>
+          <div className="mt-1">
+            <p className="text-[10px] font-bold text-rose-500">Total Dues: ৳{stats.totalDues.toLocaleString()}</p>
+            <p className="text-xs font-black text-slate-700">Total: ৳{(stats.inhandCash + stats.totalDues).toLocaleString()}</p>
+          </div>
           <p className="text-xs font-bold text-slate-400 mt-2">Available liquid cash</p>
         </div>
       </div>

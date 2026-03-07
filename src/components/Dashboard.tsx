@@ -117,6 +117,12 @@ export const Dashboard: React.FC = () => {
           value={`৳${(inhandCash || 0).toLocaleString()}`} 
           icon={DollarSign} 
           color="bg-indigo-500" 
+          extraInfo={
+            <div className="mt-1">
+              <p className="text-[10px] font-bold text-rose-500">Dues: ৳{(totalCustomerDue + totalSupplierDue).toLocaleString()}</p>
+              <p className="text-[11px] font-black text-slate-700">Total: ৳{(inhandCash + totalCustomerDue + totalSupplierDue).toLocaleString()}</p>
+            </div>
+          }
         />
         <StatCard 
           title="Net Profit" 
@@ -155,6 +161,10 @@ export const Dashboard: React.FC = () => {
               <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Inhand Cash</p>
                 <h4 className="text-4xl font-black text-indigo-600">৳{inhandCash.toLocaleString()}</h4>
+                <div className="mt-2">
+                  <p className="text-xs font-bold text-rose-500">Total Dues: ৳{(totalCustomerDue + totalSupplierDue).toLocaleString()}</p>
+                  <p className="text-sm font-black text-slate-700 mt-1">Total: ৳{(inhandCash + totalCustomerDue + totalSupplierDue).toLocaleString()}</p>
+                </div>
                 
                 <div className="mt-6 space-y-3">
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
@@ -320,7 +330,7 @@ export const Dashboard: React.FC = () => {
   );
 };
 
-const StatCard = ({ title, value, icon: Icon, color }: any) => (
+const StatCard = ({ title, value, icon: Icon, color, extraInfo }: any) => (
   <div 
     className="glass-panel p-6 rounded-3xl flex items-center group cursor-default"
   >
@@ -330,6 +340,7 @@ const StatCard = ({ title, value, icon: Icon, color }: any) => (
     <div>
       <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
       <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
+      {extraInfo}
     </div>
   </div>
 );
