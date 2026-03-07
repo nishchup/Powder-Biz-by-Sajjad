@@ -59,6 +59,35 @@ export const Dashboard: React.FC = () => {
 
   const wetStockValue = calculateFIFOValue(wetStock, wetPurchases);
 
+  const calculateDryStockFIFOValue = () => {
+    const inflows = [
+      ...state.conversions.map(c => ({
+        date: c.date,
+        quantity: c.dryQuantityProduced || 0,
+        cost: (c.wetQuantityUsed || 0) * (c.purchasePrice || 0)
+      })),
+      ...state.purchases.filter(p => p.type === 'dry').map(p => ({
+        date: p.date,
+        quantity: p.quantity || 0,
+        cost: p.totalCost
+      }))
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const totalSold = state.sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+    let soldRemaining = totalSold;
+    
+    return inflows.reduce((totalValue, inflow) => {
+      const takeFromThis = Math.min(inflow.quantity, soldRemaining);
+      const remainingInInflow = inflow.quantity - takeFromThis;
+      soldRemaining -= takeFromThis;
+      
+      const unitCost = inflow.quantity > 0 ? inflow.cost / inflow.quantity : 0;
+      return totalValue + (remainingInInflow * unitCost);
+    }, 0);
+  };
+
+  const dryStockValue = calculateDryStockFIFOValue();
+
   const expensesAfterLastSale = state.expenses.filter(e => lastSaleDate && e.date > lastSaleDate);
   const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDate && l.date > lastSaleDate);
   const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
@@ -67,8 +96,6 @@ export const Dashboard: React.FC = () => {
   const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
   const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
   const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
-  
-  const dryStockValue = calculateFIFOValue(dryStock * conversionRatio, wetPurchases);
 
   let totalSupplierDue = 0;
   let totalSupplierAdvance = 0;
