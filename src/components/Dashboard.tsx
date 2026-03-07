@@ -40,20 +40,6 @@ export const Dashboard: React.FC = () => {
     
   const remainProfitSinceRef = netProfitSinceRef - withdrawalsSinceRef;
 
-  const lastSaleDate = state.sales.length > 0 
-    ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
-    : null;
-
-  const expensesAfterLastSale = state.expenses
-    .filter(e => !lastSaleDate || e.date > lastSaleDate)
-    .reduce((sum, e) => sum + e.amount, 0);
-  
-  const laborAfterLastSale = state.laborRecords
-    .filter(l => !lastSaleDate || l.date > lastSaleDate)
-    .reduce((sum, l) => sum + l.totalCost, 0);
-
-  const totalExpensesForInhand = expensesAfterLastSale + laborAfterLastSale;
-
   const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
   const avgWetPrice = wetPurchases.length > 0 
     ? wetPurchases.reduce((sum, p) => sum + p.pricePerKg, 0) / wetPurchases.length 
@@ -85,7 +71,7 @@ export const Dashboard: React.FC = () => {
     return sum + (totalBilled - (totalPaidSales + totalPayments));
   }, 0);
 
-  const baseInhand = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance + totalExpensesForInhand);
+  const baseInhand = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance);
   const inhandCash = withdrawalsSinceRef > 0 ? baseInhand - withdrawalsSinceRef : baseInhand + remainProfitSinceRef;
 
   return (
@@ -186,10 +172,6 @@ export const Dashboard: React.FC = () => {
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
                     <span>Supplier Advance (-)</span>
                     <span className="text-rose-500">৳{totalSupplierAdvance.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Expenses (After Last Sale) (-)</span>
-                    <span className="text-rose-500">৳{totalExpensesForInhand.toLocaleString()}</span>
                   </div>
                   {withdrawalsSinceRef > 0 ? (
                     <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">

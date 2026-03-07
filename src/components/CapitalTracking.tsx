@@ -137,14 +137,13 @@ export const CapitalTracking: React.FC = () => {
     const baseInhand = state.initialCapital 
       - wetStockValue 
       - dryStockValue 
-      - supplierAdvances 
-      - currentExpenses;
+      - supplierAdvances;
 
     const inhandCash = withdrawalsSinceRef > 0 
       ? baseInhand - withdrawalsSinceRef 
       : baseInhand + remainProfitSinceRef;
 
-    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + currentExpenses;
+    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash;
     const difference = totalAssets - state.initialCapital;
 
     return {
@@ -342,10 +341,6 @@ export const CapitalTracking: React.FC = () => {
                       <span>Supplier Advances (-)</span>
                       <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Expenses (-)</span>
-                      <span className="text-rose-400">৳{(dateRange.start && dateRange.end ? (stats.filteredExpenses + stats.filteredLabor) : (stats.totalExpensesAllTime + stats.totalLabor)).toLocaleString()}</span>
-                    </div>
                     {stats.withdrawalsSinceRef > 0 ? (
                       <div className="flex justify-between">
                         <span>Profit Withdraw (Since 04-Mar) (-)</span>
@@ -380,8 +375,7 @@ export const CapitalTracking: React.FC = () => {
                 { label: 'Wet Stock', value: stats.wetStockValue, color: 'bg-blue-500' },
                 { label: 'Dry Stock', value: stats.dryStockValue, color: 'bg-amber-500' },
                 { label: 'Supplier Advances', value: stats.supplierAdvances, color: 'bg-indigo-500' },
-                { label: 'In-hand Cash', value: stats.inhandCash, color: 'bg-emerald-500' },
-                ...(dateRange.start && dateRange.end ? [{ label: 'Period Expenses', value: stats.filteredExpenses, color: 'bg-rose-500' }] : [])
+                { label: 'In-hand Cash', value: stats.inhandCash, color: 'bg-emerald-500' }
               ].map((item, idx) => {
                 const percentage = stats.totalAssets > 0 ? (item.value / stats.totalAssets) * 100 : 0;
                 return (
