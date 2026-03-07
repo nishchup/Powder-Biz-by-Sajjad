@@ -53,12 +53,12 @@ export const CapitalTracking: React.FC = () => {
     // 1. Average Purchase Prices
     const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
     const avgWetPrice = wetPurchases.length > 0 
-      ? wetPurchases.reduce((sum, p) => sum + p.pricePerKg, 0) / wetPurchases.length 
+      ? wetPurchases.reduce((sum, p) => sum + p.totalCost, 0) / wetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
       : 0;
 
     const dryPurchases = state.purchases.filter(p => p.type === 'dry');
     const avgDryPrice = dryPurchases.length > 0 
-      ? dryPurchases.reduce((sum, p) => sum + p.pricePerKg, 0) / dryPurchases.length 
+      ? dryPurchases.reduce((sum, p) => sum + p.totalCost, 0) / dryPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
       : 0;
 
     // 2. Stock Values
@@ -92,33 +92,38 @@ export const CapitalTracking: React.FC = () => {
     const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
     const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
     
-    const REF_DATE = '2026-03-04';
-    
+    const finalizedRemainProfit = state.productDeliveries.reduce((sum, d) => {
+      const withdrawn = state.profitWithdrawals
+        .filter(pw => pw.deliveryId === d.id)
+        .reduce((s, pw) => s + pw.amount, 0);
+      return sum + (d.netProfit - withdrawn);
+    }, 0);
+
+    const lastDeliveryDate = state.productDeliveries.length > 0
+      ? [...state.productDeliveries].sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime())[0].endDate
+      : '2026-03-04';
+
     const lastSaleDateInState = state.sales.length > 0 
       ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
       : null;
 
-    const salesSinceRef = state.sales.filter(s => s.date >= REF_DATE);
-    const purchasesSinceRef = state.purchases.filter(p => p.date >= REF_DATE);
-    
-    const expensesUntilLastSale = state.expenses.filter(e => e.date >= REF_DATE && (!lastSaleDateInState || e.date <= lastSaleDateInState));
-    const laborUntilLastSale = state.laborRecords.filter(l => l.date >= REF_DATE && (!lastSaleDateInState || l.date <= lastSaleDateInState));
-    
-    const netProfitSinceRef = salesSinceRef.reduce((sum, s) => sum + s.totalRevenue, 0) - 
-      (purchasesSinceRef.reduce((sum, p) => sum + p.totalCost, 0) + 
-       expensesUntilLastSale.reduce((sum, e) => sum + e.amount, 0) + 
-       laborUntilLastSale.reduce((sum, l) => sum + l.totalCost, 0));
+    // Current period profit (after last delivery report)
+    const currentSales = state.sales.filter(s => s.date > lastDeliveryDate);
+    const currentConversions = state.conversions.filter(c => c.date > lastDeliveryDate);
+    const currentExpensesUntilLastSale = state.expenses.filter(e => e.date > lastDeliveryDate && (!lastSaleDateInState || e.date <= lastSaleDateInState));
+    const currentLaborUntilLastSale = state.laborRecords.filter(l => l.date > lastDeliveryDate && (!lastSaleDateInState || l.date <= lastSaleDateInState));
+
+    const totalCurrentSales = currentSales.reduce((sum, s) => sum + s.totalRevenue, 0);
+    const totalCurrentWetUsed = currentConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalCurrentExpenses = currentExpensesUntilLastSale.reduce((sum, e) => sum + e.amount, 0) + 
+                                 currentLaborUntilLastSale.reduce((sum, l) => sum + l.totalCost, 0);
+
+    const currentPeriodProfit = totalCurrentSales - (totalCurrentWetUsed * avgWetPrice + totalCurrentExpenses);
 
     const expensesAfterLastSale = state.expenses.filter(e => lastSaleDateInState && e.date > lastSaleDateInState);
     const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDateInState && l.date > lastSaleDateInState);
     const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
                                        laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
-       
-    const withdrawalsSinceRef = state.profitWithdrawals
-      .filter(pw => pw.date >= REF_DATE)
-      .reduce((sum, pw) => sum + pw.amount, 0);
-      
-    const remainProfitSinceRef = netProfitSinceRef - withdrawalsSinceRef;
 
     const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
     const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
@@ -149,7 +154,7 @@ export const CapitalTracking: React.FC = () => {
       - dryStockValue 
       - supplierAdvances;
 
-    const inhandCash = baseInhand + remainProfitSinceRef - totalExpensesAfterLastSale;
+    const inhandCash = baseInhand + finalizedRemainProfit + currentPeriodProfit - totalExpensesAfterLastSale;
 
     const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash;
     const difference = totalAssets - state.initialCapital;
@@ -169,11 +174,10 @@ export const CapitalTracking: React.FC = () => {
       totalLabor: totalLaborAllTime,
       filteredLabor,
       totalProfitWithdrawals,
-      withdrawalsSinceRef,
-      netProfitSinceRef,
+      finalizedRemainProfit,
+      currentPeriodProfit,
       totalExpensesAfterLastSale,
       remainProfit,
-      remainProfitSinceRef,
       conversionRatio
     };
   }, [state, wetStock, dryStock, dateRange]);
@@ -352,14 +356,14 @@ export const CapitalTracking: React.FC = () => {
                       <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>{stats.netProfitSinceRef >= 0 ? 'Net Profit' : 'Net Loss'} (Until Last Sale) {stats.netProfitSinceRef >= 0 ? '(+)' : '(-)'}</span>
-                      <span className={stats.netProfitSinceRef >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                        ৳{Math.abs(stats.netProfitSinceRef).toLocaleString()}
-                      </span>
+                      <span>Finalized Profit (Deliveries) (+)</span>
+                      <span className="text-emerald-400">৳{stats.finalizedRemainProfit.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Profit Withdraw (Since 04-Mar) (-)</span>
-                      <span className="text-rose-400">৳{stats.withdrawalsSinceRef.toLocaleString()}</span>
+                      <span>Current Period Profit (+)</span>
+                      <span className={stats.currentPeriodProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                        ৳{stats.currentPeriodProfit.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Expenses (After Last Sale) (-)</span>

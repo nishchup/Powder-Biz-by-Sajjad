@@ -464,12 +464,17 @@ export const ProductDelivery: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-green-600 text-right font-medium">৳{d.totalSales.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm text-red-500 text-right font-medium">৳{d.totalExpenses.toLocaleString()}</td>
                     <td className={`px-6 py-4 text-sm text-right font-bold ${d.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      ৳{d.netProfit.toLocaleString()}
-                      {state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).length > 0 && (
-                        <div className="text-xs text-slate-500 font-normal mt-1">
-                          Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
+                      <div className="flex flex-col items-end">
+                        <span>৳{d.netProfit.toLocaleString()}</span>
+                        {state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).length > 0 && (
+                          <div className="text-[10px] text-slate-500 font-normal mt-0.5">
+                            Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
+                          </div>
+                        )}
+                        <div className="text-[10px] text-indigo-600 font-bold mt-0.5 border-t border-slate-100 pt-0.5">
+                          Remain: ৳{(d.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
                         </div>
-                      )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-right">
                       <div className="text-blue-600 font-medium">W: {(d.totalWetUsed || 0).toFixed(1)}</div>
@@ -612,6 +617,9 @@ export const ProductDelivery: React.FC = () => {
                         Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                       </p>
                     )}
+                    <p className="text-sm text-indigo-600 mt-1 font-black border-t border-indigo-100 pt-1">
+                      Remain Profit: ৳{(selectedDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
+                    </p>
                   </div>
                 </div>
 
