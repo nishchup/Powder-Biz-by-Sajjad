@@ -23,7 +23,7 @@ export const Dashboard: React.FC = () => {
   const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
   
   const finalizedRemainProfit = state.productDeliveries
-    .filter(d => d.startDate >= '2026-03-04')
+    .filter(d => d.date >= '2026-03-04')
     .reduce((sum, d) => {
       const withdrawn = state.profitWithdrawals
         .filter(pw => pw.deliveryId === d.id)
