@@ -50,27 +50,42 @@ export const CapitalTracking: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    // 1. Average Purchase Prices
+    // 1. FIFO Stock Valuation Helper
+    const calculateFIFOValue = (stockQty: number, purchases: typeof state.purchases) => {
+      const sorted = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      let remaining = stockQty;
+      let value = 0;
+      for (const p of sorted) {
+        if (remaining <= 0) break;
+        const qty = p.quantity || 0;
+        const take = Math.min(remaining, qty);
+        const price = qty > 0 ? p.totalCost / qty : 0;
+        value += take * price;
+        remaining -= take;
+      }
+      if (remaining > 0 && sorted.length > 0) {
+        const oldest = sorted[sorted.length - 1];
+        const price = oldest.quantity > 0 ? oldest.totalCost / oldest.quantity : 0;
+        value += remaining * price;
+      }
+      return value;
+    };
+
     const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
-    const avgWetPrice = wetPurchases.length > 0 
-      ? wetPurchases.reduce((sum, p) => sum + p.totalCost, 0) / wetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
-      : 0;
+    const wetStockValue = calculateFIFOValue(wetStock, wetPurchases);
 
-    const dryPurchases = state.purchases.filter(p => p.type === 'dry');
-    const avgDryPrice = dryPurchases.length > 0 
-      ? dryPurchases.reduce((sum, p) => sum + p.totalCost, 0) / dryPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
-      : 0;
-
-    // 2. Stock Values
-    const wetStockValue = wetStock * avgWetPrice;
-    
     // Calculate conversion ratio to determine Wet Equivalent of Dry Stock
     const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
     const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
     const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
     
-    // Dry Stock Value = (Wet Equivalent of Dry Stock) * Avg Wet Price
-    const dryStockValue = (dryStock * conversionRatio) * avgWetPrice;
+    // Dry Stock Value = (Wet Equivalent of Dry Stock) valued at FIFO wet prices
+    const dryStockValue = calculateFIFOValue(dryStock * conversionRatio, wetPurchases);
+
+    // For display purposes only
+    const avgWetPrice = wetPurchases.length > 0 
+      ? wetPurchases.reduce((sum, p) => sum + p.totalCost, 0) / wetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
+      : 0;
 
     // 3. Supplier Advances & Dues
     const supplierBalances = state.suppliers.map(supplier => {
@@ -163,7 +178,6 @@ export const CapitalTracking: React.FC = () => {
       totalAssets,
       difference,
       avgWetPrice,
-      avgDryPrice,
       totalExpensesAllTime,
       filteredExpenses,
       totalLabor: totalLaborAllTime,

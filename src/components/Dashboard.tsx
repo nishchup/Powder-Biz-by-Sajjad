@@ -36,21 +36,39 @@ export const Dashboard: React.FC = () => {
     : null;
 
   const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
-  const avgWetPrice = wetPurchases.length > 0 
-    ? wetPurchases.reduce((sum, p) => sum + p.totalCost, 0) / wetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
-    : 0;
+  
+  const calculateFIFOValue = (stockQty: number, purchases: typeof state.purchases) => {
+    const sorted = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    let remaining = stockQty;
+    let value = 0;
+    for (const p of sorted) {
+      if (remaining <= 0) break;
+      const qty = p.quantity || 0;
+      const take = Math.min(remaining, qty);
+      const price = qty > 0 ? p.totalCost / qty : 0;
+      value += take * price;
+      remaining -= take;
+    }
+    if (remaining > 0 && sorted.length > 0) {
+      const oldest = sorted[sorted.length - 1];
+      const price = oldest.quantity > 0 ? oldest.totalCost / oldest.quantity : 0;
+      value += remaining * price;
+    }
+    return value;
+  };
+
+  const wetStockValue = calculateFIFOValue(wetStock, wetPurchases);
 
   const expensesAfterLastSale = state.expenses.filter(e => lastSaleDate && e.date > lastSaleDate);
   const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDate && l.date > lastSaleDate);
   const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
                                      laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
 
-  const wetStockValue = wetStock * avgWetPrice;
-
   const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
   const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
   const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
-  const dryStockValue = (dryStock * conversionRatio) * avgWetPrice;
+  
+  const dryStockValue = calculateFIFOValue(dryStock * conversionRatio, wetPurchases);
 
   let totalSupplierDue = 0;
   let totalSupplierAdvance = 0;
