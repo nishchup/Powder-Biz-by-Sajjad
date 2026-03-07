@@ -481,7 +481,8 @@ export const Contacts: React.FC = () => {
 
             <div className="flex justify-end pt-10 border-t border-slate-100">
               <button 
-                type="submit"
+                type="button"
+                onClick={handleSaveGeneral}
                 className="bg-slate-900 hover:bg-black text-white px-12 py-4 rounded-2xl font-black transition-all shadow-xl active:scale-95"
               >
                 Save All Settings
