@@ -21,8 +21,22 @@ export const Dashboard: React.FC = () => {
   const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
   const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
 
-  const totalCustomerDue = totalSales - (totalSalesPaid + totalCustomerPayments);
-  const totalSupplierDue = totalPurchases - (totalPurchasesPaid + totalSupplierPayments);
+  const totalCustomerDue = state.customers.reduce((sum, c) => {
+    const customerSales = state.sales.filter(s => s.customerName === c.name);
+    const totalBilled = customerSales.reduce((sum, s) => sum + s.totalRevenue, 0);
+    const totalPaidSales = customerSales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
+    const totalPayments = state.customerPayments.filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
+    return sum + (totalBilled - (totalPaidSales + totalPayments));
+  }, 0);
+
+  const totalSupplierDue = state.suppliers.reduce((sum, s) => {
+    const supplierPurchases = state.purchases.filter(p => p.supplierName === s.name);
+    const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
+    const totalPaidPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
+    const totalPayments = state.supplierPayments.filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
+    const balance = (totalPaidPurchases + totalPayments) - totalBilled;
+    return sum + (balance < 0 ? Math.abs(balance) : 0);
+  }, 0);
 
   const inhandCash = (state.initialCapital || 0) + totalSalesPaid + totalCustomerPayments + totalCompanyAdvances - totalPurchasesPaid - totalSupplierPayments - totalExpenses - totalLoans - totalProfitWithdrawals;
 
@@ -107,11 +121,24 @@ export const Dashboard: React.FC = () => {
               <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Inhand Cash</p>
                 <h4 className="text-4xl font-black text-indigo-600">৳{inhandCash.toLocaleString()}</h4>
-                <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-[11px] text-slate-500 leading-relaxed font-bold">
-                    <span className="text-indigo-600 font-black block mb-1">হিসাব পদ্ধতি:</span>
-                    (মূলধন + বিক্রয়লব্ধ টাকা + কাস্টমার পেমেন্ট + কোম্পানি অ্যাডভান্স) - (ক্রয় বাবদ খরচ + সাপ্লায়ার পেমেন্ট + অন্যান্য খরচ + লোন + প্রফিট উত্তোলন)
-                  </p>
+                
+                <div className="mt-6 space-y-3">
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>Initial Capital (+)</span>
+                    <span className="text-emerald-600">৳{(state.initialCapital || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>Total Collections (+)</span>
+                    <span className="text-emerald-600">৳{(totalSalesPaid + totalCustomerPayments + totalCompanyAdvances).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>Total Payments (-)</span>
+                    <span className="text-rose-500">৳{(totalPurchasesPaid + totalSupplierPayments + totalExpenses + totalLoans + totalProfitWithdrawals).toLocaleString()}</span>
+                  </div>
+                  <div className="pt-1 flex justify-between items-center text-[12px] font-black text-indigo-600">
+                    <span>Net Cash</span>
+                    <span>৳{inhandCash.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
               <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
