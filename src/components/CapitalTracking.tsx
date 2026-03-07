@@ -92,33 +92,18 @@ export const CapitalTracking: React.FC = () => {
     const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
     const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
     
-    const finalizedRemainProfit = state.productDeliveries.reduce((sum, d) => {
-      const withdrawn = state.profitWithdrawals
-        .filter(pw => pw.deliveryId === d.id)
-        .reduce((s, pw) => s + pw.amount, 0);
-      return sum + (d.netProfit - withdrawn);
-    }, 0);
-
-    const lastDeliveryDate = state.productDeliveries.length > 0
-      ? [...state.productDeliveries].sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime())[0].endDate
-      : '2026-03-04';
+    const finalizedRemainProfit = state.productDeliveries
+      .filter(d => d.startDate >= '2026-03-04')
+      .reduce((sum, d) => {
+        const withdrawn = state.profitWithdrawals
+          .filter(pw => pw.deliveryId === d.id)
+          .reduce((s, pw) => s + pw.amount, 0);
+        return sum + (d.netProfit - withdrawn);
+      }, 0);
 
     const lastSaleDateInState = state.sales.length > 0 
       ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
       : null;
-
-    // Current period profit (after last delivery report)
-    const currentSales = state.sales.filter(s => s.date > lastDeliveryDate);
-    const currentConversions = state.conversions.filter(c => c.date > lastDeliveryDate);
-    const currentExpensesUntilLastSale = state.expenses.filter(e => e.date > lastDeliveryDate && (!lastSaleDateInState || e.date <= lastSaleDateInState));
-    const currentLaborUntilLastSale = state.laborRecords.filter(l => l.date > lastDeliveryDate && (!lastSaleDateInState || l.date <= lastSaleDateInState));
-
-    const totalCurrentSales = currentSales.reduce((sum, s) => sum + s.totalRevenue, 0);
-    const totalCurrentWetUsed = currentConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-    const totalCurrentExpenses = currentExpensesUntilLastSale.reduce((sum, e) => sum + e.amount, 0) + 
-                                 currentLaborUntilLastSale.reduce((sum, l) => sum + l.totalCost, 0);
-
-    const currentPeriodProfit = totalCurrentSales - (totalCurrentWetUsed * avgWetPrice + totalCurrentExpenses);
 
     const expensesAfterLastSale = state.expenses.filter(e => lastSaleDateInState && e.date > lastSaleDateInState);
     const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDateInState && l.date > lastSaleDateInState);
@@ -154,7 +139,7 @@ export const CapitalTracking: React.FC = () => {
       - dryStockValue 
       - supplierAdvances;
 
-    const inhandCash = baseInhand + finalizedRemainProfit + currentPeriodProfit - totalExpensesAfterLastSale;
+    const inhandCash = baseInhand + finalizedRemainProfit - totalExpensesAfterLastSale;
 
     const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash;
     const difference = totalAssets - state.initialCapital;
@@ -175,7 +160,6 @@ export const CapitalTracking: React.FC = () => {
       filteredLabor,
       totalProfitWithdrawals,
       finalizedRemainProfit,
-      currentPeriodProfit,
       totalExpensesAfterLastSale,
       remainProfit,
       conversionRatio
@@ -356,14 +340,8 @@ export const CapitalTracking: React.FC = () => {
                       <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Finalized Profit (Deliveries) (+)</span>
+                      <span>Finalized Profit (Deliveries Since 04-Mar) (+)</span>
                       <span className="text-emerald-400">৳{stats.finalizedRemainProfit.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Current Period Profit (+)</span>
-                      <span className={stats.currentPeriodProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                        ৳{stats.currentPeriodProfit.toLocaleString()}
-                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Expenses (After Last Sale) (-)</span>
