@@ -90,14 +90,14 @@ export const CapitalTracking: React.FC = () => {
     // 4. In-hand Cash Calculation
     const totalPurchasePaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
     const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
+    const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
+    const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
+    const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
     const totalExpensesAllTime = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalLabor = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
-    const totalWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
+    const totalLaborAllTime = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
     
-    const totalSalesReceived = state.sales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
-    const totalCustomerPayments = state.customerPayments.reduce((sum, p) => sum + p.amount, 0);
-    const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
-    const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
+    const netProfit = totalSales - (totalPurchases + totalExpensesAllTime + totalLaborAllTime);
+    const remainProfit = netProfit - totalProfitWithdrawals;
 
     // Filtered Expenses and Labor for the period
     const filteredExpenses = state.expenses.filter(e => {
@@ -113,13 +113,17 @@ export const CapitalTracking: React.FC = () => {
     }).reduce((sum, l) => sum + l.totalCost, 0);
 
     const isDateSelected = dateRange.start !== '' && dateRange.end !== '';
-    const currentExpenses = isDateSelected ? filteredExpenses + filteredLabor : totalExpensesAllTime + totalLabor;
+    const currentExpenses = isDateSelected ? filteredExpenses + filteredLabor : totalExpensesAllTime + totalLaborAllTime;
 
-    const inhandCash = state.initialCapital 
+    const baseInhand = state.initialCapital 
       - wetStockValue 
       - dryStockValue 
       - supplierAdvances 
       - currentExpenses;
+
+    const inhandCash = totalProfitWithdrawals > 0 
+      ? baseInhand - totalProfitWithdrawals 
+      : baseInhand + remainProfit;
 
     const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + currentExpenses;
     const difference = totalAssets - state.initialCapital;
@@ -136,8 +140,10 @@ export const CapitalTracking: React.FC = () => {
       avgDryPrice,
       totalExpensesAllTime,
       filteredExpenses,
-      totalLabor,
+      totalLabor: totalLaborAllTime,
       filteredLabor,
+      totalProfitWithdrawals,
+      remainProfit,
       conversionRatio
     };
   }, [state, wetStock, dryStock, dateRange]);
@@ -319,6 +325,17 @@ export const CapitalTracking: React.FC = () => {
                       <span>Expenses (-)</span>
                       <span className="text-rose-400">৳{(dateRange.start && dateRange.end ? (stats.filteredExpenses + stats.filteredLabor) : (stats.totalExpensesAllTime + stats.totalLabor)).toLocaleString()}</span>
                     </div>
+                    {stats.totalProfitWithdrawals > 0 ? (
+                      <div className="flex justify-between">
+                        <span>Profit Withdraw (-)</span>
+                        <span className="text-rose-400">৳{stats.totalProfitWithdrawals.toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between">
+                        <span>Remain Profit (+)</span>
+                        <span className="text-emerald-400">৳{stats.remainProfit.toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
                     <div className="flex justify-between font-black text-sm pt-2 border-t border-white/5">

@@ -21,6 +21,21 @@ export const Dashboard: React.FC = () => {
   const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
   const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
   const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
+  const remainProfit = netProfit - totalProfitWithdrawals;
+
+  const lastSaleDate = state.sales.length > 0 
+    ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
+    : null;
+
+  const expensesAfterLastSale = state.expenses
+    .filter(e => !lastSaleDate || e.date > lastSaleDate)
+    .reduce((sum, e) => sum + e.amount, 0);
+  
+  const laborAfterLastSale = state.laborRecords
+    .filter(l => !lastSaleDate || l.date > lastSaleDate)
+    .reduce((sum, l) => sum + l.totalCost, 0);
+
+  const totalExpensesForInhand = expensesAfterLastSale + laborAfterLastSale;
 
   const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
   const avgWetPrice = wetPurchases.length > 0 
@@ -53,7 +68,8 @@ export const Dashboard: React.FC = () => {
     return sum + (totalBilled - (totalPaidSales + totalPayments));
   }, 0);
 
-  const inhandCash = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance + totalExpenses + totalLabor);
+  const baseInhand = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance + totalExpensesForInhand);
+  const inhandCash = totalProfitWithdrawals > 0 ? baseInhand - totalProfitWithdrawals : baseInhand + remainProfit;
 
   return (
     <div 
@@ -155,9 +171,20 @@ export const Dashboard: React.FC = () => {
                     <span className="text-rose-500">৳{totalSupplierAdvance.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Expenses (-)</span>
-                    <span className="text-rose-500">৳{(totalExpenses + totalLabor).toLocaleString()}</span>
+                    <span>Expenses (After Last Sale) (-)</span>
+                    <span className="text-rose-500">৳{totalExpensesForInhand.toLocaleString()}</span>
                   </div>
+                  {totalProfitWithdrawals > 0 ? (
+                    <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                      <span>Profit Withdraw (-)</span>
+                      <span className="text-rose-500">৳{totalProfitWithdrawals.toLocaleString()}</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                      <span>Remain Profit (+)</span>
+                      <span className="text-emerald-600">৳{remainProfit.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="pt-1 flex justify-between items-center text-[12px] font-black text-indigo-600">
                     <span>Net Inhand Cash</span>
                     <span>৳{inhandCash.toLocaleString()}</span>
