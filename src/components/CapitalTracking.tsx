@@ -91,6 +91,25 @@ export const CapitalTracking: React.FC = () => {
     const totalPurchasePaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
     const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
     const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
+    
+    const REF_DATE = '2026-03-04';
+    
+    const salesSinceRef = state.sales.filter(s => s.date >= REF_DATE);
+    const purchasesSinceRef = state.purchases.filter(p => p.date >= REF_DATE);
+    const expensesSinceRef = state.expenses.filter(e => e.date >= REF_DATE);
+    const laborSinceRef = state.laborRecords.filter(l => l.date >= REF_DATE);
+    
+    const netProfitSinceRef = salesSinceRef.reduce((sum, s) => sum + s.totalRevenue, 0) - 
+      (purchasesSinceRef.reduce((sum, p) => sum + p.totalCost, 0) + 
+       expensesSinceRef.reduce((sum, e) => sum + e.amount, 0) + 
+       laborSinceRef.reduce((sum, l) => sum + l.totalCost, 0));
+       
+    const withdrawalsSinceRef = state.profitWithdrawals
+      .filter(pw => pw.date >= REF_DATE)
+      .reduce((sum, pw) => sum + pw.amount, 0);
+      
+    const remainProfitSinceRef = netProfitSinceRef - withdrawalsSinceRef;
+
     const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
     const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
     const totalExpensesAllTime = state.expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -121,9 +140,9 @@ export const CapitalTracking: React.FC = () => {
       - supplierAdvances 
       - currentExpenses;
 
-    const inhandCash = totalProfitWithdrawals > 0 
-      ? baseInhand - totalProfitWithdrawals 
-      : baseInhand + remainProfit;
+    const inhandCash = withdrawalsSinceRef > 0 
+      ? baseInhand - withdrawalsSinceRef 
+      : baseInhand + remainProfitSinceRef;
 
     const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + currentExpenses;
     const difference = totalAssets - state.initialCapital;
@@ -143,7 +162,9 @@ export const CapitalTracking: React.FC = () => {
       totalLabor: totalLaborAllTime,
       filteredLabor,
       totalProfitWithdrawals,
+      withdrawalsSinceRef,
       remainProfit,
+      remainProfitSinceRef,
       conversionRatio
     };
   }, [state, wetStock, dryStock, dateRange]);
@@ -325,15 +346,15 @@ export const CapitalTracking: React.FC = () => {
                       <span>Expenses (-)</span>
                       <span className="text-rose-400">৳{(dateRange.start && dateRange.end ? (stats.filteredExpenses + stats.filteredLabor) : (stats.totalExpensesAllTime + stats.totalLabor)).toLocaleString()}</span>
                     </div>
-                    {stats.totalProfitWithdrawals > 0 ? (
+                    {stats.withdrawalsSinceRef > 0 ? (
                       <div className="flex justify-between">
-                        <span>Profit Withdraw (-)</span>
-                        <span className="text-rose-400">৳{stats.totalProfitWithdrawals.toLocaleString()}</span>
+                        <span>Profit Withdraw (Since 04-Mar) (-)</span>
+                        <span className="text-rose-400">৳{stats.withdrawalsSinceRef.toLocaleString()}</span>
                       </div>
                     ) : (
                       <div className="flex justify-between">
-                        <span>Remain Profit (+)</span>
-                        <span className="text-emerald-400">৳{stats.remainProfit.toLocaleString()}</span>
+                        <span>Remain Profit (Since 04-Mar) (+)</span>
+                        <span className="text-emerald-400">৳{stats.remainProfitSinceRef.toLocaleString()}</span>
                       </div>
                     )}
                   </div>

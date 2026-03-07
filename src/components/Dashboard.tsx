@@ -21,7 +21,24 @@ export const Dashboard: React.FC = () => {
   const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
   const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
   const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
-  const remainProfit = netProfit - totalProfitWithdrawals;
+  
+  const REF_DATE = '2026-03-04';
+  
+  const salesSinceRef = state.sales.filter(s => s.date >= REF_DATE);
+  const purchasesSinceRef = state.purchases.filter(p => p.date >= REF_DATE);
+  const expensesSinceRef = state.expenses.filter(e => e.date >= REF_DATE);
+  const laborSinceRef = state.laborRecords.filter(l => l.date >= REF_DATE);
+  
+  const netProfitSinceRef = salesSinceRef.reduce((sum, s) => sum + s.totalRevenue, 0) - 
+    (purchasesSinceRef.reduce((sum, p) => sum + p.totalCost, 0) + 
+     expensesSinceRef.reduce((sum, e) => sum + e.amount, 0) + 
+     laborSinceRef.reduce((sum, l) => sum + l.totalCost, 0));
+     
+  const withdrawalsSinceRef = state.profitWithdrawals
+    .filter(pw => pw.date >= REF_DATE)
+    .reduce((sum, pw) => sum + pw.amount, 0);
+    
+  const remainProfitSinceRef = netProfitSinceRef - withdrawalsSinceRef;
 
   const lastSaleDate = state.sales.length > 0 
     ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
@@ -69,7 +86,7 @@ export const Dashboard: React.FC = () => {
   }, 0);
 
   const baseInhand = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance + totalExpensesForInhand);
-  const inhandCash = totalProfitWithdrawals > 0 ? baseInhand - totalProfitWithdrawals : baseInhand + remainProfit;
+  const inhandCash = withdrawalsSinceRef > 0 ? baseInhand - withdrawalsSinceRef : baseInhand + remainProfitSinceRef;
 
   return (
     <div 
@@ -174,15 +191,15 @@ export const Dashboard: React.FC = () => {
                     <span>Expenses (After Last Sale) (-)</span>
                     <span className="text-rose-500">৳{totalExpensesForInhand.toLocaleString()}</span>
                   </div>
-                  {totalProfitWithdrawals > 0 ? (
+                  {withdrawalsSinceRef > 0 ? (
                     <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                      <span>Profit Withdraw (-)</span>
-                      <span className="text-rose-500">৳{totalProfitWithdrawals.toLocaleString()}</span>
+                      <span>Profit Withdraw (Since 04-Mar) (-)</span>
+                      <span className="text-rose-500">৳{withdrawalsSinceRef.toLocaleString()}</span>
                     </div>
                   ) : (
                     <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                      <span>Remain Profit (+)</span>
-                      <span className="text-emerald-600">৳{remainProfit.toLocaleString()}</span>
+                      <span>Remain Profit (Since 04-Mar) (+)</span>
+                      <span className="text-emerald-600">৳{remainProfitSinceRef.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="pt-1 flex justify-between items-center text-[12px] font-black text-indigo-600">
