@@ -96,6 +96,43 @@ export const Dashboard: React.FC = () => {
         />
       </div>
 
+      {/* Capital Tracking Section */}
+      <div className="glass-panel p-8 rounded-[2.5rem] border border-indigo-100 bg-indigo-50/30">
+        <div className="flex flex-col lg:flex-row justify-between gap-8">
+          <div className="flex-1">
+            <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center">
+              <DollarSign className="mr-2 text-indigo-500" size={24} /> Capital Tracking (মূলধন ট্র্যাকিং)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Inhand Cash</p>
+                <h4 className="text-4xl font-black text-indigo-600">৳{inhandCash.toLocaleString()}</h4>
+                <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[11px] text-slate-500 leading-relaxed font-bold">
+                    <span className="text-indigo-600 font-black block mb-1">হিসাব পদ্ধতি:</span>
+                    (মূলধন + বিক্রয়লব্ধ টাকা + কাস্টমার পেমেন্ট + কোম্পানি অ্যাডভান্স) - (ক্রয় বাবদ খরচ + সাপ্লায়ার পেমেন্ট + অন্যান্য খরচ + লোন + প্রফিট উত্তোলন)
+                  </p>
+                </div>
+              </div>
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Dues (মোট বকেয়া)</p>
+                <h4 className="text-4xl font-black text-orange-600">৳{(totalCustomerDue + totalSupplierDue).toLocaleString()}</h4>
+                <div className="mt-6 grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                    <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mb-1">Customer Due</p>
+                    <p className="text-lg font-black text-orange-700">৳{totalCustomerDue.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
+                    <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest mb-1">Supplier Due</p>
+                    <p className="text-lg font-black text-rose-700">৳{totalSupplierDue.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass-panel p-8 rounded-[2rem]">
           <ProductionCharts />
