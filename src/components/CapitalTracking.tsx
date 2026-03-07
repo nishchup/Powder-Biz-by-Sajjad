@@ -94,15 +94,25 @@ export const CapitalTracking: React.FC = () => {
     
     const REF_DATE = '2026-03-04';
     
+    const lastSaleDateInState = state.sales.length > 0 
+      ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
+      : null;
+
     const salesSinceRef = state.sales.filter(s => s.date >= REF_DATE);
     const purchasesSinceRef = state.purchases.filter(p => p.date >= REF_DATE);
-    const expensesSinceRef = state.expenses.filter(e => e.date >= REF_DATE);
-    const laborSinceRef = state.laborRecords.filter(l => l.date >= REF_DATE);
+    
+    const expensesUntilLastSale = state.expenses.filter(e => e.date >= REF_DATE && (!lastSaleDateInState || e.date <= lastSaleDateInState));
+    const laborUntilLastSale = state.laborRecords.filter(l => l.date >= REF_DATE && (!lastSaleDateInState || l.date <= lastSaleDateInState));
     
     const netProfitSinceRef = salesSinceRef.reduce((sum, s) => sum + s.totalRevenue, 0) - 
       (purchasesSinceRef.reduce((sum, p) => sum + p.totalCost, 0) + 
-       expensesSinceRef.reduce((sum, e) => sum + e.amount, 0) + 
-       laborSinceRef.reduce((sum, l) => sum + l.totalCost, 0));
+       expensesUntilLastSale.reduce((sum, e) => sum + e.amount, 0) + 
+       laborUntilLastSale.reduce((sum, l) => sum + l.totalCost, 0));
+
+    const expensesAfterLastSale = state.expenses.filter(e => lastSaleDateInState && e.date > lastSaleDateInState);
+    const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDateInState && l.date > lastSaleDateInState);
+    const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
+                                       laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
        
     const withdrawalsSinceRef = state.profitWithdrawals
       .filter(pw => pw.date >= REF_DATE)
@@ -139,9 +149,7 @@ export const CapitalTracking: React.FC = () => {
       - dryStockValue 
       - supplierAdvances;
 
-    const inhandCash = withdrawalsSinceRef > 0 
-      ? baseInhand - withdrawalsSinceRef 
-      : baseInhand + remainProfitSinceRef;
+    const inhandCash = baseInhand + remainProfitSinceRef - totalExpensesAfterLastSale;
 
     const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash;
     const difference = totalAssets - state.initialCapital;
@@ -162,6 +170,8 @@ export const CapitalTracking: React.FC = () => {
       filteredLabor,
       totalProfitWithdrawals,
       withdrawalsSinceRef,
+      netProfitSinceRef,
+      totalExpensesAfterLastSale,
       remainProfit,
       remainProfitSinceRef,
       conversionRatio
@@ -341,17 +351,20 @@ export const CapitalTracking: React.FC = () => {
                       <span>Supplier Advances (-)</span>
                       <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
                     </div>
-                    {stats.withdrawalsSinceRef > 0 ? (
-                      <div className="flex justify-between">
-                        <span>Profit Withdraw (Since 04-Mar) (-)</span>
-                        <span className="text-rose-400">৳{stats.withdrawalsSinceRef.toLocaleString()}</span>
-                      </div>
-                    ) : (
-                      <div className="flex justify-between">
-                        <span>Remain Profit (Since 04-Mar) (+)</span>
-                        <span className="text-emerald-400">৳{stats.remainProfitSinceRef.toLocaleString()}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span>{stats.netProfitSinceRef >= 0 ? 'Net Profit' : 'Net Loss'} (Until Last Sale) {stats.netProfitSinceRef >= 0 ? '(+)' : '(-)'}</span>
+                      <span className={stats.netProfitSinceRef >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                        ৳{Math.abs(stats.netProfitSinceRef).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Profit Withdraw (Since 04-Mar) (-)</span>
+                      <span className="text-rose-400">৳{stats.withdrawalsSinceRef.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Expenses (After Last Sale) (-)</span>
+                      <span className="text-rose-400">৳{stats.totalExpensesAfterLastSale.toLocaleString()}</span>
+                    </div>
                   </div>
                   <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
                     <div className="flex justify-between font-black text-sm pt-2 border-t border-white/5">
