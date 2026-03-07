@@ -51,6 +51,7 @@ export const Contacts: React.FC = () => {
   const [companyData, setCompanyData] = useState(state.companyInfo);
   const [capitalData, setCapitalData] = useState(state.initialCapital.toString());
   const [pinData, setPinData] = useState(state.appPin);
+  const [showChatbotData, setShowChatbotData] = useState(state.showChatbot);
 
   const handleEdit = (item: any) => {
     setFormData({
@@ -177,6 +178,7 @@ export const Contacts: React.FC = () => {
     if (pinData.length === 4) {
       setAppPin(pinData);
     }
+    useAppStore.getState().setShowChatbot(showChatbotData);
     showMessage("Settings saved successfully!", 'success');
   };
 
@@ -390,19 +392,38 @@ export const Contacts: React.FC = () => {
                   <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center">
                     <Shield className="mr-2 text-indigo-500" size={16} /> Security Settings
                   </h4>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">App Lock PIN</label>
-                    <input 
-                      type="password" 
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={4}
-                      value={pinData}
-                      onChange={e => setPinData(e.target.value)}
-                      className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono tracking-[0.5em] text-2xl text-slate-900"
-                      placeholder="****"
-                    />
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1 mt-2">Set a 4-digit PIN to secure your application.</p>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">App Lock PIN</label>
+                      <input 
+                        type="password" 
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={4}
+                        value={pinData}
+                        onChange={e => setPinData(e.target.value)}
+                        className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono tracking-[0.5em] text-2xl text-slate-900"
+                        placeholder="****"
+                      />
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1 mt-2">Set a 4-digit PIN to secure your application.</p>
+                    </div>
+                    
+                    <div className="pt-4 border-t border-slate-200">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <div className="relative">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={showChatbotData}
+                            onChange={(e) => setShowChatbotData(e.target.checked)}
+                          />
+                          <div className={`block w-14 h-8 rounded-full transition-colors ${showChatbotData ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
+                          <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${showChatbotData ? 'transform translate-x-6' : ''}`}></div>
+                        </div>
+                        <div className="text-sm font-bold text-slate-700">Show AI Chatbot</div>
+                      </label>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1 mt-2">Toggle the floating AI assistant icon.</p>
+                    </div>
                   </div>
                 </div>
               </div>

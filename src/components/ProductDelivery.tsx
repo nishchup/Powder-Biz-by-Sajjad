@@ -8,9 +8,10 @@ import { exportToPDF } from '../services/pdfService';
 import { ConfirmModal } from './ConfirmModal';
 
 export const ProductDelivery: React.FC = () => {
-  const { state, addProductDelivery, deleteProductDelivery, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal, dryStock } = useAppStore();
+  const { state, addProductDelivery, editProductDelivery, deleteProductDelivery, addProfitWithdrawal, editProfitWithdrawal, deleteProfitWithdrawal, dryStock } = useAppStore();
   const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [withdrawDelivery, setWithdrawDelivery] = useState<any>(null);
@@ -112,6 +113,7 @@ export const ProductDelivery: React.FC = () => {
 
   const handleCancel = () => {
     setIsFormOpen(false);
+    setEditingId(null);
     setFormData({ 
       date: new Date().toISOString().split('T')[0], 
       startDate: '', 
@@ -120,6 +122,19 @@ export const ProductDelivery: React.FC = () => {
       totalWetUsed: '',
       totalDryProduced: ''
     });
+  };
+
+  const handleEdit = (delivery: any) => {
+    setEditingId(delivery.id);
+    setFormData({
+      date: delivery.date,
+      startDate: delivery.startDate,
+      endDate: delivery.endDate,
+      description: delivery.description || '',
+      totalWetUsed: delivery.totalWetUsed?.toString() || '',
+      totalDryProduced: delivery.totalDryProduced?.toString() || '',
+    });
+    setIsFormOpen(true);
   };
 
   const handleWithdrawCancel = () => {
@@ -215,7 +230,7 @@ export const ProductDelivery: React.FC = () => {
       const currentTotalPurchases = currentWetUsed * avgWetPriceInPeriod;
       const currentNetProfit = (summary?.totalSales || 0) - (currentTotalPurchases + (summary?.totalExpenses || 0));
 
-      addProductDelivery({
+      const deliveryData = {
         date: formData.date,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -228,7 +243,13 @@ export const ProductDelivery: React.FC = () => {
         totalWetUsed: currentWetUsed,
         totalDryProduced: parseFloat(formData.totalDryProduced) || 0,
         description: formData.description,
-      });
+      };
+
+      if (editingId) {
+        editProductDelivery(editingId, deliveryData);
+      } else {
+        addProductDelivery(deliveryData);
+      }
       handleCancel();
     }
   };
@@ -261,7 +282,7 @@ export const ProductDelivery: React.FC = () => {
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
-              <h3 className="text-lg font-bold text-slate-800">New Delivery Summary</h3>
+              <h3 className="text-lg font-bold text-slate-800">{editingId ? 'Edit Delivery Summary' : 'New Delivery Summary'}</h3>
               <button onClick={handleCancel} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <X size={20} />
               </button>
@@ -394,7 +415,7 @@ export const ProductDelivery: React.FC = () => {
                   summary ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                Save Delivery Report
+                {editingId ? 'Update Delivery Report' : 'Save Delivery Report'}
               </button>
             </div>
           </form>
@@ -469,6 +490,13 @@ export const ProductDelivery: React.FC = () => {
                           title="View Details"
                         >
                           <FileText size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleEdit(d)}
+                          className="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-md hover:bg-indigo-50 transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 size={18} />
                         </button>
                         <button 
                           onClick={() => setDeleteConfirm({ id: d.id, type: 'delivery' })}

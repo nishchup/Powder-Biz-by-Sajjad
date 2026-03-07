@@ -28,9 +28,12 @@ import { WeatherBanner } from './components/WeatherBanner';
 import { Chatbot } from './components/Chatbot';
 import { AnimatePresence } from 'motion/react';
 
+import { useAppStore } from './store';
+
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLocked, setIsLocked] = useState(true);
+  const { state } = useAppStore();
 
   if (isLocked) {
     return <LockScreen onUnlock={() => setIsLocked(false)} />;
@@ -62,7 +65,7 @@ function AppContent() {
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} onLock={() => setIsLocked(true)}>
       <WeatherBanner />
       {renderContent()}
-      <Chatbot />
+      {state.showChatbot && <Chatbot />}
     </Layout>
   );
 }

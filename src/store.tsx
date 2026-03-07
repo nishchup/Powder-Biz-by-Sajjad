@@ -174,6 +174,7 @@ export interface AppState {
   lastBackupTime: string | null;
   language: 'en' | 'bn';
   weatherLocation: string;
+  showChatbot: boolean;
 }
 
 const initialState: AppState = {
@@ -203,6 +204,7 @@ const initialState: AppState = {
   lastBackupTime: null,
   language: 'en',
   weatherLocation: 'Jamalpur',
+  showChatbot: true,
 };
 
 interface AppContextType {
@@ -246,6 +248,7 @@ interface AppContextType {
   editCompanyAdvance: (id: string, a: Omit<CompanyAdvance, 'id'>) => void;
   deleteCompanyAdvance: (id: string) => void;
   addProductDelivery: (d: Omit<ProductDelivery, 'id'>) => void;
+  editProductDelivery: (id: string, d: Omit<ProductDelivery, 'id'>) => void;
   deleteProductDelivery: (id: string) => void;
   addProfitWithdrawal: (p: Omit<ProfitWithdrawal, 'id'>) => void;
   editProfitWithdrawal: (id: string, p: Omit<ProfitWithdrawal, 'id'>) => void;
@@ -263,6 +266,7 @@ interface AppContextType {
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
   setWeatherLocation: (location: string) => void;
+  setShowChatbot: (show: boolean) => void;
   isOnline: boolean;
   isSyncing: boolean;
   hasPendingSync: boolean;
@@ -314,6 +318,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           lastBackupTime: parsed.lastBackupTime || null,
           language: parsed.language || 'en',
           weatherLocation: parsed.weatherLocation || 'Jamalpur',
+          showChatbot: parsed.showChatbot !== undefined ? parsed.showChatbot : true,
         };
       }
     } catch (e) {
@@ -554,6 +559,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, productDeliveries: [...s.productDeliveries, { ...d, id: generateId() }] }));
   };
 
+  const editProductDelivery = (id: string, d: Omit<ProductDelivery, 'id'>) => {
+    setState(s => ({ ...s, productDeliveries: s.productDeliveries.map(item => item.id === id ? { ...d, id } : item) }));
+  };
+
   const deleteProductDelivery = (id: string) => {
     setState(s => ({ ...s, productDeliveries: s.productDeliveries.filter(d => d.id !== id) }));
   };
@@ -622,6 +631,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, weatherLocation: location }));
   };
 
+  const setShowChatbot = (show: boolean) => {
+    setState(s => ({ ...s, showChatbot: show }));
+  };
+
   const wetStock = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.quantity || 0), 0) -
                    state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
 
@@ -674,6 +687,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       editCompanyAdvance,
       deleteCompanyAdvance,
       addProductDelivery,
+      editProductDelivery,
       deleteProductDelivery,
       addProfitWithdrawal,
       editProfitWithdrawal,
@@ -691,6 +705,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       importState,
       setLanguage,
       setWeatherLocation,
+      setShowChatbot,
       isOnline,
       isSyncing,
       hasPendingSync,
