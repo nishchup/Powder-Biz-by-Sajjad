@@ -181,7 +181,7 @@ export const Purchases: React.FC = () => {
 
   const handleShareWhatsApp = (receipt: any) => {
     const typeLabel = receipt.type === 'dry' ? 'Dry Powder' : 'Wet Powder';
-    const text = `*${state.companyInfo.name}*\n_Purchase Receipt_\n\n*Date:* ${receipt.date}\n*Receipt #:* PR-${receipt.id.substring(0, 6).toUpperCase()}\n*Supplier:* ${receipt.supplierName}\n\n*Description:* ${typeLabel}\n*Bag:* ${receipt.bags || 0}\n*Quantity:* ${receipt.quantity.toFixed(2)} kg\n*Rate:* ৳${receipt.pricePerKg.toFixed(2)}\n\n*Subtotal:* ৳${receipt.totalCost.toLocaleString()}\n*Paid Amount:* ৳${(receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost).toLocaleString()}\n*Due Amount:* ৳${(receipt.totalCost - (receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost)).toLocaleString()}\n\n*Total:* ৳${receipt.totalCost.toLocaleString()}`;
+    const text = `*${state.companyInfo.name}*\n_Purchase Receipt_\n\n*Date:* ${receipt.date}\n*Receipt #:* PR-${receipt.id.substring(0, 6).toUpperCase()}\n*Supplier:* ${receipt.supplierName}\n\n*Description:* ${typeLabel}\n*Bag:* ${receipt.totalBags || 0}\n*Quantity:* ${receipt.quantity.toFixed(2)} kg\n*Rate:* ৳${receipt.pricePerKg.toFixed(2)}\n\n*Subtotal:* ৳${receipt.totalCost.toLocaleString()}\n*Paid Amount:* ৳${(receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost).toLocaleString()}\n*Due Amount:* ৳${(receipt.totalCost - (receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost)).toLocaleString()}\n\n*Total:* ৳${receipt.totalCost.toLocaleString()}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -657,26 +657,28 @@ export const Purchases: React.FC = () => {
                   </div>
                 </div>
 
-                <table className="w-full mb-12">
-                  <thead>
-                    <tr className="border-b-2 border-slate-900">
-                      <th className="text-left py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Description</th>
-                      <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Bag</th>
-                      <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Quantity(kg)</th>
-                      <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Rate (৳)</th>
-                      <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Amount (৳)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    <tr>
-                      <td className="py-6 font-bold text-slate-900">{selectedReceipt.type === 'dry' ? 'Dry Powder' : 'Wet Powder'}</td>
-                      <td className="py-6 text-right font-bold text-slate-900">{selectedReceipt.bags || 0}</td>
-                      <td className="py-6 text-right font-bold text-slate-900">{selectedReceipt.quantity.toFixed(2)}</td>
-                      <td className="py-6 text-right font-bold text-slate-900">{selectedReceipt.pricePerKg.toFixed(2)}</td>
-                      <td className="py-6 text-right font-black text-slate-900 text-lg">{selectedReceipt.totalCost.toLocaleString()}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="space-y-6 mb-12 bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Description</span>
+                    <span className="font-bold text-slate-900">{selectedReceipt.type === 'dry' ? 'Dry Powder' : 'Wet Powder'}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Bag Quantity</span>
+                    <span className="font-bold text-slate-900">{selectedReceipt.totalBags || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Quantity (kg)</span>
+                    <span className="font-bold text-slate-900">{selectedReceipt.quantity.toFixed(2)} kg</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Rate (৳)</span>
+                    <span className="font-bold text-slate-900">৳{selectedReceipt.pricePerKg.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Amount</span>
+                    <span className="font-black text-slate-900 text-xl">৳{selectedReceipt.totalCost.toLocaleString()}</span>
+                  </div>
+                </div>
 
                 <div className="flex justify-end mb-16">
                   <div className="w-72 space-y-4">
