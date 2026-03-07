@@ -13,7 +13,7 @@ export const Contacts: React.FC = () => {
     editSupplier, editCustomer, editExpenseCategory,
     deleteSupplier, deleteCustomer, deleteExpenseCategory,
     setInitialCapital, setCompanyInfo, setAppPin, setLastBackupTime,
-    resetState, importState
+    resetState, importState, setShowChatbot
   } = useAppStore();
   
   const [activeTab, setActiveTab] = useState<'suppliers' | 'customers' | 'categories' | 'backup' | 'general'>('general');
@@ -178,7 +178,7 @@ export const Contacts: React.FC = () => {
     if (pinData.length === 4) {
       setAppPin(pinData);
     }
-    useAppStore.getState().setShowChatbot(showChatbotData);
+    setShowChatbot(showChatbotData);
     showMessage("Settings saved successfully!", 'success');
   };
 
@@ -437,7 +437,7 @@ export const Contacts: React.FC = () => {
                     <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Company Name</label>
                     <input 
                       type="text" 
-                      value={companyData.name}
+                      value={companyData.name || ''}
                       onChange={e => setCompanyData({...companyData, name: e.target.value})}
                       className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
                       placeholder="e.g. PowderBiz"
@@ -447,7 +447,7 @@ export const Contacts: React.FC = () => {
                     <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Address</label>
                     <input 
                       type="text" 
-                      value={companyData.address}
+                      value={companyData.address || ''}
                       onChange={e => setCompanyData({...companyData, address: e.target.value})}
                       className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
                       placeholder="Company Address"
@@ -458,7 +458,7 @@ export const Contacts: React.FC = () => {
                       <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Phone</label>
                       <input 
                         type="text" 
-                        value={companyData.phone}
+                        value={companyData.phone || ''}
                         onChange={e => setCompanyData({...companyData, phone: e.target.value})}
                         className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
                         placeholder="Phone Number"
@@ -468,7 +468,7 @@ export const Contacts: React.FC = () => {
                       <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Email</label>
                       <input 
                         type="email" 
-                        value={companyData.email}
+                        value={companyData.email || ''}
                         onChange={e => setCompanyData({...companyData, email: e.target.value})}
                         className="w-full bg-white border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900"
                         placeholder="Email Address"
