@@ -181,7 +181,7 @@ export const Purchases: React.FC = () => {
 
   const handleShareWhatsApp = (receipt: any) => {
     const typeLabel = receipt.type === 'dry' ? 'Dry Powder' : 'Wet Powder';
-    const text = `*${state.companyInfo.name}*\n_Purchase Receipt_\n\n*Date:* ${receipt.date}\n*Receipt #:* PR-${receipt.id.substring(0, 6).toUpperCase()}\n*Supplier:* ${receipt.supplierName}\n\n*Description:* ${typeLabel}\n*Quantity:* ${receipt.quantity.toFixed(2)} kg\n*Rate:* ৳${receipt.pricePerKg.toFixed(2)}\n\n*Subtotal:* ৳${receipt.totalCost.toLocaleString()}\n*Paid Amount:* ৳${(receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost).toLocaleString()}\n*Due Amount:* ৳${(receipt.totalCost - (receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost)).toLocaleString()}\n\n*Total:* ৳${receipt.totalCost.toLocaleString()}`;
+    const text = `*${state.companyInfo.name}*\n_Purchase Receipt_\n\n*Date:* ${receipt.date}\n*Receipt #:* PR-${receipt.id.substring(0, 6).toUpperCase()}\n*Supplier:* ${receipt.supplierName}\n\n*Description:* ${typeLabel}\n*Bag:* ${receipt.bags || 0}\n*Quantity:* ${receipt.quantity.toFixed(2)} kg\n*Rate:* ৳${receipt.pricePerKg.toFixed(2)}\n\n*Subtotal:* ৳${receipt.totalCost.toLocaleString()}\n*Paid Amount:* ৳${(receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost).toLocaleString()}\n*Due Amount:* ৳${(receipt.totalCost - (receipt.paidAmount !== undefined ? receipt.paidAmount : receipt.totalCost)).toLocaleString()}\n\n*Total:* ৳${receipt.totalCost.toLocaleString()}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -661,7 +661,8 @@ export const Purchases: React.FC = () => {
                   <thead>
                     <tr className="border-b-2 border-slate-900">
                       <th className="text-left py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Description</th>
-                      <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Qty (kg)</th>
+                      <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Bag</th>
+                      <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Quantity(kg)</th>
                       <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Rate (৳)</th>
                       <th className="text-right py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Amount (৳)</th>
                     </tr>
@@ -669,6 +670,7 @@ export const Purchases: React.FC = () => {
                   <tbody className="divide-y divide-slate-100">
                     <tr>
                       <td className="py-6 font-bold text-slate-900">{selectedReceipt.type === 'dry' ? 'Dry Powder' : 'Wet Powder'}</td>
+                      <td className="py-6 text-right font-bold text-slate-900">{selectedReceipt.bags || 0}</td>
                       <td className="py-6 text-right font-bold text-slate-900">{selectedReceipt.quantity.toFixed(2)}</td>
                       <td className="py-6 text-right font-bold text-slate-900">{selectedReceipt.pricePerKg.toFixed(2)}</td>
                       <td className="py-6 text-right font-black text-slate-900 text-lg">{selectedReceipt.totalCost.toLocaleString()}</td>
