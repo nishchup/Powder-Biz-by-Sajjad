@@ -153,10 +153,11 @@ export const Contacts: React.FC = () => {
         profitWithdrawals: Array.isArray(importData.profitWithdrawals) ? importData.profitWithdrawals : [],
         tasks: Array.isArray(importData.tasks) ? importData.tasks : [],
         laborRecords: Array.isArray(importData.laborRecords) ? importData.laborRecords : [],
-        appPin: importData.appPin || '1234',
-        lastBackupTime: importData.lastBackupTime || null,
-        language: importData.language || 'en',
-        weatherLocation: importData.weatherLocation || 'Jamalpur',
+        appPin: importData.appPin || state.appPin,
+        lastBackupTime: importData.lastBackupTime || state.lastBackupTime,
+        language: importData.language || state.language,
+        weatherLocation: importData.weatherLocation || state.weatherLocation,
+        showChatbot: importData.showChatbot !== undefined ? importData.showChatbot : state.showChatbot
       });
       showMessage("Data imported successfully!", 'success');
       setImportData(null);

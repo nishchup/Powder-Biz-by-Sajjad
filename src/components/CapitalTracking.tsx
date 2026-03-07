@@ -99,26 +99,29 @@ export const CapitalTracking: React.FC = () => {
     const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
     const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
 
-    const inhandCash = state.initialCapital 
-      - totalPurchasePaid 
-      - totalSupplierPayments 
-      - totalExpensesAllTime 
-      - totalLabor 
-      - totalWithdrawals
-      + totalSalesReceived 
-      + totalCustomerPayments 
-      + totalLoans 
-      + totalCompanyAdvances;
-
-    // Filtered Expenses for the period
+    // Filtered Expenses and Labor for the period
     const filteredExpenses = state.expenses.filter(e => {
       if (dateRange.start && e.date < dateRange.start) return false;
       if (dateRange.end && e.date > dateRange.end) return false;
       return true;
     }).reduce((sum, e) => sum + e.amount, 0);
 
+    const filteredLabor = state.laborRecords.filter(l => {
+      if (dateRange.start && l.date < dateRange.start) return false;
+      if (dateRange.end && l.date > dateRange.end) return false;
+      return true;
+    }).reduce((sum, l) => sum + l.totalCost, 0);
+
     const isDateSelected = dateRange.start !== '' && dateRange.end !== '';
-    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + (isDateSelected ? filteredExpenses : 0);
+    const currentExpenses = isDateSelected ? filteredExpenses + filteredLabor : totalExpensesAllTime + totalLabor;
+
+    const inhandCash = state.initialCapital 
+      - wetStockValue 
+      - dryStockValue 
+      - supplierAdvances 
+      - currentExpenses;
+
+    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + currentExpenses;
     const difference = totalAssets - state.initialCapital;
 
     return {
@@ -133,6 +136,8 @@ export const CapitalTracking: React.FC = () => {
       avgDryPrice,
       totalExpensesAllTime,
       filteredExpenses,
+      totalLabor,
+      filteredLabor,
       conversionRatio
     };
   }, [state, wetStock, dryStock, dateRange]);
@@ -295,41 +300,31 @@ export const CapitalTracking: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] font-medium text-slate-400">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Wet Stock Value</span>
-                      <span className="text-white">৳{stats.wetStockValue.toLocaleString()}</span>
+                      <span>Initial Capital (+)</span>
+                      <span className="text-white">৳{state.initialCapital.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Dry Stock Value</span>
-                      <span className="text-white">৳{stats.dryStockValue.toLocaleString()}</span>
+                      <span>Wet Stock Value (-)</span>
+                      <span className="text-rose-400">৳{stats.wetStockValue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Supplier Advances</span>
-                      <span className="text-white">৳{stats.supplierAdvances.toLocaleString()}</span>
+                      <span>Dry Stock Value (-)</span>
+                      <span className="text-rose-400">৳{stats.dryStockValue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>In-hand Cash</span>
-                      <span className="text-white">৳{stats.inhandCash.toLocaleString()}</span>
+                      <span>Supplier Advances (-)</span>
+                      <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
                     </div>
-                    {dateRange.start && dateRange.end && (
-                      <div className="flex justify-between text-indigo-400">
-                        <span>Period Expenses (+)</span>
-                        <span>৳{stats.filteredExpenses.toLocaleString()}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span>Expenses (-)</span>
+                      <span className="text-rose-400">৳{(dateRange.start && dateRange.end ? (stats.filteredExpenses + stats.filteredLabor) : (stats.totalExpensesAllTime + stats.totalLabor)).toLocaleString()}</span>
+                    </div>
                   </div>
                   <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
-                    <div className="flex justify-between font-bold text-slate-300">
-                      <span>Current Total Assets</span>
-                      <span>৳{stats.totalAssets.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Initial Capital (-)</span>
-                      <span className="text-rose-400">৳{state.initialCapital.toLocaleString()}</span>
-                    </div>
-                    <div className="pt-2 border-t border-white/5 flex justify-between font-black text-sm">
-                      <span className="text-slate-200">Net Performance</span>
-                      <span className={stats.difference >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                        ৳{stats.difference.toLocaleString()}
+                    <div className="flex justify-between font-black text-sm pt-2 border-t border-white/5">
+                      <span className="text-slate-200">In-hand Cash</span>
+                      <span className="text-emerald-400">
+                        ৳{stats.inhandCash.toLocaleString()}
                       </span>
                     </div>
                   </div>
