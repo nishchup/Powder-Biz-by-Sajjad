@@ -86,7 +86,7 @@ export const CapitalTracking: React.FC = () => {
           quantity: p.quantity || 0,
           cost: p.totalCost
         }))
-      ].sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime());
+      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       const totalSold = state.sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
       let soldRemaining = totalSold;
