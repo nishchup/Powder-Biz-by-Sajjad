@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock, ArrowUpCircle, PieChart, CloudSun } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock, ArrowUpCircle, PieChart, CloudSun, Calculator as CalculatorIcon } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
+import { Calculator } from './Calculator';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onLock }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const { dryStock, state, setLanguage, isOnline, isSyncing, hasPendingSync, lastSynced, syncData } = useAppStore();
   const t = useTranslation(state.language);
 
@@ -135,6 +137,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
               {state.language === 'en' ? 'বাং' : 'EN'}
             </button>
             <button 
+              onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+              className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
+              title="Calculator"
+            >
+              <CalculatorIcon size={18} />
+            </button>
+            <button 
               onClick={onLock}
               className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
             >
@@ -186,6 +195,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
               {state.language === 'en' ? 'বাংলা' : 'English'}
             </button>
             <button 
+              onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+              className="flex items-center text-slate-600 hover:text-amber-600 font-medium text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
+              title="Calculator"
+            >
+              <CalculatorIcon size={18} className="mr-2" />
+              Calc
+            </button>
+            <button 
               onClick={onLock}
               className="flex items-center text-slate-600 hover:text-red-600 font-medium text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-colors"
               title="Lock Application"
@@ -218,6 +235,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
           </div>
         </main>
       </div>
+
+      {/* Calculator Popup */}
+      <Calculator isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} />
     </div>
   );
 };
