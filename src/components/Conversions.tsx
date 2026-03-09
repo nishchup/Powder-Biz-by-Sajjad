@@ -86,14 +86,13 @@ export const Conversions: React.FC = () => {
       if (purchase && purchase.totalBags && purchase.totalBags > 0) {
         const wetQty = (purchase.quantity / purchase.totalBags) * bags;
         const estimatedDry = wetQty * 0.8;
-        const netPrice = purchase.quantity > 0 ? purchase.totalCost / purchase.quantity : purchase.pricePerKg;
         
         setFormData({
           ...formData,
           bagsUsed: e.target.value,
           wetQuantityUsed: wetQty.toFixed(2),
           dryQuantityProduced: estimatedDry.toFixed(2),
-          purchasePrice: netPrice.toString()
+          purchasePrice: purchase.pricePerKg.toString()
         });
       } else {
         setFormData({ ...formData, bagsUsed: e.target.value });
