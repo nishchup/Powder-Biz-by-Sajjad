@@ -34,23 +34,44 @@ export const ProductDelivery: React.FC = () => {
     notes: '',
   });
 
-  const avgWetPriceInPeriod = useMemo(() => {
+  const avgWetPriceUsedInPeriod = useMemo(() => {
     if (!formData.startDate || !formData.endDate) return 0;
-    const filteredWetPurchases = state.purchases.filter(p => 
-      (p.type === 'wet' || !p.type) && 
-      p.date >= formData.startDate && 
-      p.date <= formData.endDate
-    );
-    const totalWetQtyInPeriod = filteredWetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0);
-    const totalWetCostInPeriod = filteredWetPurchases.reduce((sum, p) => sum + (p.totalCost || 0), 0);
     
-    if (totalWetQtyInPeriod > 0) return totalWetCostInPeriod / totalWetQtyInPeriod;
-    
+    // Global average of all wet purchases for fallback
     const allWetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
     const globalTotalWetQty = allWetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0);
     const globalTotalWetCost = allWetPurchases.reduce((sum, p) => sum + (p.totalCost || 0), 0);
-    return globalTotalWetQty > 0 ? globalTotalWetCost / globalTotalWetQty : 0;
-  }, [formData.startDate, formData.endDate, state.purchases]);
+    const globalAvgWetPurchasePrice = globalTotalWetQty > 0 ? globalTotalWetCost / globalTotalWetQty : 0;
+
+    // 1. Get conversions in period
+    const filteredConversions = state.conversions.filter(c => 
+      c.date >= formData.startDate && 
+      c.date <= formData.endDate
+    );
+    
+    const totalWetUsedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalWetCostInPeriod = filteredConversions.reduce((sum, c) => {
+        const price = c.purchasePrice || globalAvgWetPurchasePrice;
+        return sum + ((c.wetQuantityUsed || 0) * price);
+    }, 0);
+    
+    if (totalWetUsedInPeriod > 0) {
+      return totalWetCostInPeriod / totalWetUsedInPeriod;
+    }
+    
+    // 2. Fallback: Average cost of ALL conversions
+    const totalWetUsedAllTime = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalWetCostAllTime = state.conversions.reduce((sum, c) => {
+        const price = c.purchasePrice || globalAvgWetPurchasePrice;
+        return sum + ((c.wetQuantityUsed || 0) * price);
+    }, 0);
+    
+    if (totalWetUsedAllTime > 0) {
+      return totalWetCostAllTime / totalWetUsedAllTime;
+    }
+    
+    return globalAvgWetPurchasePrice;
+  }, [formData.startDate, formData.endDate, state.conversions, state.purchases]);
 
   const summary = useMemo(() => {
     if (!formData.startDate || !formData.endDate) return null;
@@ -73,8 +94,8 @@ export const ProductDelivery: React.FC = () => {
     // User Rule: Displayed Dry Produced = Total Sales Quantity
     const displayedDryProduced = totalSalesQty;
 
-    // User Rule: Total Purchases/Cost = Total Wet Used * Average Purchase Price of Wet Powder in Period
-    const totalPurchases = displayedWetUsed * avgWetPriceInPeriod;
+    // User Rule: Total Purchases/Cost = Total Wet Used * Average Original Purchase Price of Wet Stock used in Conversions
+    const totalPurchases = displayedWetUsed * avgWetPriceUsedInPeriod;
 
     const filteredExpenses = state.expenses.filter(e => e.date >= formData.startDate && e.date <= formData.endDate);
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -91,7 +112,7 @@ export const ProductDelivery: React.FC = () => {
       totalWetUsed: displayedWetUsed,
       totalDryProduced: displayedDryProduced
     };
-  }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses, state.conversions, avgWetPriceInPeriod]);
+  }, [formData.startDate, formData.endDate, state.purchases, state.sales, state.expenses, state.conversions, avgWetPriceUsedInPeriod]);
 
   React.useEffect(() => {
     if (summary) {
@@ -227,7 +248,7 @@ export const ProductDelivery: React.FC = () => {
     e.preventDefault();
     if (formData.startDate && formData.endDate) {
       const currentWetUsed = parseFloat(formData.totalWetUsed) || 0;
-      const currentTotalPurchases = currentWetUsed * avgWetPriceInPeriod;
+      const currentTotalPurchases = currentWetUsed * avgWetPriceUsedInPeriod;
       const currentNetProfit = (summary?.totalSales || 0) - (currentTotalPurchases + (summary?.totalExpenses || 0));
 
       const deliveryData = {
@@ -327,9 +348,9 @@ export const ProductDelivery: React.FC = () => {
               <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Cost (Based on Wet Used)</p>
-                  <p className="text-xl font-bold text-slate-900">৳{((parseFloat(formData.totalWetUsed) || 0) * avgWetPriceInPeriod).toLocaleString()}</p>
+                  <p className="text-xl font-bold text-slate-900">৳{((parseFloat(formData.totalWetUsed) || 0) * avgWetPriceUsedInPeriod).toLocaleString()}</p>
                   <p className="text-xs text-slate-500 mt-1">
-                    Wet Used × Avg Purchase Price (৳{avgWetPriceInPeriod.toFixed(2)}/kg)
+                    Wet Used × Avg Original Purchase Price (৳{avgWetPriceUsedInPeriod.toFixed(2)}/kg)
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -342,8 +363,8 @@ export const ProductDelivery: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Net Profit/Loss</p>
-                  <p className={`text-xl font-black ${(summary.totalSales - ((parseFloat(formData.totalWetUsed) || 0) * avgWetPriceInPeriod + summary.totalExpenses)) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    ৳{(summary.totalSales - ((parseFloat(formData.totalWetUsed) || 0) * avgWetPriceInPeriod + summary.totalExpenses)).toLocaleString()}
+                  <p className={`text-xl font-black ${(summary.totalSales - ((parseFloat(formData.totalWetUsed) || 0) * avgWetPriceUsedInPeriod + summary.totalExpenses)) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    ৳{(summary.totalSales - ((parseFloat(formData.totalWetUsed) || 0) * avgWetPriceUsedInPeriod + summary.totalExpenses)).toLocaleString()}
                   </p>
                 </div>
                 <div className="space-y-1 bg-blue-50/50 p-2 rounded-lg border border-blue-100">

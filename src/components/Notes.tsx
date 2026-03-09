@@ -221,18 +221,20 @@ export const Notes: React.FC = () => {
                     <Calendar size={12} className="mr-1.5" />
                     {note.date}
                   </div>
-                  <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-all">
+                  <div className="flex space-x-2">
                     <button 
                       onClick={() => handleEdit(note)}
-                      className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center active:scale-90"
+                      className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center active:scale-90 shadow-sm"
+                      title="Edit Note"
                     >
-                      <Pencil size={14} />
+                      <Pencil size={16} />
                     </button>
                     <button 
                       onClick={() => setDeleteId(note.id)}
-                      className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90"
+                      className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center active:scale-90 shadow-sm"
+                      title="Delete Note"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
