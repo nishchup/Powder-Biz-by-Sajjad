@@ -50,31 +50,21 @@ export const CapitalTracking: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    // 1. FIFO Stock Valuation Helper
-    const calculateFIFOValue = (stockQty: number, purchases: typeof state.purchases) => {
-      const sorted = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      let remaining = stockQty;
-      let value = 0;
-      for (const p of sorted) {
-        if (remaining <= 0) break;
-        const qty = p.quantity || 0;
-        const take = Math.min(remaining, qty);
-        const price = qty > 0 ? p.totalCost / qty : 0;
-        value += take * price;
-        remaining -= take;
-      }
-      if (remaining > 0 && sorted.length > 0) {
-        const oldest = sorted[sorted.length - 1];
-        const price = oldest.quantity > 0 ? oldest.totalCost / oldest.quantity : 0;
-        value += remaining * price;
-      }
-      return value;
-    };
+    const totalPurchasesPaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
+    const totalSalesPaid = state.sales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
+    const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
+    const totalCustomerPayments = state.customerPayments.reduce((sum, p) => sum + p.amount, 0);
+    const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
+    const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
+    const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
+    const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalLabor = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
 
-    const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
-    const wetStockValue = calculateFIFOValue(wetStock, wetPurchases);
+    const totalWetPurchasesValue = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + p.totalCost, 0);
+    const totalConversionsValue = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed * (c.purchasePrice || 0)), 0);
+    const wetStockValue = Math.max(0, totalWetPurchasesValue - totalConversionsValue);
 
-    const calculateDryStockFIFOValue = () => {
+    const calculateDryStockValue = () => {
       const inflows = [
         ...state.conversions.map(c => ({
           date: c.date,
@@ -101,27 +91,25 @@ export const CapitalTracking: React.FC = () => {
       }, 0);
     };
 
-    const dryStockValue = calculateDryStockFIFOValue();
+    const dryStockValue = calculateDryStockValue();
 
-    // Calculate conversion ratio to determine Wet Equivalent of Dry Stock
-    const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-    const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
-    const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
+    const inhandCash = (state.initialCapital || 0) 
+      + totalSalesPaid 
+      + totalCustomerPayments 
+      + totalLoans 
+      - totalPurchasesPaid 
+      - totalSupplierPayments 
+      - totalExpenses 
+      - totalLabor 
+      - totalCompanyAdvances 
+      - totalProfitWithdrawals;
 
-    // For display purposes only
-    const avgWetPrice = wetPurchases.length > 0 
-      ? wetPurchases.reduce((sum, p) => sum + p.totalCost, 0) / wetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
-      : 0;
-
-    // 3. Supplier Advances & Dues
     const supplierBalances = state.suppliers.map(supplier => {
       const supplierPurchases = state.purchases.filter(p => p.supplierName === supplier.name);
       const supplierPayments = state.supplierPayments.filter(p => p.supplierName === supplier.name);
-      
       const totalCost = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
       const totalPaidInPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
       const totalStandalonePayments = supplierPayments.reduce((sum, p) => sum + p.amount, 0);
-      
       return (totalPaidInPurchases + totalStandalonePayments) - totalCost;
     });
 
@@ -136,39 +124,6 @@ export const CapitalTracking: React.FC = () => {
       return sum + (totalBilled - (totalPaidSales + totalPayments));
     }, 0);
 
-    const totalDues = supplierDues + totalCustomerDue;
-
-    // 4. In-hand Cash Calculation
-    const totalPurchasePaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
-    const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
-    const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
-    
-    const finalizedRemainProfit = state.productDeliveries
-      .filter(d => d.date >= '2026-03-04')
-      .reduce((sum, d) => {
-        const withdrawn = state.profitWithdrawals
-          .filter(pw => pw.deliveryId === d.id)
-          .reduce((s, pw) => s + pw.amount, 0);
-        return sum + (d.netProfit - withdrawn);
-      }, 0);
-
-    const lastSaleDateInState = state.sales.length > 0 
-      ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
-      : null;
-
-    const expensesAfterLastSale = state.expenses.filter(e => lastSaleDateInState && e.date > lastSaleDateInState);
-    const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDateInState && l.date > lastSaleDateInState);
-    const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
-                                       laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
-
-    const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
-    const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
-    const totalExpensesAllTime = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalLaborAllTime = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
-    
-    const netProfit = totalSales - (totalPurchases + totalExpensesAllTime + totalLaborAllTime);
-    const remainProfit = netProfit - totalProfitWithdrawals;
-
     // Filtered Expenses and Labor for the period
     const filteredExpenses = state.expenses.filter(e => {
       if (dateRange.start && e.date < dateRange.start) return false;
@@ -182,39 +137,43 @@ export const CapitalTracking: React.FC = () => {
       return true;
     }).reduce((sum, l) => sum + l.totalCost, 0);
 
-    const isDateSelected = dateRange.start !== '' && dateRange.end !== '';
-    const currentExpenses = isDateSelected ? filteredExpenses + filteredLabor : totalExpensesAllTime + totalLaborAllTime;
+    const totalAssets = inhandCash + wetStockValue + dryStockValue + supplierAdvances + totalCustomerDue;
+    const totalLiabilities = supplierDues + totalLoans;
+    const netWorth = totalAssets - totalLiabilities;
+    const difference = netWorth - state.initialCapital;
 
-    const baseInhand = state.initialCapital 
-      - wetStockValue 
-      - dryStockValue 
-      - supplierAdvances;
+    const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
+    const avgWetPrice = wetPurchases.length > 0 
+      ? wetPurchases.reduce((sum, p) => sum + p.totalCost, 0) / wetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0)
+      : 0;
 
-    const inhandCash = baseInhand + finalizedRemainProfit - totalExpensesAfterLastSale;
-
-    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash;
-    const difference = totalAssets - state.initialCapital;
+    const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+    const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
 
     return {
       wetStockValue,
       dryStockValue,
       supplierAdvances,
-      totalDues,
+      totalDues: supplierDues + totalCustomerDue,
       inhandCash,
-      totalAssets,
+      totalAssets: netWorth, // Use Net Worth as the primary "Total Assets" for comparison
       difference,
       avgWetPrice,
-      totalExpensesAllTime,
+      totalExpensesAllTime: totalExpenses,
       filteredExpenses,
-      totalLabor: totalLaborAllTime,
+      totalLabor: totalLabor,
       filteredLabor,
       totalProfitWithdrawals,
-      finalizedRemainProfit,
-      totalExpensesAfterLastSale,
-      remainProfit,
-      conversionRatio
+      conversionRatio,
+      totalSalesPaid,
+      totalCustomerPayments,
+      totalLoans,
+      totalPurchasesPaid,
+      totalSupplierPayments,
+      totalCompanyAdvances
     };
-  }, [state, wetStock, dryStock, dateRange]);
+  }, [state, wetStock, dryStock]);
 
   return (
     <div className="space-y-8">
@@ -374,38 +333,48 @@ export const CapitalTracking: React.FC = () => {
               </div>
 
               <div className="mt-8 pt-8 border-t border-white/10">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Calculation Breakdown</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] font-medium text-slate-400">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Cash Flow Breakdown</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[11px] font-medium text-slate-400">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Initial Capital (+)</span>
                       <span className="text-white">৳{state.initialCapital.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Wet Stock Value (-)</span>
-                      <span className="text-rose-400">৳{stats.wetStockValue.toLocaleString()}</span>
+                      <span>Total Sales Paid (+)</span>
+                      <span className="text-emerald-400">৳{stats.totalSalesPaid.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Dry Stock Value (-)</span>
-                      <span className="text-rose-400">৳{stats.dryStockValue.toLocaleString()}</span>
+                      <span>Customer Payments (+)</span>
+                      <span className="text-emerald-400">৳{stats.totalCustomerPayments.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Supplier Advances (-)</span>
-                      <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Finalized Profit (Deliveries Since 04-Mar) (+)</span>
-                      <span className="text-emerald-400">৳{stats.finalizedRemainProfit.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Expenses (After Last Sale) (-)</span>
-                      <span className="text-rose-400">৳{stats.totalExpensesAfterLastSale.toLocaleString()}</span>
+                      <span>Loans & Advances (+)</span>
+                      <span className="text-emerald-400">৳{stats.totalLoans.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
-                    <div className="flex justify-between font-black text-sm pt-2 border-t border-white/5">
-                      <span className="text-slate-200">In-hand Cash</span>
-                      <span className="text-emerald-400">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Purchase Payments (-)</span>
+                      <span className="text-rose-400">৳{stats.totalPurchasesPaid.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Supplier Payments (-)</span>
+                      <span className="text-rose-400">৳{stats.totalSupplierPayments.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Expenses & Labor (-)</span>
+                      <span className="text-rose-400">৳{(stats.totalExpensesAllTime + stats.totalLabor).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Profit Withdrawals (-)</span>
+                      <span className="text-rose-400">৳{stats.totalProfitWithdrawals.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="col-span-1 sm:col-span-2 mt-4 pt-4 border-t border-white/5">
+                    <div className="flex justify-between font-black text-sm">
+                      <span className="text-slate-200 uppercase tracking-widest">Net In-hand Cash</span>
+                      <span className="text-emerald-400 text-lg">
                         ৳{stats.inhandCash.toLocaleString()}
                       </span>
                     </div>
