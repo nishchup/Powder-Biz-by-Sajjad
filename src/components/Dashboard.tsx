@@ -22,44 +22,15 @@ export const Dashboard: React.FC = () => {
   const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
   const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
   
-  const finalizedRemainProfit = state.productDeliveries
-    .filter(d => d.date >= '2026-03-04')
-    .reduce((sum, d) => {
-      const withdrawn = state.profitWithdrawals
-        .filter(pw => pw.deliveryId === d.id)
-        .reduce((s, pw) => s + pw.amount, 0);
-      return sum + (d.netProfit - withdrawn);
-    }, 0);
+  const totalWetPurchasesValue = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + p.totalCost, 0);
+  const totalConversionsValue = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed * (c.purchasePrice || 0)), 0);
+  const wetStockValue = Math.max(0, totalWetPurchasesValue - totalConversionsValue);
 
-  const lastSaleDate = state.sales.length > 0 
-    ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
-    : null;
-
-  const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
+  const totalDryPurchasesValue = state.purchases.filter(p => p.type === 'dry').reduce((sum, p) => sum + p.totalCost, 0);
+  const totalDryInflowValue = totalConversionsValue + totalDryPurchasesValue;
   
-  const calculateFIFOValue = (stockQty: number, purchases: typeof state.purchases) => {
-    const sorted = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    let remaining = stockQty;
-    let value = 0;
-    for (const p of sorted) {
-      if (remaining <= 0) break;
-      const qty = p.quantity || 0;
-      const take = Math.min(remaining, qty);
-      const price = qty > 0 ? p.totalCost / qty : 0;
-      value += take * price;
-      remaining -= take;
-    }
-    if (remaining > 0 && sorted.length > 0) {
-      const oldest = sorted[sorted.length - 1];
-      const price = oldest.quantity > 0 ? oldest.totalCost / oldest.quantity : 0;
-      value += remaining * price;
-    }
-    return value;
-  };
-
-  const wetStockValue = calculateFIFOValue(wetStock, wetPurchases);
-
-  const calculateDryStockFIFOValue = () => {
+  // Calculate Cost of Goods Sold for Dry Stock using FIFO
+  const calculateDryStockValue = () => {
     const inflows = [
       ...state.conversions.map(c => ({
         date: c.date,
@@ -86,19 +57,9 @@ export const Dashboard: React.FC = () => {
     }, 0);
   };
 
-  const dryStockValue = calculateDryStockFIFOValue();
-
-  const expensesAfterLastSale = state.expenses.filter(e => lastSaleDate && e.date > lastSaleDate);
-  const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDate && l.date > lastSaleDate);
-  const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
-                                     laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
-
-  const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-  const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
-  const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
+  const dryStockValue = calculateDryStockValue();
 
   let totalSupplierDue = 0;
-  let totalSupplierAdvance = 0;
   state.suppliers.forEach(s => {
     const supplierPurchases = state.purchases.filter(p => p.supplierName === s.name);
     const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
@@ -106,7 +67,6 @@ export const Dashboard: React.FC = () => {
     const totalPayments = state.supplierPayments.filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
     const balance = (totalPaidPurchases + totalPayments) - totalBilled;
     if (balance < 0) totalSupplierDue += Math.abs(balance);
-    else totalSupplierAdvance += balance;
   });
 
   const totalCustomerDue = state.customers.reduce((sum, c) => {
@@ -117,7 +77,16 @@ export const Dashboard: React.FC = () => {
     return sum + (totalBilled - (totalPaidSales + totalPayments));
   }, 0);
 
-  const inhandCash = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance) + finalizedRemainProfit - totalExpensesAfterLastSale;
+  const inhandCash = (state.initialCapital || 0) 
+    + totalSalesPaid 
+    + totalCustomerPayments 
+    + totalLoans 
+    - totalPurchasesPaid 
+    - totalSupplierPayments 
+    - totalExpenses 
+    - totalLabor 
+    - totalCompanyAdvances 
+    - totalProfitWithdrawals;
 
   return (
     <div 
@@ -217,24 +186,36 @@ export const Dashboard: React.FC = () => {
                     <span className="text-emerald-600">৳{(state.initialCapital || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Wet Stock Value (-)</span>
-                    <span className="text-rose-500">৳{wetStockValue.toLocaleString()}</span>
+                    <span>Total Sales Paid (+)</span>
+                    <span className="text-emerald-600">৳{totalSalesPaid.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Dry Stock Value (-)</span>
-                    <span className="text-rose-500">৳{dryStockValue.toLocaleString()}</span>
+                    <span>Customer Payments (+)</span>
+                    <span className="text-emerald-600">৳{totalCustomerPayments.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Supplier Advance (-)</span>
-                    <span className="text-rose-500">৳{totalSupplierAdvance.toLocaleString()}</span>
+                    <span>Loans & Advances (+)</span>
+                    <span className="text-emerald-600">৳{totalLoans.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Finalized Profit (Deliveries Since 04-Mar) (+)</span>
-                    <span className="text-emerald-600">৳{finalizedRemainProfit.toLocaleString()}</span>
+                    <span>Purchase Payments (-)</span>
+                    <span className="text-rose-500">৳{totalPurchasesPaid.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Expenses (After Last Sale) (-)</span>
-                    <span className="text-rose-500">৳{totalExpensesAfterLastSale.toLocaleString()}</span>
+                    <span>Supplier Payments (-)</span>
+                    <span className="text-rose-500">৳{totalSupplierPayments.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>Expenses & Labor (-)</span>
+                    <span className="text-rose-500">৳{(totalExpenses + totalLabor).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>Company Advances (-)</span>
+                    <span className="text-rose-500">৳{totalCompanyAdvances.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>Profit Withdrawals (-)</span>
+                    <span className="text-rose-500">৳{totalProfitWithdrawals.toLocaleString()}</span>
                   </div>
                   <div className="pt-1 flex justify-between items-center text-[12px] font-black text-indigo-600">
                     <span>Net Inhand Cash</span>
