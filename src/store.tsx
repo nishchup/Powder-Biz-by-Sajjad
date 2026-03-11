@@ -15,7 +15,6 @@ export interface SupplierPayment {
   supplierName: string;
   amount: number;
   remarks?: string;
-  notes?: string;
   purchaseId?: string;
 }
 

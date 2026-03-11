@@ -50,7 +50,6 @@ export const SupplierLedger: React.FC = () => {
           : p.remarks || 'Supplier Payment',
         debit: p.amount < 0 ? Math.abs(p.amount) : 0,
         credit: p.amount > 0 ? p.amount : 0,
-        notes: p.notes || '',
         reference: `PY-${p.id.substring(0, 6).toUpperCase()}`
       }));
 
@@ -168,7 +167,6 @@ export const SupplierLedger: React.FC = () => {
                 <thead>
                   <tr className="bg-slate-50/50">
                     <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
-                    <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Notes</th>
                     <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Type</th>
                     <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Reference</th>
                     <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Description</th>
@@ -191,7 +189,6 @@ export const SupplierLedger: React.FC = () => {
                     paginatedData.map((item: any) => (
                       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className={`px-8 py-5 text-sm font-bold ${item.type === 'Payment' ? 'text-rose-600' : (item.type === 'Adjusted Payment' ? 'text-emerald-600' : 'text-slate-600')}`}>{item.date}</td>
-                        <td className="px-8 py-5 text-sm font-medium text-slate-500">{item.notes || '—'}</td>
                         <td className="px-8 py-5 text-sm">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${item.type === 'Purchase' ? 'bg-blue-100 text-blue-700' : (item.type === 'Payment' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')}`}>
                             {item.type}
@@ -215,7 +212,7 @@ export const SupplierLedger: React.FC = () => {
                 {ledgerData.length > 0 && (
                   <tfoot className="bg-slate-50/50 font-black">
                     <tr>
-                      <td colSpan={5} className="px-8 py-6 text-right text-slate-500 uppercase tracking-widest text-xs">Period Totals</td>
+                      <td colSpan={4} className="px-8 py-6 text-right text-slate-500 uppercase tracking-widest text-xs">Period Totals</td>
                       <td className="px-8 py-6 text-right text-slate-900">৳{totals.debit.toLocaleString()}</td>
                       <td className="px-8 py-6 text-right text-emerald-600">৳{totals.credit.toLocaleString()}</td>
                       <td className={`px-8 py-6 text-right ${balance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>

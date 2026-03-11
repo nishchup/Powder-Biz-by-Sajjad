@@ -24,7 +24,6 @@ export const Payments: React.FC = () => {
     name: '',
     amount: '',
     description: '',
-    notes: '',
   });
 
   const handleEdit = (p: any) => {
@@ -33,7 +32,6 @@ export const Payments: React.FC = () => {
       name: activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'loan' ? p.personName : activeTab === 'profitWithdraw' ? p.deliveryId : '',
       amount: p.amount.toString(),
       description: activeTab === 'profitWithdraw' ? p.notes : (p.description || p.remarks || ''),
-      notes: p.notes || '',
     });
     setEditingId(p.id);
     setIsFormOpen(true);
@@ -42,7 +40,7 @@ export const Payments: React.FC = () => {
   const handleCancel = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ date: getTodayDate(), name: '', amount: '', description: '', notes: '' });
+    setFormData({ date: getTodayDate(), name: '', amount: '', description: '' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -52,9 +50,9 @@ export const Payments: React.FC = () => {
     if (amount > 0) {
       if (activeTab === 'supplier' && formData.name) {
         if (editingId) {
-          editSupplierPayment(editingId, { date: formData.date, supplierName: formData.name, amount, remarks: formData.description, notes: formData.notes });
+          editSupplierPayment(editingId, { date: formData.date, supplierName: formData.name, amount, remarks: formData.description });
         } else {
-          addSupplierPayment({ date: formData.date, supplierName: formData.name, amount, remarks: formData.description, notes: formData.notes });
+          addSupplierPayment({ date: formData.date, supplierName: formData.name, amount, remarks: formData.description });
         }
         handleCancel();
       } else if (activeTab === 'customer' && formData.name) {
@@ -264,18 +262,6 @@ export const Payments: React.FC = () => {
                         />
                       </div>
                     </div>
-                    {activeTab === 'supplier' && (
-                      <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Notes</label>
-                        <input 
-                          type="text" 
-                          placeholder="Additional notes..."
-                          value={formData.notes}
-                          onChange={e => setFormData({...formData, notes: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
-                        />
-                      </div>
-                    )}
                     {(activeTab === 'loan' || activeTab === 'companyAdvance' || activeTab === 'supplier' || activeTab === 'profitWithdraw') && (
                       <div className="sm:col-span-2 lg:col-span-3 space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
@@ -325,7 +311,6 @@ export const Payments: React.FC = () => {
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
-                {activeTab === 'supplier' && <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Notes</th>}
                 {activeTab !== 'companyAdvance' && (
                   <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">
                     {activeTab === 'supplier' ? 'Supplier' : activeTab === 'customer' ? 'Customer' : activeTab === 'profitWithdraw' ? 'Delivery Ref' : 'Person'}
@@ -341,7 +326,7 @@ export const Payments: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={(activeTab === 'loan' || activeTab === 'companyAdvance') ? (activeTab === 'companyAdvance' ? 4 : 5) : (activeTab === 'supplier' ? 6 : 5)} className="px-8 py-24 text-center">
+                  <td colSpan={(activeTab === 'loan' || activeTab === 'companyAdvance') ? (activeTab === 'companyAdvance' ? 4 : 5) : 4} className="px-8 py-24 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
                         <CreditCard className="text-slate-200" size={48} />
@@ -361,11 +346,6 @@ export const Payments: React.FC = () => {
                   return (
                     <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className={`px-8 py-5 text-sm font-bold ${activeTab === 'supplier' ? rowColor : 'text-slate-600'}`}>{p.date}</td>
-                      {activeTab === 'supplier' && (
-                        <td className={`px-8 py-5 text-sm font-medium ${rowColor}`}>
-                          {p.notes || '—'}
-                        </td>
-                      )}
                       {activeTab !== 'companyAdvance' && (
                         <td className={`px-8 py-5 text-sm font-black ${rowColor}`}>
                           {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'profitWithdraw' ? (state.productDeliveries.find(d => d.id === p.deliveryId)?.description || p.deliveryId) : p.personName}
