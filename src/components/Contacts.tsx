@@ -13,7 +13,7 @@ export const Contacts: React.FC = () => {
     editSupplier, editCustomer, editExpenseCategory,
     deleteSupplier, deleteCustomer, deleteExpenseCategory,
     setInitialCapital, setCompanyInfo, setAppPin, setLastBackupTime,
-    resetState, importState, setShowChatbot
+    resetState, importState, setShowChatbot, setSalesGoal
   } = useAppStore();
   
   const [activeTab, setActiveTab] = useState<'suppliers' | 'customers' | 'categories' | 'backup' | 'general'>('general');
@@ -50,6 +50,7 @@ export const Contacts: React.FC = () => {
 
   const [companyData, setCompanyData] = useState(state.companyInfo);
   const [capitalData, setCapitalData] = useState(state.initialCapital.toString());
+  const [salesGoalData, setSalesGoalData] = useState(state.salesGoal.toString());
   const [pinData, setPinData] = useState(state.appPin);
   const [showChatbotData, setShowChatbotData] = useState(state.showChatbot);
 
@@ -153,6 +154,7 @@ export const Contacts: React.FC = () => {
         profitWithdrawals: Array.isArray(importData.profitWithdrawals) ? importData.profitWithdrawals : [],
         tasks: Array.isArray(importData.tasks) ? importData.tasks : [],
         laborRecords: Array.isArray(importData.laborRecords) ? importData.laborRecords : [],
+        salesGoal: importData.salesGoal || state.salesGoal,
         appPin: importData.appPin || state.appPin,
         lastBackupTime: importData.lastBackupTime || state.lastBackupTime,
         language: importData.language || state.language,
@@ -176,6 +178,7 @@ export const Contacts: React.FC = () => {
     e.preventDefault();
     setCompanyInfo(companyData);
     setInitialCapital(parseFloat(capitalData) || 0);
+    setSalesGoal(parseFloat(salesGoalData) || 0);
     if (pinData.length === 4) {
       setAppPin(pinData);
     }
@@ -386,6 +389,21 @@ export const Contacts: React.FC = () => {
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1 mt-2">This amount will be added to your Inhand Cash.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest ml-1">Sales Goal (বিক্রয় লক্ষ্যমাত্রা)</label>
+                    <div className="relative">
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black">৳</span>
+                      <input 
+                        type="number" 
+                        value={salesGoalData}
+                        onChange={e => setSalesGoalData(e.target.value)}
+                        className="w-full bg-white border border-slate-100 rounded-2xl pl-10 pr-5 py-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-black text-slate-900 text-lg"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1 mt-2">Set a target revenue to track your progress.</p>
                   </div>
                 </div>
 

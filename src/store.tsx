@@ -15,6 +15,7 @@ export interface SupplierPayment {
   supplierName: string;
   amount: number;
   remarks?: string;
+  notes?: string;
   purchaseId?: string;
 }
 
@@ -23,6 +24,7 @@ export interface CustomerPayment {
   date: string;
   customerName: string;
   amount: number;
+  notes?: string;
 }
 
 export interface Purchase {
@@ -170,6 +172,7 @@ export interface AppState {
   profitWithdrawals: ProfitWithdrawal[];
   tasks: Task[];
   laborRecords: LaborRecord[];
+  salesGoal: number;
   appPin: string;
   lastBackupTime: string | null;
   language: 'en' | 'bn';
@@ -200,6 +203,7 @@ const initialState: AppState = {
   profitWithdrawals: [],
   tasks: [],
   laborRecords: [],
+  salesGoal: 1000000,
   appPin: '1234',
   lastBackupTime: null,
   language: 'en',
@@ -260,6 +264,7 @@ interface AppContextType {
   addLaborRecord: (l: Omit<LaborRecord, 'id'>) => void;
   editLaborRecord: (id: string, l: Omit<LaborRecord, 'id'>) => void;
   deleteLaborRecord: (id: string) => void;
+  setSalesGoal: (goal: number) => void;
   setAppPin: (pin: string) => void;
   setLastBackupTime: (time: string) => void;
   resetState: () => void;
@@ -314,6 +319,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           profitWithdrawals: Array.isArray(parsed.profitWithdrawals) ? parsed.profitWithdrawals : [],
           tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
           laborRecords: Array.isArray(parsed.laborRecords) ? parsed.laborRecords : [],
+          salesGoal: parsed.salesGoal || 1000000,
           appPin: parsed.appPin || '1234',
           lastBackupTime: parsed.lastBackupTime || null,
           language: parsed.language || 'en',
@@ -607,6 +613,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, laborRecords: s.laborRecords.filter(l => l.id !== id) }));
   };
 
+  const setSalesGoal = (goal: number) => {
+    setState(s => ({ ...s, salesGoal: goal }));
+  };
+
   const setAppPin = (pin: string) => {
     setState(s => ({ ...s, appPin: pin }));
   };
@@ -699,6 +709,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addLaborRecord,
       editLaborRecord,
       deleteLaborRecord,
+      setSalesGoal,
       setAppPin,
       setLastBackupTime,
       resetState,

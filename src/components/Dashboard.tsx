@@ -1,18 +1,31 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../store';
-import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
+import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Target, Edit2 } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { ProductionCharts } from './ProductionCharts';
 import { FinancialCharts } from './FinancialCharts';
 
 export const Dashboard: React.FC = () => {
-  const { state, wetStock, dryStock } = useAppStore();
+  const { state, wetStock, dryStock, setSalesGoal } = useAppStore();
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [newGoal, setNewGoal] = useState(state.salesGoal.toString());
 
   const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
   const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
   const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalLabor = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
   const netProfit = totalSales - (totalPurchases + totalExpenses + totalLabor);
+
+  const salesGoalProgress = Math.min((totalSales / (state.salesGoal || 1)) * 100, 100);
+
+  const handleGoalUpdate = () => {
+    const goalValue = parseFloat(newGoal);
+    if (!isNaN(goalValue) && goalValue > 0) {
+      setSalesGoal(goalValue);
+      setIsEditingGoal(false);
+    }
+  };
 
   const totalPurchasesPaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
   const totalSalesPaid = state.sales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
@@ -158,6 +171,53 @@ export const Dashboard: React.FC = () => {
           color="bg-emerald-500" 
         />
         <StatCard 
+          title="Sales Goal" 
+          value={
+            isEditingGoal ? (
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  value={newGoal} 
+                  onChange={(e) => setNewGoal(e.target.value)}
+                  className="w-24 px-2 py-1 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <button 
+                  onClick={handleGoalUpdate}
+                  className="p-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span>৳{(state.salesGoal || 0).toLocaleString()}</span>
+                <button 
+                  onClick={() => setIsEditingGoal(true)}
+                  className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>
+            )
+          } 
+          icon={Target} 
+          color="bg-blue-600" 
+          extraInfo={
+            <div className="mt-2">
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className="bg-blue-500 h-full transition-all duration-500" 
+                  style={{ width: `${salesGoalProgress}%` }}
+                />
+              </div>
+              <p className="text-[10px] font-bold text-slate-500 mt-1">
+                {salesGoalProgress.toFixed(1)}% of target
+              </p>
+            </div>
+          }
+        />
+        <StatCard 
           title="Inhand Cash" 
           value={`৳${(inhandCash || 0).toLocaleString()}`} 
           icon={DollarSign} 
@@ -229,7 +289,7 @@ export const Dashboard: React.FC = () => {
                     <span className="text-rose-500">৳{totalSupplierAdvance.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
-                    <span>Finalized Profit (Deliveries Since 04-Mar) (+)</span>
+                    <span>Remain Finalized Profit</span>
                     <span className="text-emerald-600">৳{finalizedRemainProfit.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">

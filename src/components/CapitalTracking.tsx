@@ -139,27 +139,11 @@ export const CapitalTracking: React.FC = () => {
     const totalDues = supplierDues + totalCustomerDue;
 
     // 4. In-hand Cash Calculation
-    const totalPurchasePaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
-    const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
     const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
     
-    const finalizedRemainProfit = state.productDeliveries
-      .filter(d => d.date >= '2026-03-04')
-      .reduce((sum, d) => {
-        const withdrawn = state.profitWithdrawals
-          .filter(pw => pw.deliveryId === d.id)
-          .reduce((s, pw) => s + pw.amount, 0);
-        return sum + (d.netProfit - withdrawn);
-      }, 0);
-
     const lastSaleDateInState = state.sales.length > 0 
       ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
       : null;
-
-    const expensesAfterLastSale = state.expenses.filter(e => lastSaleDateInState && e.date > lastSaleDateInState);
-    const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDateInState && l.date > lastSaleDateInState);
-    const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
-                                       laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
 
     const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
     const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
@@ -185,20 +169,17 @@ export const CapitalTracking: React.FC = () => {
     const isDateSelected = dateRange.start !== '' && dateRange.end !== '';
     const currentExpenses = isDateSelected ? filteredExpenses + filteredLabor : totalExpensesAllTime + totalLaborAllTime;
 
-    const baseInhand = state.initialCapital 
-      - wetStockValue 
-      - dryStockValue 
-      - supplierAdvances;
+    const inhandCash = state.initialCapital + netProfit - totalProfitWithdrawals - (wetStockValue + dryStockValue + totalCustomerDue + supplierAdvances) + supplierDues;
 
-    const inhandCash = baseInhand + finalizedRemainProfit - totalExpensesAfterLastSale;
-
-    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash;
-    const difference = totalAssets - state.initialCapital;
+    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + totalCustomerDue;
+    const difference = totalAssets - supplierDues - state.initialCapital;
 
     return {
       wetStockValue,
       dryStockValue,
       supplierAdvances,
+      supplierDues,
+      totalCustomerDue,
       totalDues,
       inhandCash,
       totalAssets,
@@ -209,8 +190,7 @@ export const CapitalTracking: React.FC = () => {
       totalLabor: totalLaborAllTime,
       filteredLabor,
       totalProfitWithdrawals,
-      finalizedRemainProfit,
-      totalExpensesAfterLastSale,
+      netProfit,
       remainProfit,
       conversionRatio
     };
@@ -373,13 +353,21 @@ export const CapitalTracking: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-8 pt-8 border-t border-white/10">
+                <div className="mt-8 pt-8 border-t border-white/10">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Calculation Breakdown</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] font-medium text-slate-400">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Initial Capital (+)</span>
                       <span className="text-white">৳{state.initialCapital.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Remain Finalized Profit</span>
+                      <span className="text-emerald-400">৳{stats.netProfit.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Profit Withdrawals (-)</span>
+                      <span className="text-rose-400">৳{stats.totalProfitWithdrawals.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Wet Stock Value (-)</span>
@@ -390,16 +378,16 @@ export const CapitalTracking: React.FC = () => {
                       <span className="text-rose-400">৳{stats.dryStockValue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Supplier Advances (-)</span>
+                      <span>Customer Due (-)</span>
+                      <span className="text-rose-400">৳{stats.totalCustomerDue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Supplier Due (+)</span>
+                      <span className="text-emerald-400">৳{stats.supplierDues.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Supplier Advance (-)</span>
                       <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Finalized Profit (Deliveries Since 04-Mar) (+)</span>
-                      <span className="text-emerald-400">৳{stats.finalizedRemainProfit.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Expenses (After Last Sale) (-)</span>
-                      <span className="text-rose-400">৳{stats.totalExpensesAfterLastSale.toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
