@@ -138,12 +138,29 @@ export const CapitalTracking: React.FC = () => {
 
     const totalDues = supplierDues + totalCustomerDue;
 
-    // 4. In-hand Cash Calculation
-    const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
-    
-    const lastSaleDateInState = state.sales.length > 0 
+    // 4. In-hand Cash Calculation (Matching Dashboard logic)
+    const lastSaleDate = state.sales.length > 0 
       ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
       : null;
+
+    const finalizedRemainProfit = state.productDeliveries
+      .filter(d => d.date >= '2026-03-04')
+      .reduce((sum, d) => {
+        const withdrawn = state.profitWithdrawals
+          .filter(pw => pw.deliveryId === d.id)
+          .reduce((s, pw) => s + pw.amount, 0);
+        return sum + (d.netProfit - withdrawn);
+      }, 0);
+
+    const expensesAfterLastSale = state.expenses.filter(e => lastSaleDate && e.date > lastSaleDate);
+    const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDate && l.date > lastSaleDate);
+    const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
+                                       laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
+
+    const inhandCash = (state.initialCapital || 0) - (wetStockValue + dryStockValue + supplierAdvances) + finalizedRemainProfit - totalExpensesAfterLastSale;
+
+    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + totalCustomerDue;
+    const difference = totalAssets - supplierDues - state.initialCapital;
 
     const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
     const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
@@ -151,6 +168,7 @@ export const CapitalTracking: React.FC = () => {
     const totalLaborAllTime = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
     
     const netProfit = totalSales - (totalPurchases + totalExpensesAllTime + totalLaborAllTime);
+    const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
     const remainProfit = netProfit - totalProfitWithdrawals;
 
     // Filtered Expenses and Labor for the period
@@ -165,14 +183,6 @@ export const CapitalTracking: React.FC = () => {
       if (dateRange.end && l.date > dateRange.end) return false;
       return true;
     }).reduce((sum, l) => sum + l.totalCost, 0);
-
-    const isDateSelected = dateRange.start !== '' && dateRange.end !== '';
-    const currentExpenses = isDateSelected ? filteredExpenses + filteredLabor : totalExpensesAllTime + totalLaborAllTime;
-
-    const inhandCash = state.initialCapital + netProfit - totalProfitWithdrawals - (wetStockValue + dryStockValue + totalCustomerDue + supplierAdvances) + supplierDues;
-
-    const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + totalCustomerDue;
-    const difference = totalAssets - supplierDues - state.initialCapital;
 
     return {
       wetStockValue,
@@ -192,7 +202,9 @@ export const CapitalTracking: React.FC = () => {
       totalProfitWithdrawals,
       netProfit,
       remainProfit,
-      conversionRatio
+      conversionRatio,
+      finalizedRemainProfit,
+      totalExpensesAfterLastSale
     };
   }, [state, wetStock, dryStock, dateRange]);
 
@@ -362,14 +374,6 @@ export const CapitalTracking: React.FC = () => {
                       <span className="text-white">৳{state.initialCapital.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Remain Finalized Profit</span>
-                      <span className="text-emerald-400">৳{stats.netProfit.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Profit Withdrawals (-)</span>
-                      <span className="text-rose-400">৳{stats.totalProfitWithdrawals.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span>Wet Stock Value (-)</span>
                       <span className="text-rose-400">৳{stats.wetStockValue.toLocaleString()}</span>
                     </div>
@@ -378,16 +382,16 @@ export const CapitalTracking: React.FC = () => {
                       <span className="text-rose-400">৳{stats.dryStockValue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Customer Due (-)</span>
-                      <span className="text-rose-400">৳{stats.totalCustomerDue.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Supplier Due (+)</span>
-                      <span className="text-emerald-400">৳{stats.supplierDues.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span>Supplier Advance (-)</span>
                       <span className="text-rose-400">৳{stats.supplierAdvances.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Remain Finalized Profit</span>
+                      <span className="text-emerald-400">৳{stats.finalizedRemainProfit.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Expenses (After Last Sale) (-)</span>
+                      <span className="text-rose-400">৳{stats.totalExpensesAfterLastSale.toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
