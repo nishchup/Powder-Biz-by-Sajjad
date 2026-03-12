@@ -22,6 +22,7 @@ export const Purchases: React.FC = () => {
   const [duePaymentData, setDuePaymentData] = useState({
     amount: 0,
     remarks: '',
+    notes: '',
     adjustFromAdvance: false
   });
   
@@ -73,6 +74,7 @@ export const Purchases: React.FC = () => {
     setDuePaymentData({
       amount: due,
       remarks: '',
+      notes: '',
       adjustFromAdvance: false
     });
     setIsPayDueOpen(true);
@@ -92,6 +94,7 @@ export const Purchases: React.FC = () => {
         supplierName: selectedPurchaseForDue.supplierName,
         amount: amount,
         remarks: duePaymentData.remarks || `Due payment for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}`,
+        notes: duePaymentData.notes,
         purchaseId: selectedPurchaseForDue.id
       });
     } else {
@@ -102,6 +105,7 @@ export const Purchases: React.FC = () => {
         supplierName: selectedPurchaseForDue.supplierName,
         amount: amount,
         remarks: `Adjusted from existing payments for PR-${selectedPurchaseForDue.id.substring(0, 6).toUpperCase()}. ${duePaymentData.remarks}`,
+        notes: duePaymentData.notes,
         purchaseId: selectedPurchaseForDue.id
       });
       // 2. Add offset to unallocated payments to keep ledger balance same
@@ -570,9 +574,20 @@ export const Purchases: React.FC = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Notes</label>
+                <input 
+                  type="text"
+                  placeholder="Additional notes..."
+                  value={duePaymentData.notes}
+                  onChange={e => setDuePaymentData({...duePaymentData, notes: e.target.value})}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Remarks</label>
                 <textarea 
-                  placeholder="Payment notes..."
+                  placeholder="Payment remarks..."
                   value={duePaymentData.remarks}
                   onChange={e => setDuePaymentData({...duePaymentData, remarks: e.target.value})}
                   className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900 h-24 resize-none"

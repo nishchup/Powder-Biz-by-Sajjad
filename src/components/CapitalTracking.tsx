@@ -344,8 +344,12 @@ export const CapitalTracking: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-12">
                 <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Current Total Assets</p>
-                  <p className="text-5xl font-black tracking-tighter">৳{stats.totalAssets.toLocaleString()}</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">In-hand Cash</p>
+                  <p className="text-5xl font-black tracking-tighter">৳{stats.inhandCash.toLocaleString()}</p>
+                  <div className="mt-2">
+                    <p className="text-xs font-bold text-rose-500">Total Dues: ৳{(stats.totalCustomerDue + stats.supplierDues).toLocaleString()}</p>
+                    <p className="text-sm font-black text-slate-400 mt-1">Total: ৳{(stats.inhandCash + stats.totalCustomerDue + stats.supplierDues).toLocaleString()}</p>
+                  </div>
                 </div>
                 <div className="flex flex-col justify-end">
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Performance vs Capital</p>
@@ -395,11 +399,9 @@ export const CapitalTracking: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-2 sm:border-l sm:border-white/5 sm:pl-4">
-                    <div className="flex justify-between font-black text-sm pt-2 border-t border-white/5">
-                      <span className="text-slate-200">In-hand Cash</span>
-                      <span className="text-emerald-400">
-                        ৳{stats.inhandCash.toLocaleString()}
-                      </span>
+                    <div className="pt-1 flex justify-between items-center text-[12px] font-black text-indigo-600">
+                      <span>Net Inhand Cash</span>
+                      <span>৳{stats.inhandCash.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
