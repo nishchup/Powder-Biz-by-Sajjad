@@ -34,13 +34,13 @@ export const WeatherBanner: React.FC = () => {
     return () => clearInterval(interval);
   }, [state.weatherLocation]);
 
-  if (loading || !weather) return null;
+  if (loading || !weather || !weather.current_condition?.[0] || !weather.weather?.[0]) return null;
 
   const current = weather.current_condition[0];
   const today = weather.weather[0];
-  const rainChance = parseInt(today.hourly[0].chanceofrain);
-  const condition = current.weatherDesc[0].value.toLowerCase();
-  const humidity = parseInt(current.humidity);
+  const rainChance = parseInt(today.hourly?.[0]?.chanceofrain || '0');
+  const condition = current.weatherDesc?.[0]?.value?.toLowerCase() || '';
+  const humidity = parseInt(current.humidity || '0');
 
   let bannerConfig = {
     bg: 'bg-emerald-500',

@@ -129,11 +129,11 @@ export const WeatherForecast: React.FC = () => {
     );
   }
 
-  if (error || !weather) {
+  if (error || !weather || !weather.current_condition?.[0] || !weather.weather?.[0]) {
     return (
       <div className="p-8 bg-white rounded-3xl shadow-sm border border-slate-100 text-center">
         <AlertTriangle className="mx-auto text-amber-500 mb-4" size={48} />
-        <p className="text-slate-600 font-medium">{error || 'Weather data unavailable'}</p>
+        <p className="text-slate-600 font-medium">{error || 'Weather data unavailable or invalid format'}</p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all"
@@ -146,7 +146,7 @@ export const WeatherForecast: React.FC = () => {
 
   const current = weather.current_condition[0];
   const today = weather.weather[0];
-  const advisory = getDryingAdvisory(current.weatherDesc[0].value, current.humidity, today.hourly[0].chanceofrain);
+  const advisory = getDryingAdvisory(current.weatherDesc?.[0]?.value || '', current.humidity || '0', today.hourly?.[0]?.chanceofrain || '0');
 
   return (
     <div className="space-y-6">
@@ -192,8 +192,10 @@ export const WeatherForecast: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-4xl font-black text-slate-900">{current.temp_C}°C</h3>
-                <p className="text-slate-500 font-bold text-lg capitalize">{current.weatherDesc[0].value}</p>
-                <p className="text-slate-400 text-sm font-medium">{weather.nearest_area[0].areaName[0].value}, {weather.nearest_area[0].country[0].value}</p>
+                <p className="text-slate-500 font-bold text-lg capitalize">{current.weatherDesc?.[0]?.value || 'Unknown'}</p>
+                <p className="text-slate-400 text-sm font-medium">
+                  {weather.nearest_area?.[0]?.areaName?.[0]?.value || 'Unknown'}, {weather.nearest_area?.[0]?.country?.[0]?.value || 'Unknown'}
+                </p>
               </div>
             </div>
             
@@ -223,7 +225,7 @@ export const WeatherForecast: React.FC = () => {
                 <CloudRain className="text-blue-400" size={20} />
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rain Chance</p>
-                  <p className="text-sm font-black text-slate-900">{today.hourly[0].chanceofrain}%</p>
+                  <p className="text-sm font-black text-slate-900">{today.hourly?.[0]?.chanceofrain || '0'}%</p>
                 </div>
               </div>
             </div>
@@ -273,15 +275,15 @@ export const WeatherForecast: React.FC = () => {
                 {idx === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'long' })}
               </p>
               <div className="p-3 bg-slate-50 rounded-2xl">
-                {getWeatherIcon(day.hourly[4].weatherCode)}
+                {getWeatherIcon(day.hourly?.[4]?.weatherCode || '0')}
               </div>
               <div>
                 <p className="text-2xl font-black text-slate-900">{day.maxtempC}° / {day.mintempC}°</p>
-                <p className="text-slate-500 font-bold text-sm capitalize">{day.hourly[4].weatherDesc[0].value}</p>
+                <p className="text-slate-500 font-bold text-sm capitalize">{day.hourly?.[4]?.weatherDesc?.[0]?.value || 'Unknown'}</p>
               </div>
               <div className="flex items-center gap-2 text-blue-500 font-bold text-xs">
                 <CloudRain size={14} />
-                <span>{day.hourly[4].chanceofrain}% Rain</span>
+                <span>{day.hourly?.[4]?.chanceofrain || '0'}% Rain</span>
               </div>
             </div>
           ))}
