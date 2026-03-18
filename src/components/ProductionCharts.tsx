@@ -25,7 +25,7 @@ export const ProductionCharts: React.FC<ProductionChartsProps> = ({ startDate, e
 
   const chartData = useMemo(() => {
     // Group conversions by date
-    const grouped = state.conversions.reduce((acc: any, curr) => {
+    const grouped = (state.conversions || []).reduce((acc: any, curr) => {
       const date = curr.date;
       
       // Apply filters if provided
@@ -59,7 +59,7 @@ export const ProductionCharts: React.FC<ProductionChartsProps> = ({ startDate, e
     }));
   }, [chartData]);
 
-  if (state.conversions.length === 0) {
+  if ((state.conversions || []).length === 0) {
     return null;
   }
 

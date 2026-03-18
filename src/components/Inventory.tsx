@@ -13,7 +13,7 @@ export const Inventory: React.FC = () => {
   const stockMovements = useMemo(() => {
     const movements: any[] = [];
 
-    state.purchases.forEach(p => {
+    (state.purchases || []).forEach(p => {
       movements.push({
         id: p.id,
         date: p.date,
@@ -25,7 +25,7 @@ export const Inventory: React.FC = () => {
       });
     });
 
-    state.sales.forEach(s => {
+    (state.sales || []).forEach(s => {
       movements.push({
         id: s.id,
         date: s.date,
@@ -37,7 +37,7 @@ export const Inventory: React.FC = () => {
       });
     });
 
-    state.conversions.forEach(c => {
+    (state.conversions || []).forEach(c => {
       movements.push({
         id: `${c.id}-out`,
         date: c.date,

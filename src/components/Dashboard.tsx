@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useAppStore } from '../store';
-import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Target, Edit2 } from 'lucide-react';
+import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Target, Edit2, Bell, Clock, Calendar } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { ProductionCharts } from './ProductionCharts';
 import { FinancialCharts } from './FinancialCharts';
@@ -11,10 +11,10 @@ export const Dashboard: React.FC = () => {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState(state.salesGoal.toString());
 
-  const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
-  const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
-  const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalLabor = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
+  const totalPurchases = (state.purchases || []).reduce((sum, p) => sum + p.totalCost, 0);
+  const totalSales = (state.sales || []).reduce((sum, s) => sum + s.totalRevenue, 0);
+  const totalExpenses = (state.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+  const totalLabor = (state.laborRecords || []).reduce((sum, l) => sum + l.totalCost, 0);
   const netProfit = totalSales - (totalPurchases + totalExpenses + totalLabor);
 
   const salesGoalProgress = Math.min((totalSales / (state.salesGoal || 1)) * 100, 100);
@@ -27,28 +27,28 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const totalPurchasesPaid = state.purchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
-  const totalSalesPaid = state.sales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
-  const totalSupplierPayments = state.supplierPayments.reduce((sum, p) => sum + p.amount, 0);
-  const totalCustomerPayments = state.customerPayments.reduce((sum, p) => sum + p.amount, 0);
-  const totalLoans = state.loans.reduce((sum, l) => sum + l.amount, 0);
-  const totalCompanyAdvances = state.companyAdvances.reduce((sum, a) => sum + a.amount, 0);
-  const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0);
+  const totalPurchasesPaid = (state.purchases || []).reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
+  const totalSalesPaid = (state.sales || []).reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
+  const totalSupplierPayments = (state.supplierPayments || []).reduce((sum, p) => sum + p.amount, 0);
+  const totalCustomerPayments = (state.customerPayments || []).reduce((sum, p) => sum + p.amount, 0);
+  const totalLoans = (state.loans || []).reduce((sum, l) => sum + l.amount, 0);
+  const totalCompanyAdvances = (state.companyAdvances || []).reduce((sum, a) => sum + a.amount, 0);
+  const totalProfitWithdrawals = (state.profitWithdrawals || []).reduce((sum, pw) => sum + pw.amount, 0);
   
-  const finalizedRemainProfit = state.productDeliveries
+  const finalizedRemainProfit = (state.productDeliveries || [])
     .filter(d => d.date >= '2026-03-04')
     .reduce((sum, d) => {
-      const withdrawn = state.profitWithdrawals
+      const withdrawn = (state.profitWithdrawals || [])
         .filter(pw => pw.deliveryId === d.id)
         .reduce((s, pw) => s + pw.amount, 0);
       return sum + (d.netProfit - withdrawn);
     }, 0);
 
-  const lastSaleDate = state.sales.length > 0 
-    ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
+  const lastSaleDate = (state.sales || []).length > 0 
+    ? [...(state.sales || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
     : null;
 
-  const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
+  const wetPurchases = (state.purchases || []).filter(p => p.type === 'wet' || !p.type);
   
   const calculateFIFOValue = (stockQty: number, purchases: typeof state.purchases) => {
     const sorted = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -74,19 +74,19 @@ export const Dashboard: React.FC = () => {
 
   const calculateDryStockFIFOValue = () => {
     const inflows = [
-      ...state.conversions.map(c => ({
+      ...(state.conversions || []).map(c => ({
         date: c.date,
         quantity: c.dryQuantityProduced || 0,
         cost: (c.wetQuantityUsed || 0) * (c.purchasePrice || 0)
       })),
-      ...state.purchases.filter(p => p.type === 'dry').map(p => ({
+      ...(state.purchases || []).filter(p => p.type === 'dry').map(p => ({
         date: p.date,
         quantity: p.quantity || 0,
         cost: p.totalCost
       }))
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const totalSold = state.sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+    const totalSold = (state.sales || []).reduce((sum, s) => sum + (s.quantity || 0), 0);
     let soldRemaining = totalSold;
     
     return inflows.reduce((totalValue, inflow) => {
@@ -101,32 +101,32 @@ export const Dashboard: React.FC = () => {
 
   const dryStockValue = calculateDryStockFIFOValue();
 
-  const expensesAfterLastSale = state.expenses.filter(e => lastSaleDate && e.date > lastSaleDate);
-  const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDate && l.date > lastSaleDate);
+  const expensesAfterLastSale = (state.expenses || []).filter(e => lastSaleDate && e.date > lastSaleDate);
+  const laborAfterLastSale = (state.laborRecords || []).filter(l => lastSaleDate && l.date > lastSaleDate);
   const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
                                      laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
 
-  const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-  const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+  const totalWetUsed = (state.conversions || []).reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+  const totalDryProduced = (state.conversions || []).reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
   const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
 
   let totalSupplierDue = 0;
   let totalSupplierAdvance = 0;
-  state.suppliers.forEach(s => {
-    const supplierPurchases = state.purchases.filter(p => p.supplierName === s.name);
+  (state.suppliers || []).forEach(s => {
+    const supplierPurchases = (state.purchases || []).filter(p => p.supplierName === s.name);
     const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
     const totalPaidPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
-    const totalPayments = state.supplierPayments.filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
+    const totalPayments = (state.supplierPayments || []).filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
     const balance = (totalPaidPurchases + totalPayments) - totalBilled;
     if (balance < 0) totalSupplierDue += Math.abs(balance);
     else totalSupplierAdvance += balance;
   });
 
-  const totalCustomerDue = state.customers.reduce((sum, c) => {
-    const customerSales = state.sales.filter(s => s.customerName === c.name);
+  const totalCustomerDue = (state.customers || []).reduce((sum, c) => {
+    const customerSales = (state.sales || []).filter(s => s.customerName === c.name);
     const totalBilled = customerSales.reduce((sum, s) => sum + s.totalRevenue, 0);
     const totalPaidSales = customerSales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
-    const totalPayments = state.customerPayments.filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
+    const totalPayments = (state.customerPayments || []).filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
     return sum + (totalBilled - (totalPaidSales + totalPayments));
   }, 0);
 
@@ -340,7 +340,7 @@ export const Dashboard: React.FC = () => {
             <span className="text-xs font-black uppercase tracking-widest text-slate-400">Latest Records</span>
           </div>
           <div className="p-8 space-y-6">
-            {[...state.sales].reverse().slice(0, 3).map(s => (
+            {[...(state.sales || [])].reverse().slice(0, 3).map(s => (
               <div key={s.id} className="flex justify-between items-center group">
                 <div className="flex items-center">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 mr-4 group-hover:scale-110 transition-transform">
@@ -357,7 +357,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
             ))}
-            {[...state.purchases].reverse().slice(0, 3).map(p => (
+            {[...(state.purchases || [])].reverse().slice(0, 3).map(p => (
               <div key={p.id} className="flex justify-between items-center group">
                 <div className="flex items-center">
                   <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-600 mr-4 group-hover:scale-110 transition-transform">
@@ -374,7 +374,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
             ))}
-            {state.sales.length === 0 && state.purchases.length === 0 && (
+            {(state.sales || []).length === 0 && (state.purchases || []).length === 0 && (
               <div className="text-center py-12">
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Activity className="text-slate-300" size={40} />
@@ -385,6 +385,48 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        <div className="glass-panel rounded-[2rem] overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <div>
+              <h3 className="text-xl font-black text-slate-900">Upcoming Reminders</h3>
+              <p className="text-slate-500 text-sm font-medium">Don't miss your tasks</p>
+            </div>
+            <Bell className="text-indigo-500" size={24} />
+          </div>
+          <div className="p-8 flex-1 space-y-4">
+            {(state.reminders || [])
+              .filter(r => !r.completed)
+              .sort((a, b) => new Date(`${a.date} ${a.time}`).getTime() - new Date(`${b.date} ${b.time}`).getTime())
+              .slice(0, 4)
+              .map(reminder => (
+                <div key={reminder.id} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-indigo-200 transition-colors">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    reminder.type === 'work' ? 'bg-blue-100 text-blue-600' : 
+                    reminder.type === 'shopping' ? 'bg-emerald-100 text-emerald-600' : 
+                    'bg-amber-100 text-amber-600'
+                  }`}>
+                    <Clock size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-800 truncate">{reminder.title}</p>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <Calendar size={10} />
+                      {reminder.date} @ {reminder.time}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            {(state.reminders || []).filter(r => !r.completed).length === 0 && (
+              <div className="text-center py-8">
+                <Bell className="mx-auto text-slate-200 mb-2" size={32} />
+                <p className="text-slate-400 text-sm font-bold italic">No upcoming reminders</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass-panel rounded-[2rem] overflow-hidden flex flex-col">
           <div className="p-8 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-xl font-black text-slate-900">Financial Summary</h3>

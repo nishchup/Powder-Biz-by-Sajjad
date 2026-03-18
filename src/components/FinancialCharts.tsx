@@ -26,7 +26,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ startDate, end
     const grouped: any = {};
 
     // Group sales
-    state.sales.forEach(s => {
+    (state.sales || []).forEach(s => {
       if (startDate && s.date < startDate) return;
       if (endDate && s.date > endDate) return;
       if (!grouped[s.date]) grouped[s.date] = { date: s.date, sales: 0, purchases: 0, expenses: 0 };
@@ -34,7 +34,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ startDate, end
     });
 
     // Group purchases
-    state.purchases.forEach(p => {
+    (state.purchases || []).forEach(p => {
       if (startDate && p.date < startDate) return;
       if (endDate && p.date > endDate) return;
       if (!grouped[p.date]) grouped[p.date] = { date: p.date, sales: 0, purchases: 0, expenses: 0 };
@@ -42,7 +42,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({ startDate, end
     });
 
     // Group expenses
-    state.expenses.forEach(e => {
+    (state.expenses || []).forEach(e => {
       if (startDate && e.date < startDate) return;
       if (endDate && e.date > endDate) return;
       if (!grouped[e.date]) grouped[e.date] = { date: e.date, sales: 0, purchases: 0, expenses: 0 };

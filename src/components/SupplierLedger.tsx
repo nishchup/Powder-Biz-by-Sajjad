@@ -20,12 +20,12 @@ export const SupplierLedger: React.FC = () => {
     setCurrentPage(1);
   }, [selectedSupplier, dateRange]);
 
-  const suppliers = state.suppliers;
+  const suppliers = state.suppliers || [];
 
   const ledgerData = useMemo(() => {
     if (!selectedSupplier) return [];
 
-    const purchases = state.purchases
+    const purchases = (state.purchases || [])
       .filter(p => p.supplierName === selectedSupplier)
       .map(p => ({
         id: p.id,
@@ -37,7 +37,7 @@ export const SupplierLedger: React.FC = () => {
         reference: `PR-${p.id.substring(0, 6).toUpperCase()}`
       }));
 
-    const payments = state.supplierPayments
+    const payments = (state.supplierPayments || [])
       .filter(p => p.supplierName === selectedSupplier)
       .map(p => ({
         id: p.id,

@@ -153,6 +153,7 @@ export const Contacts: React.FC = () => {
         productDeliveries: Array.isArray(importData.productDeliveries) ? importData.productDeliveries : [],
         profitWithdrawals: Array.isArray(importData.profitWithdrawals) ? importData.profitWithdrawals : [],
         tasks: Array.isArray(importData.tasks) ? importData.tasks : [],
+        reminders: Array.isArray(importData.reminders) ? importData.reminders : [],
         laborRecords: Array.isArray(importData.laborRecords) ? importData.laborRecords : [],
         salesGoal: importData.salesGoal || state.salesGoal,
         appPin: importData.appPin || state.appPin,
@@ -186,9 +187,9 @@ export const Contacts: React.FC = () => {
     showMessage("Settings saved successfully!", 'success');
   };
 
-  const currentList = activeTab === 'suppliers' ? state.suppliers : 
-                      activeTab === 'customers' ? state.customers : 
-                      state.expenseCategories;
+  const currentList = activeTab === 'suppliers' ? (state.suppliers || []) : 
+                      activeTab === 'customers' ? (state.customers || []) : 
+                      (state.expenseCategories || []);
 
   const getTabTitle = () => {
     if (activeTab === 'suppliers') return 'Supplier';
@@ -631,7 +632,7 @@ export const Contacts: React.FC = () => {
               {activeTab === 'categories' ? <Tags className="mr-3 text-indigo-500" size={24} /> : <Users className="mr-3 text-indigo-500" size={24} />}
               {activeTab} List
             </h3>
-            <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total: {currentList.length}</span>
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total: {(currentList || []).length}</span>
           </div>
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -643,7 +644,7 @@ export const Contacts: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {currentList.length === 0 ? (
+                {(currentList || []).length === 0 ? (
                   <tr>
                     <td colSpan={activeTab !== 'categories' ? 3 : 2} className="px-8 py-24 text-center">
                       <div className="flex flex-col items-center justify-center">
@@ -656,7 +657,7 @@ export const Contacts: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  currentList.map((item: any) => (
+                  (currentList || []).map((item: any) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-8 py-5 text-sm font-black text-slate-900">{item.name}</td>
                       {activeTab !== 'categories' && <td className="px-8 py-5 text-sm font-bold text-slate-600">{item.phone || '-'}</td>}

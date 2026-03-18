@@ -18,8 +18,8 @@ export const CapitalTracking: React.FC = () => {
 
   // Auto-select start date based on last sale date
   useEffect(() => {
-    if (state.sales.length > 0) {
-      const dates = state.sales.map(s => new Date(s.date).getTime());
+    if ((state.sales || []).length > 0) {
+      const dates = (state.sales || []).map(s => new Date(s.date).getTime());
       const lastSaleTime = Math.max(...dates);
       const lastSaleDate = new Date(lastSaleTime);
       
@@ -52,7 +52,7 @@ export const CapitalTracking: React.FC = () => {
   const stats = useMemo(() => {
     // 1. FIFO Stock Valuation Helper
     const calculateFIFOValue = (stockQty: number, purchases: typeof state.purchases) => {
-      const sorted = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const sorted = [...(purchases || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       let remaining = stockQty;
       let value = 0;
       for (const p of sorted) {
@@ -71,24 +71,24 @@ export const CapitalTracking: React.FC = () => {
       return value;
     };
 
-    const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
+    const wetPurchases = (state.purchases || []).filter(p => p.type === 'wet' || !p.type);
     const wetStockValue = calculateFIFOValue(wetStock, wetPurchases);
 
     const calculateDryStockFIFOValue = () => {
       const inflows = [
-        ...state.conversions.map(c => ({
+        ...(state.conversions || []).map(c => ({
           date: c.date,
           quantity: c.dryQuantityProduced || 0,
           cost: (c.wetQuantityUsed || 0) * (c.purchasePrice || 0)
         })),
-        ...state.purchases.filter(p => p.type === 'dry').map(p => ({
+        ...(state.purchases || []).filter(p => p.type === 'dry').map(p => ({
           date: p.date,
           quantity: p.quantity || 0,
           cost: p.totalCost
         }))
       ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      const totalSold = state.sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+      const totalSold = (state.sales || []).reduce((sum, s) => sum + (s.quantity || 0), 0);
       let soldRemaining = totalSold;
       
       return inflows.reduce((totalValue, inflow) => {
@@ -104,8 +104,8 @@ export const CapitalTracking: React.FC = () => {
     const dryStockValue = calculateDryStockFIFOValue();
 
     // Calculate conversion ratio to determine Wet Equivalent of Dry Stock
-    const totalWetUsed = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-    const totalDryProduced = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
+    const totalWetUsed = (state.conversions || []).reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalDryProduced = (state.conversions || []).reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
     const conversionRatio = totalDryProduced > 0 ? totalWetUsed / totalDryProduced : 1;
 
     // For display purposes only
@@ -114,9 +114,9 @@ export const CapitalTracking: React.FC = () => {
       : 0;
 
     // 3. Supplier Advances & Dues
-    const supplierBalances = state.suppliers.map(supplier => {
-      const supplierPurchases = state.purchases.filter(p => p.supplierName === supplier.name);
-      const supplierPayments = state.supplierPayments.filter(p => p.supplierName === supplier.name);
+    const supplierBalances = (state.suppliers || []).map(supplier => {
+      const supplierPurchases = (state.purchases || []).filter(p => p.supplierName === supplier.name);
+      const supplierPayments = (state.supplierPayments || []).filter(p => p.supplierName === supplier.name);
       
       const totalCost = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
       const totalPaidInPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
@@ -128,32 +128,32 @@ export const CapitalTracking: React.FC = () => {
     const supplierAdvances = supplierBalances.reduce((total, balance) => total + (balance > 0 ? balance : 0), 0);
     const supplierDues = supplierBalances.reduce((total, balance) => total + (balance < 0 ? Math.abs(balance) : 0), 0);
 
-    const totalCustomerDue = state.customers.reduce((sum, c) => {
-      const customerSales = state.sales.filter(s => s.customerName === c.name);
+    const totalCustomerDue = (state.customers || []).reduce((sum, c) => {
+      const customerSales = (state.sales || []).filter(s => s.customerName === c.name);
       const totalBilled = customerSales.reduce((sum, s) => sum + s.totalRevenue, 0);
       const totalPaidSales = customerSales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
-      const totalPayments = state.customerPayments.filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
+      const totalPayments = (state.customerPayments || []).filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
       return sum + (totalBilled - (totalPaidSales + totalPayments));
     }, 0);
 
     const totalDues = supplierDues + totalCustomerDue;
 
     // 4. In-hand Cash Calculation (Matching Dashboard logic)
-    const lastSaleDate = state.sales.length > 0 
-      ? [...state.sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
+    const lastSaleDate = (state.sales || []).length > 0 
+      ? [...(state.sales || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date 
       : null;
 
-    const finalizedRemainProfit = state.productDeliveries
+    const finalizedRemainProfit = (state.productDeliveries || [])
       .filter(d => d.date >= '2026-03-04')
       .reduce((sum, d) => {
-        const withdrawn = state.profitWithdrawals
+        const withdrawn = (state.profitWithdrawals || [])
           .filter(pw => pw.deliveryId === d.id)
           .reduce((s, pw) => s + pw.amount, 0);
         return sum + (d.netProfit - withdrawn);
       }, 0);
 
-    const expensesAfterLastSale = state.expenses.filter(e => lastSaleDate && e.date > lastSaleDate);
-    const laborAfterLastSale = state.laborRecords.filter(l => lastSaleDate && l.date > lastSaleDate);
+    const expensesAfterLastSale = (state.expenses || []).filter(e => lastSaleDate && e.date > lastSaleDate);
+    const laborAfterLastSale = (state.laborRecords || []).filter(l => lastSaleDate && l.date > lastSaleDate);
     const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
                                        laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
 
@@ -162,23 +162,23 @@ export const CapitalTracking: React.FC = () => {
     const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + totalCustomerDue;
     const difference = totalAssets - supplierDues - state.initialCapital;
 
-    const totalPurchases = state.purchases.reduce((sum, p) => sum + p.totalCost, 0);
-    const totalSales = state.sales.reduce((sum, s) => sum + s.totalRevenue, 0);
-    const totalExpensesAllTime = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalLaborAllTime = state.laborRecords.reduce((sum, l) => sum + l.totalCost, 0);
+    const totalPurchases = (state.purchases || []).reduce((sum, p) => sum + p.totalCost, 0);
+    const totalSales = (state.sales || []).reduce((sum, s) => sum + s.totalRevenue, 0);
+    const totalExpensesAllTime = (state.expenses || []).reduce((sum, e) => sum + e.amount, 0);
+    const totalLaborAllTime = (state.laborRecords || []).reduce((sum, l) => sum + l.totalCost, 0);
     
     const netProfit = totalSales - (totalPurchases + totalExpensesAllTime + totalLaborAllTime);
-    const totalProfitWithdrawals = state.profitWithdrawals.reduce((sum, w) => sum + w.amount, 0);
+    const totalProfitWithdrawals = (state.profitWithdrawals || []).reduce((sum, w) => sum + w.amount, 0);
     const remainProfit = netProfit - totalProfitWithdrawals;
 
     // Filtered Expenses and Labor for the period
-    const filteredExpenses = state.expenses.filter(e => {
+    const filteredExpenses = (state.expenses || []).filter(e => {
       if (dateRange.start && e.date < dateRange.start) return false;
       if (dateRange.end && e.date > dateRange.end) return false;
       return true;
     }).reduce((sum, e) => sum + e.amount, 0);
 
-    const filteredLabor = state.laborRecords.filter(l => {
+    const filteredLabor = (state.laborRecords || []).filter(l => {
       if (dateRange.start && l.date < dateRange.start) return false;
       if (dateRange.end && l.date > dateRange.end) return false;
       return true;

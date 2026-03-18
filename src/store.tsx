@@ -153,6 +153,16 @@ export interface ProfitWithdrawal {
   notes: string;
 }
 
+export interface Reminder {
+  id: string;
+  title: string;
+  time: string;
+  date: string;
+  completed: boolean;
+  type: 'work' | 'shopping' | 'other';
+  notified?: boolean;
+}
+
 export interface AppState {
   purchases: Purchase[];
   expenses: Expense[];
@@ -171,6 +181,7 @@ export interface AppState {
   productDeliveries: ProductDelivery[];
   profitWithdrawals: ProfitWithdrawal[];
   tasks: Task[];
+  reminders: Reminder[];
   laborRecords: LaborRecord[];
   salesGoal: number;
   appPin: string;
@@ -202,6 +213,7 @@ const initialState: AppState = {
   productDeliveries: [],
   profitWithdrawals: [],
   tasks: [],
+  reminders: [],
   laborRecords: [],
   salesGoal: 1000000,
   appPin: '1234',
@@ -261,6 +273,11 @@ interface AppContextType {
   editTask: (id: string, t: Omit<Task, 'id'>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
+  addReminder: (r: Omit<Reminder, 'id'>) => void;
+  editReminder: (id: string, r: Omit<Reminder, 'id'>) => void;
+  deleteReminder: (id: string) => void;
+  toggleReminder: (id: string) => void;
+  markReminderAsNotified: (id: string) => void;
   addLaborRecord: (l: Omit<LaborRecord, 'id'>) => void;
   editLaborRecord: (id: string, l: Omit<LaborRecord, 'id'>) => void;
   deleteLaborRecord: (id: string) => void;
@@ -270,6 +287,7 @@ interface AppContextType {
   resetState: () => void;
   importState: (newState: AppState) => void;
   setLanguage: (lang: 'en' | 'bn') => void;
+  language: 'en' | 'bn';
   setWeatherLocation: (location: string) => void;
   setShowChatbot: (show: boolean) => void;
   isOnline: boolean;
@@ -295,37 +313,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return new Date(lastDataUpdate) > new Date(lastSyncedTime);
   });
 
+  const sanitizeState = (data: any): AppState => {
+    return {
+      ...initialState,
+      ...data,
+      purchases: Array.isArray(data.purchases) ? data.purchases : initialState.purchases,
+      expenses: Array.isArray(data.expenses) ? data.expenses : initialState.expenses,
+      conversions: Array.isArray(data.conversions) ? data.conversions : initialState.conversions,
+      sales: Array.isArray(data.sales) ? data.sales : initialState.sales,
+      suppliers: Array.isArray(data.suppliers) ? data.suppliers : initialState.suppliers,
+      customers: Array.isArray(data.customers) ? data.customers : initialState.customers,
+      expenseCategories: Array.isArray(data.expenseCategories) ? data.expenseCategories : initialState.expenseCategories,
+      supplierPayments: Array.isArray(data.supplierPayments) ? data.supplierPayments : initialState.supplierPayments,
+      customerPayments: Array.isArray(data.customerPayments) ? data.customerPayments : initialState.customerPayments,
+      notes: Array.isArray(data.notes) ? data.notes : initialState.notes,
+      loans: Array.isArray(data.loans) ? data.loans : initialState.loans,
+      companyAdvances: Array.isArray(data.companyAdvances) ? data.companyAdvances : initialState.companyAdvances,
+      productDeliveries: Array.isArray(data.productDeliveries) ? data.productDeliveries : initialState.productDeliveries,
+      profitWithdrawals: Array.isArray(data.profitWithdrawals) ? data.profitWithdrawals : initialState.profitWithdrawals,
+      tasks: Array.isArray(data.tasks) ? data.tasks : initialState.tasks,
+      reminders: Array.isArray(data.reminders) ? data.reminders : initialState.reminders,
+      laborRecords: Array.isArray(data.laborRecords) ? data.laborRecords : initialState.laborRecords,
+    };
+  };
+
   const [state, setState] = useState<AppState>(() => {
     try {
       const saved = localStorage.getItem('powderbiz_data_v2');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return {
-          purchases: Array.isArray(parsed.purchases) ? parsed.purchases : [],
-          expenses: Array.isArray(parsed.expenses) ? parsed.expenses : [],
-          conversions: Array.isArray(parsed.conversions) ? parsed.conversions : [],
-          sales: Array.isArray(parsed.sales) ? parsed.sales : [],
-          suppliers: Array.isArray(parsed.suppliers) ? parsed.suppliers : [],
-          customers: Array.isArray(parsed.customers) ? parsed.customers : [],
-          expenseCategories: Array.isArray(parsed.expenseCategories) ? parsed.expenseCategories : initialState.expenseCategories,
-          initialCapital: parsed.initialCapital || 0,
-          companyInfo: parsed.companyInfo || initialState.companyInfo,
-          supplierPayments: Array.isArray(parsed.supplierPayments) ? parsed.supplierPayments : [],
-          customerPayments: Array.isArray(parsed.customerPayments) ? parsed.customerPayments : [],
-          notes: Array.isArray(parsed.notes) ? parsed.notes : [],
-          loans: Array.isArray(parsed.loans) ? parsed.loans : [],
-          companyAdvances: Array.isArray(parsed.companyAdvances) ? parsed.companyAdvances : [],
-          productDeliveries: Array.isArray(parsed.productDeliveries) ? parsed.productDeliveries : [],
-          profitWithdrawals: Array.isArray(parsed.profitWithdrawals) ? parsed.profitWithdrawals : [],
-          tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
-          laborRecords: Array.isArray(parsed.laborRecords) ? parsed.laborRecords : [],
-          salesGoal: parsed.salesGoal || 1000000,
-          appPin: parsed.appPin || '1234',
-          lastBackupTime: parsed.lastBackupTime || null,
-          language: parsed.language || 'en',
-          weatherLocation: parsed.weatherLocation || 'Jamalpur',
-          showChatbot: parsed.showChatbot !== undefined ? parsed.showChatbot : true,
-        };
+        return sanitizeState(parsed);
       }
     } catch (e) {
       console.error("Failed to parse local storage", e);
@@ -364,10 +381,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const response = await fetch('/api/state');
         if (response.ok) {
           const serverState = await response.json();
-          // Only update if server state is newer or local is empty
-          // For simplicity in this demo, we'll just merge or overwrite
-          // In a real app, you'd use timestamps for conflict resolution
-          setState(serverState);
+          setState(prev => sanitizeState({ ...prev, ...serverState }));
         }
       } catch (error) {
         console.error("Failed to fetch initial state:", error);
@@ -601,6 +615,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, tasks: s.tasks.filter(t => t.id !== id) }));
   };
 
+  const addReminder = (r: Omit<Reminder, 'id'>) => {
+    setState(s => ({ ...s, reminders: [...s.reminders, { ...r, id: generateId() }] }));
+  };
+
+  const editReminder = (id: string, r: Omit<Reminder, 'id'>) => {
+    setState(s => ({ ...s, reminders: s.reminders.map(item => item.id === id ? { ...r, id } : item) }));
+  };
+
+  const deleteReminder = (id: string) => {
+    setState(s => ({ ...s, reminders: s.reminders.filter(r => r.id !== id) }));
+  };
+
+  const toggleReminder = (id: string) => {
+    setState(s => ({ ...s, reminders: s.reminders.map(r => r.id === id ? { ...r, completed: !r.completed } : r) }));
+  };
+
+  const markReminderAsNotified = (id: string) => {
+    setState(s => ({ ...s, reminders: s.reminders.map(r => r.id === id ? { ...r, notified: true } : r) }));
+  };
+
   const addLaborRecord = (l: Omit<LaborRecord, 'id'>) => {
     setState(s => ({ ...s, laborRecords: [...s.laborRecords, { ...l, id: generateId() }] }));
   };
@@ -630,7 +664,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const importState = (newState: AppState) => {
-    setState(newState);
+    setState(sanitizeState(newState));
   };
 
   const setLanguage = (lang: 'en' | 'bn') => {
@@ -706,6 +740,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       editTask,
       toggleTask,
       deleteTask,
+      addReminder,
+      editReminder,
+      deleteReminder,
+      toggleReminder,
+      markReminderAsNotified,
       addLaborRecord,
       editLaborRecord,
       deleteLaborRecord,
@@ -715,6 +754,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       resetState,
       importState,
       setLanguage,
+      language: state.language,
       setWeatherLocation,
       setShowChatbot,
       isOnline,

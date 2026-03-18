@@ -66,7 +66,7 @@ export const LaborTracking: React.FC = () => {
     setIsFormOpen(false);
   };
 
-  const filteredRecords = state.laborRecords.filter(record => {
+  const filteredRecords = (state.laborRecords || []).filter(record => {
     const matchesSearch = record.workerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          record.notes.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesProcess = processFilter === 'All' || record.processName === processFilter;

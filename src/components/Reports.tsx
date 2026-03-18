@@ -17,7 +17,7 @@ export const Reports: React.FC = () => {
   const [reportTab, setReportTab] = useState<'summary' | 'purchases' | 'drying' | 'sales' | 'expenses' | 'labor' | 'due' | 'profitWithdraw'>('summary');
 
   const filteredPurchases = useMemo(() => {
-    return state.purchases.filter(p => {
+    return (state.purchases || []).filter(p => {
       if (startDate && p.date < startDate) return false;
       if (endDate && p.date > endDate) return false;
       return true;
@@ -25,7 +25,7 @@ export const Reports: React.FC = () => {
   }, [state.purchases, startDate, endDate]);
 
   const filteredConversions = useMemo(() => {
-    return state.conversions.filter(c => {
+    return (state.conversions || []).filter(c => {
       if (startDate && c.date < startDate) return false;
       if (endDate && c.date > endDate) return false;
       return true;
@@ -33,7 +33,7 @@ export const Reports: React.FC = () => {
   }, [state.conversions, startDate, endDate]);
 
   const filteredSales = useMemo(() => {
-    return state.sales.filter(s => {
+    return (state.sales || []).filter(s => {
       if (startDate && s.date < startDate) return false;
       if (endDate && s.date > endDate) return false;
       return true;
@@ -41,7 +41,7 @@ export const Reports: React.FC = () => {
   }, [state.sales, startDate, endDate]);
 
   const filteredExpenses = useMemo(() => {
-    return state.expenses.filter(e => {
+    return (state.expenses || []).filter(e => {
       if (startDate && e.date < startDate) return false;
       if (endDate && e.date > endDate) return false;
       return true;
@@ -49,7 +49,7 @@ export const Reports: React.FC = () => {
   }, [state.expenses, startDate, endDate]);
 
   const filteredLabor = useMemo(() => {
-    return state.laborRecords.filter(l => {
+    return (state.laborRecords || []).filter(l => {
       if (startDate && l.date < startDate) return false;
       if (endDate && l.date > endDate) return false;
       return true;
@@ -60,19 +60,19 @@ export const Reports: React.FC = () => {
   const totalSales = filteredSales.reduce((sum, s) => sum + s.totalRevenue, 0);
   const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalLabor = filteredLabor.reduce((sum, l) => sum + l.totalCost, 0);
-  const totalLoans = state.loans.filter(l => {
+  const totalLoans = (state.loans || []).filter(l => {
     if (startDate && l.date < startDate) return false;
     if (endDate && l.date > endDate) return false;
     return true;
   }).reduce((sum, l) => sum + l.amount, 0);
   
-  const totalCompanyAdvances = state.companyAdvances.filter(a => {
+  const totalCompanyAdvances = (state.companyAdvances || []).filter(a => {
     if (startDate && a.date < startDate) return false;
     if (endDate && a.date > endDate) return false;
     return true;
   }).reduce((sum, a) => sum + a.amount, 0);
   
-  const totalProfitWithdrawals = state.profitWithdrawals.filter(pw => {
+  const totalProfitWithdrawals = (state.profitWithdrawals || []).filter(pw => {
     if (startDate && pw.date < startDate) return false;
     if (endDate && pw.date > endDate) return false;
     return true;
@@ -584,11 +584,11 @@ export const Reports: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {state.customers.map(c => {
-                    const customerSales = state.sales.filter(s => s.customerName === c.name);
+                {(state.customers || []).map(c => {
+                    const customerSales = (state.sales || []).filter(s => s.customerName === c.name);
                     const totalBilled = customerSales.reduce((sum, s) => sum + s.totalRevenue, 0);
                     const totalPaidSales = customerSales.reduce((sum, s) => sum + (s.paidAmount !== undefined ? s.paidAmount : s.totalRevenue), 0);
-                    const totalPayments = state.customerPayments.filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
+                    const totalPayments = (state.customerPayments || []).filter(p => p.customerName === c.name).reduce((sum, p) => sum + p.amount, 0);
                     const totalPaid = totalPaidSales + totalPayments;
                     const due = totalBilled - totalPaid;
                     
@@ -616,11 +616,11 @@ export const Reports: React.FC = () => {
               <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Supplier Advances & Dues</h3>
               <div className="flex items-center gap-3">
                 {(() => {
-                  const supplierBalances = state.suppliers.map(s => {
-                    const supplierPurchases = state.purchases.filter(p => p.supplierName === s.name);
+                  const supplierBalances = (state.suppliers || []).map(s => {
+                    const supplierPurchases = (state.purchases || []).filter(p => p.supplierName === s.name);
                     const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
                     const totalPaidPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
-                    const totalPayments = state.supplierPayments.filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
+                    const totalPayments = (state.supplierPayments || []).filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
                     const totalPaid = totalPaidPurchases + totalPayments;
                     return totalPaid - totalBilled;
                   });
@@ -652,11 +652,11 @@ export const Reports: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {state.suppliers.map(s => {
-                    const supplierPurchases = state.purchases.filter(p => p.supplierName === s.name);
+                {(state.suppliers || []).map(s => {
+                    const supplierPurchases = (state.purchases || []).filter(p => p.supplierName === s.name);
                     const totalBilled = supplierPurchases.reduce((sum, p) => sum + p.totalCost, 0);
                     const totalPaidPurchases = supplierPurchases.reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
-                    const totalPayments = state.supplierPayments.filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
+                    const totalPayments = (state.supplierPayments || []).filter(p => p.supplierName === s.name).reduce((sum, p) => sum + p.amount, 0);
                     const totalPaid = totalPaidPurchases + totalPayments;
                     const balance = totalPaid - totalBilled; // Positive = Advance, Negative = Due
                     
@@ -704,12 +704,12 @@ export const Reports: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {state.productDeliveries.length === 0 ? (
+                {(state.productDeliveries || []).length === 0 ? (
                   <tr><td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-bold italic">No product deliveries found.</td></tr>
                 ) : (
                   <>
-                    {state.productDeliveries.map(d => {
-                      const withdrawn = state.profitWithdrawals
+                    {(state.productDeliveries || []).map(d => {
+                      const withdrawn = (state.profitWithdrawals || [])
                         .filter(pw => pw.deliveryId === d.id)
                         .reduce((sum, pw) => sum + pw.amount, 0);
                       const remaining = d.netProfit - withdrawn;
@@ -729,13 +729,13 @@ export const Reports: React.FC = () => {
                     <tr className="bg-slate-900 text-white font-bold">
                       <td colSpan={2} className="px-8 py-5 text-xs font-black uppercase tracking-[0.2em]">Overall Summary</td>
                       <td className="px-8 py-5 text-sm text-right font-black text-emerald-400">
-                        ৳{state.productDeliveries.reduce((sum, d) => sum + d.netProfit, 0).toLocaleString()}
+                        ৳{(state.productDeliveries || []).reduce((sum, d) => sum + d.netProfit, 0).toLocaleString()}
                       </td>
                       <td className="px-8 py-5 text-sm text-right font-black text-rose-400">
-                        ৳{state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
+                        ৳{(state.profitWithdrawals || []).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                       </td>
                       <td className="px-8 py-5 text-lg text-right font-black text-indigo-400">
-                        ৳{(state.productDeliveries.reduce((sum, d) => sum + d.netProfit, 0) - state.profitWithdrawals.reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
+                        ৳{((state.productDeliveries || []).reduce((sum, d) => sum + d.netProfit, 0) - (state.profitWithdrawals || []).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
                       </td>
                     </tr>
                   </>
@@ -744,11 +744,11 @@ export const Reports: React.FC = () => {
             </table>
           </div>
           
-          {state.profitWithdrawals.length > 0 && (
+          {(state.profitWithdrawals || []).length > 0 && (
             <div className="mt-8 p-8 border-t border-slate-100">
               <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Withdrawal History</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {state.profitWithdrawals
+                {(state.profitWithdrawals || [])
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .map(pw => (
                     <div key={pw.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -757,7 +757,7 @@ export const Reports: React.FC = () => {
                         <span className="text-sm font-black text-rose-600">৳{pw.amount.toLocaleString()}</span>
                       </div>
                       <p className="text-xs font-black text-slate-900 mb-1">
-                        Ref: {state.productDeliveries.find(d => d.id === pw.deliveryId)?.description || 'Unknown'}
+                        Ref: {(state.productDeliveries || []).find(d => d.id === pw.deliveryId)?.description || 'Unknown'}
                       </p>
                       {pw.notes && <p className="text-[10px] text-slate-500 italic">"{pw.notes}"</p>}
                     </div>

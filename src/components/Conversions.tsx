@@ -55,13 +55,13 @@ export const Conversions: React.FC = () => {
     });
   };
 
-  const wetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
+  const wetPurchases = (state.purchases || []).filter(p => p.type === 'wet' || !p.type);
 
   const getPurchaseAvailable = (purchaseId: string, excludeConversionId?: string | null) => {
-    const purchase = state.purchases.find(p => p.id === purchaseId);
+    const purchase = (state.purchases || []).find(p => p.id === purchaseId);
     if (!purchase) return { bags: 0, quantity: 0 };
 
-    const usedInConversions = state.conversions
+    const usedInConversions = (state.conversions || [])
       .filter(c => c.purchaseId === purchaseId && c.id !== excludeConversionId)
       .reduce((acc, c) => ({
         bags: acc.bags + (c.bagsUsed || 0),
@@ -82,7 +82,7 @@ export const Conversions: React.FC = () => {
     const purchaseId = formData.purchaseId;
     
     if (purchaseId && !isNaN(bags)) {
-      const purchase = state.purchases.find(p => p.id === purchaseId);
+      const purchase = (state.purchases || []).find(p => p.id === purchaseId);
       if (purchase && purchase.totalBags && purchase.totalBags > 0) {
         const wetQty = (purchase.quantity / purchase.totalBags) * bags;
         const estimatedDry = wetQty * 0.8;
@@ -140,7 +140,7 @@ export const Conversions: React.FC = () => {
           return;
         }
       } else {
-        const oldWetQty = editingId ? (state.conversions.find(c => c.id === editingId)?.wetQuantityUsed || 0) : 0;
+        const oldWetQty = editingId ? ((state.conversions || []).find(c => c.id === editingId)?.wetQuantityUsed || 0) : 0;
         const availableWetStock = wetStock + oldWetQty;
 
         if (wetQty > availableWetStock) {
@@ -148,7 +148,7 @@ export const Conversions: React.FC = () => {
           return;
         }
 
-        const oldBagsUsed = editingId ? (state.conversions.find(c => c.id === editingId)?.bagsUsed || 0) : 0;
+        const oldBagsUsed = editingId ? ((state.conversions || []).find(c => c.id === editingId)?.bagsUsed || 0) : 0;
         const availableBagsStock = wetBagsStock + oldBagsUsed;
 
         if (bagsUsed > availableBagsStock) {
@@ -188,7 +188,7 @@ export const Conversions: React.FC = () => {
     }
   };
 
-  const sortedConversions = [...state.conversions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedConversions = [...(state.conversions || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const totalPages = Math.ceil(sortedConversions.length / itemsPerPage);
   const paginatedConversions = sortedConversions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -312,7 +312,7 @@ export const Conversions: React.FC = () => {
                       value={formData.purchaseId}
                       onChange={e => {
                         const pId = e.target.value;
-                        const purchase = state.purchases.find(p => p.id === pId);
+                        const purchase = (state.purchases || []).find(p => p.id === pId);
                         setFormData({
                           ...formData, 
                           purchaseId: pId,
@@ -431,7 +431,7 @@ export const Conversions: React.FC = () => {
             <History className="mr-3 text-amber-500" size={24} />
             Drying Batch History
           </h3>
-          <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total Batches: {state.conversions.length}</span>
+          <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total Batches: {(state.conversions || []).length}</span>
         </div>
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -462,7 +462,7 @@ export const Conversions: React.FC = () => {
               ) : (
                 paginatedConversions.map((c) => {
                   const yieldPercent = (c.dryQuantityProduced / c.wetQuantityUsed) * 100;
-                  const purchase = state.purchases.find(p => p.id === c.purchaseId);
+                  const purchase = (state.purchases || []).find(p => p.id === c.purchaseId);
                   return (
                     <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-8 py-5 text-sm font-bold text-slate-600">{c.date}</td>
@@ -592,7 +592,7 @@ export const Conversions: React.FC = () => {
                   <div className="mb-12 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Linked Purchase</p>
                     {(() => {
-                      const p = state.purchases.find(p => p.id === selectedReceipt.purchaseId);
+                      const p = (state.purchases || []).find(p => p.id === selectedReceipt.purchaseId);
                       return p ? (
                         <div className="grid grid-cols-2 gap-4">
                           <div>

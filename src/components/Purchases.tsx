@@ -38,22 +38,22 @@ export const Purchases: React.FC = () => {
   });
 
   const getPurchasePaidAmount = (p: any) => {
-    const additionalPayments = state.supplierPayments
+    const additionalPayments = (state.supplierPayments || [])
       .filter(sp => sp.purchaseId === p.id)
       .reduce((sum, sp) => sum + sp.amount, 0);
     return (p.paidAmount !== undefined ? p.paidAmount : p.totalCost) + additionalPayments;
   };
 
   const getSupplierAdvance = (supplierName: string) => {
-    const totalPurchases = state.purchases
+    const totalPurchases = (state.purchases || [])
       .filter(p => p.supplierName === supplierName)
       .reduce((sum, p) => sum + (p.totalCost || 0), 0);
     
-    const totalPaidInPurchases = state.purchases
+    const totalPaidInPurchases = (state.purchases || [])
       .filter(p => p.supplierName === supplierName)
       .reduce((sum, p) => sum + (p.paidAmount !== undefined ? p.paidAmount : p.totalCost), 0);
     
-    const totalSupplierPayments = state.supplierPayments
+    const totalSupplierPayments = (state.supplierPayments || [])
       .filter(p => p.supplierName === supplierName)
       .reduce((sum, p) => sum + p.amount, 0);
     
@@ -62,7 +62,7 @@ export const Purchases: React.FC = () => {
   };
 
   const getSupplierTotalPayments = (supplierName: string) => {
-    return state.supplierPayments
+    return (state.supplierPayments || [])
       .filter(p => p.supplierName === supplierName && !p.purchaseId)
       .reduce((sum, p) => sum + p.amount, 0);
   };
@@ -190,7 +190,7 @@ export const Purchases: React.FC = () => {
     window.open(url, '_blank');
   };
 
-  const filteredPurchases = state.purchases.filter(p => 
+  const filteredPurchases = (state.purchases || []).filter(p => 
     p.supplierName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -294,11 +294,11 @@ export const Purchases: React.FC = () => {
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none"
                     >
                       <option value="" disabled>Select a supplier</option>
-                      {state.suppliers.map(s => (
+                      {(state.suppliers || []).map(s => (
                         <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
-                    {state.suppliers.length === 0 && (
+                    {(state.suppliers || []).length === 0 && (
                       <p className="text-[10px] text-rose-500 font-black uppercase tracking-wider ml-1">Add supplier in Contacts first</p>
                     )}
                   </div>

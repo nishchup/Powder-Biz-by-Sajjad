@@ -90,11 +90,11 @@ export const Payments: React.FC = () => {
   };
 
   const getActiveData = () => {
-    if (activeTab === 'supplier') return state.supplierPayments;
-    if (activeTab === 'customer') return state.customerPayments;
-    if (activeTab === 'companyAdvance') return state.companyAdvances;
-    if (activeTab === 'profitWithdraw') return state.profitWithdrawals;
-    return state.loans;
+    if (activeTab === 'supplier') return state.supplierPayments || [];
+    if (activeTab === 'customer') return state.customerPayments || [];
+    if (activeTab === 'companyAdvance') return state.companyAdvances || [];
+    if (activeTab === 'profitWithdraw') return state.profitWithdrawals || [];
+    return state.loans || [];
   };
 
   const activeData = getActiveData();
@@ -226,7 +226,7 @@ export const Payments: React.FC = () => {
                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none"
                           >
                             <option value="" disabled>Select Delivery</option>
-                            {state.productDeliveries.map(d => (
+                            {(state.productDeliveries || []).map(d => (
                               <option key={d.id} value={d.id}>
                                 {d.date} - {d.description} (Profit: ৳{d.netProfit.toLocaleString()})
                               </option>
@@ -241,8 +241,8 @@ export const Payments: React.FC = () => {
                           >
                             <option value="" disabled>Select {activeTab === 'supplier' ? 'Supplier' : 'Customer'}</option>
                             {activeTab === 'supplier' 
-                              ? state.suppliers.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
-                              : state.customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
+                              ? (state.suppliers || []).map(s => <option key={s.id} value={s.name}>{s.name}</option>)
+                              : (state.customers || []).map(c => <option key={c.id} value={c.name}>{c.name}</option>)
                             }
                           </select>
                         )}
@@ -366,7 +366,7 @@ export const Payments: React.FC = () => {
                       {(activeTab === 'supplier' || activeTab === 'customer') && <td className={`px-8 py-5 text-sm font-medium ${activeTab === 'supplier' ? rowColor : 'text-slate-500'}`}>{p.notes || '—'}</td>}
                       {activeTab !== 'companyAdvance' && (
                         <td className={`px-8 py-5 text-sm font-black ${rowColor}`}>
-                          {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'profitWithdraw' ? (state.productDeliveries.find(d => d.id === p.deliveryId)?.description || p.deliveryId) : p.personName}
+                          {activeTab === 'supplier' ? p.supplierName : activeTab === 'customer' ? p.customerName : activeTab === 'profitWithdraw' ? ((state.productDeliveries || []).find(d => d.id === p.deliveryId)?.description || p.deliveryId) : p.personName}
                         </td>
                       )}
                       <td className="px-8 py-5 text-sm text-right">

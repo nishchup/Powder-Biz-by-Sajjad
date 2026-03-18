@@ -56,7 +56,7 @@ export const Sales: React.FC = () => {
     const paid = formData.paidAmount === '' ? totalRevenue : parseFloat(formData.paidAmount);
     
     if (qty > 0 && price > 0 && formData.customerName) {
-      const oldQty = editingId ? (state.sales.find(s => s.id === editingId)?.quantity || 0) : 0;
+      const oldQty = editingId ? ((state.sales || []).find(s => s.id === editingId)?.quantity || 0) : 0;
       const availableStock = dryStock + oldQty;
 
       if (qty > availableStock) {
@@ -91,7 +91,7 @@ export const Sales: React.FC = () => {
     window.open(url, '_blank');
   };
 
-  const filteredSales = state.sales.filter(s => 
+  const filteredSales = (state.sales || []).filter(s => 
     s.customerName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -214,11 +214,11 @@ export const Sales: React.FC = () => {
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none"
                     >
                       <option value="" disabled>Select a customer</option>
-                      {state.customers.map(c => (
+                      {(state.customers || []).map(c => (
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
-                    {state.customers.length === 0 && (
+                    {(state.customers || []).length === 0 && (
                       <p className="text-[10px] text-rose-500 font-black uppercase tracking-wider ml-1">Add customer in Contacts first</p>
                     )}
                   </div>

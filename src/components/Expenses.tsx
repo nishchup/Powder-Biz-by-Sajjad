@@ -64,7 +64,7 @@ export const Expenses: React.FC = () => {
     }
   };
 
-  const filteredExpenses = state.expenses.filter(e => 
+  const filteredExpenses = (state.expenses || []).filter(e => 
     e.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -165,11 +165,11 @@ export const Expenses: React.FC = () => {
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none"
                     >
                       <option value="" disabled>Select a category</option>
-                      {state.expenseCategories.map(c => (
+                      {(state.expenseCategories || []).map(c => (
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))}
                     </select>
-                    {state.expenseCategories.length === 0 && (
+                    {(state.expenseCategories || []).length === 0 && (
                       <p className="text-[10px] text-rose-500 font-black uppercase tracking-wider ml-1">Add categories in Contacts first</p>
                     )}
                   </div>

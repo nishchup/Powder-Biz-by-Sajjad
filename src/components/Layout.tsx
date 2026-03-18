@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock, ArrowUpCircle, PieChart, CloudSun, Calculator as CalculatorIcon } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Sun, TrendingUp, Wallet, BarChart3, Users, Menu, X, Truck, Package, CreditCard, Globe, StickyNote, Lock, Wifi, WifiOff, RefreshCw, CheckCircle2, Clock, ArrowUpCircle, PieChart, CloudSun, Calculator as CalculatorIcon, Bell } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 import { Calculator } from './Calculator';
@@ -39,6 +39,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     { id: 'supplierLedger', label: t('supplierLedger'), icon: ArrowUpCircle },
     { id: 'productDelivery', label: t('productDelivery'), icon: Truck },
     { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+    { id: 'reminders', label: state.language === 'en' ? 'Reminders' : 'রিমাইন্ডার', icon: Bell },
     { id: 'notes', label: t('notes'), icon: StickyNote },
     { id: 'weather', label: t('weather'), icon: CloudSun },
   ];
