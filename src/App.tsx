@@ -35,8 +35,30 @@ function AppContent() {
   const [isLocked, setIsLocked] = useState(true);
   const { state } = useAppStore();
 
+  // Check for existing session on mount
+  React.useEffect(() => {
+    const lastUnlock = localStorage.getItem('lastUnlockTime');
+    if (lastUnlock) {
+      const timeElapsed = Date.now() - parseInt(lastUnlock);
+      const threeMinutes = 3 * 60 * 1000;
+      if (timeElapsed < threeMinutes) {
+        setIsLocked(false);
+      }
+    }
+  }, []);
+
+  const handleUnlock = () => {
+    localStorage.setItem('lastUnlockTime', Date.now().toString());
+    setIsLocked(false);
+  };
+
+  const handleLock = () => {
+    localStorage.removeItem('lastUnlockTime');
+    setIsLocked(true);
+  };
+
   if (isLocked) {
-    return <LockScreen onUnlock={() => setIsLocked(false)} />;
+    return <LockScreen onUnlock={handleUnlock} />;
   }
 
   const renderContent = () => {
@@ -62,7 +84,7 @@ function AppContent() {
   };
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} onLock={() => setIsLocked(true)}>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} onLock={handleLock}>
       <WeatherBanner />
       {renderContent()}
       {state.showChatbot && <Chatbot />}
