@@ -21,7 +21,7 @@ export const WeatherBanner: React.FC = () => {
         const response = await fetch(`https://wttr.in/${encodeURIComponent(loc)}?format=j1`);
         if (!response.ok) throw new Error('Failed to fetch weather data');
         const data = await response.json();
-        setWeather(data);
+        setWeather(data.data || data);
       } catch (err) {
         console.error('Weather fetch error:', err);
       } finally {
