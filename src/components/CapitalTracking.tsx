@@ -157,7 +157,10 @@ export const CapitalTracking: React.FC = () => {
     const totalExpensesAfterLastSale = expensesAfterLastSale.reduce((sum, e) => sum + e.amount, 0) + 
                                        laborAfterLastSale.reduce((sum, l) => sum + l.totalCost, 0);
 
-    const inhandCash = (state.initialCapital || 0) - (wetStockValue + dryStockValue + supplierAdvances) + finalizedRemainProfit - totalExpensesAfterLastSale;
+    const totalLoans = (state.loans || []).reduce((sum, l) => sum + l.amount, 0);
+    const totalCompanyAdvances = (state.companyAdvances || []).reduce((sum, a) => sum + a.amount, 0);
+
+    const inhandCash = (state.initialCapital || 0) - (wetStockValue + dryStockValue + supplierAdvances) + finalizedRemainProfit - totalExpensesAfterLastSale - totalLoans + totalCompanyAdvances;
 
     const totalAssets = wetStockValue + dryStockValue + supplierAdvances + inhandCash + totalCustomerDue;
     const difference = totalAssets - supplierDues - state.initialCapital;
@@ -191,6 +194,8 @@ export const CapitalTracking: React.FC = () => {
       supplierDues,
       totalCustomerDue,
       totalDues,
+      totalLoans,
+      totalCompanyAdvances,
       inhandCash,
       totalAssets,
       difference,
@@ -392,6 +397,14 @@ export const CapitalTracking: React.FC = () => {
                     <div className="flex justify-between">
                       <span>Remain Finalized Profit</span>
                       <span className="text-emerald-400">৳{stats.finalizedRemainProfit.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t('companyAdvancesPlus')}</span>
+                      <span className="text-emerald-400">৳{stats.totalCompanyAdvances.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t('totalLoansMinus')}</span>
+                      <span className="text-rose-400">৳{stats.totalLoans.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Expenses (After Last Sale) (-)</span>

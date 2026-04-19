@@ -77,6 +77,10 @@ export const translations = {
     resetConfirmMessage: 'Are you absolutely sure? This will delete all your transaction data permanently. This action cannot be undone.',
     resetButton: 'Yes, Reset Transactions',
     dataResetSuccess: 'All transaction data has been reset.',
+    totalLoan: 'Total Loan',
+    companyAdvance: 'Company Advance',
+    totalLoansMinus: 'Total Loans (-)',
+    companyAdvancesPlus: 'Company Advances (+)',
   },
   bn: {
     dashboard: 'ড্যাশবোর্ড',
@@ -155,6 +159,10 @@ export const translations = {
     resetConfirmMessage: 'আপনি কি নিশ্চিত? এটি আপনার সমস্ত লেনদেনের ডাটা স্থায়ীভাবে মুছে ফেলবে। এই কাজ আর ফিরিয়ে আনা সম্ভব নয়।',
     resetButton: 'হ্যাঁ, লেনদেন রিসেট করুন',
     dataResetSuccess: 'সমস্ত লেনদেনের ডাটা রিসেট করা হয়েছে।',
+    totalLoan: 'মোট ঋণ',
+    companyAdvance: 'কোম্পানি অগ্রিম',
+    totalLoansMinus: 'মোট ঋণ (-)',
+    companyAdvancesPlus: 'কোম্পানি অগ্রিম (+)',
   }
 };
 

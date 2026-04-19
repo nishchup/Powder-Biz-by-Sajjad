@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useAppStore } from '../store';
-import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Target, Edit2, Bell, Clock, Calendar } from 'lucide-react';
+import { Package, Sun, TrendingUp, Wallet, DollarSign, Printer, CreditCard, Landmark, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Target, Edit2, Bell, Clock, Calendar, Plus } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { ProductionCharts } from './ProductionCharts';
 import { FinancialCharts } from './FinancialCharts';
+import { useTranslation } from '../translations';
 
 export const Dashboard: React.FC = () => {
   const { state, wetStock, dryStock, setSalesGoal } = useAppStore();
+  const t = useTranslation(state.language);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState(state.salesGoal.toString());
 
@@ -130,7 +132,7 @@ export const Dashboard: React.FC = () => {
     return sum + (totalBilled - (totalPaidSales + totalPayments));
   }, 0);
 
-  const inhandCash = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance) + finalizedRemainProfit - totalExpensesAfterLastSale;
+  const inhandCash = (state.initialCapital || 0) - (wetStockValue + dryStockValue + totalSupplierAdvance) + finalizedRemainProfit - totalExpensesAfterLastSale - totalLoans + totalCompanyAdvances;
 
   return (
     <div 
@@ -236,10 +238,16 @@ export const Dashboard: React.FC = () => {
           color={(netProfit || 0) >= 0 ? "bg-emerald-600" : "bg-rose-600"} 
         />
         <StatCard 
-          title="Total Loan" 
+          title={t('totalLoan')} 
           value={`৳${(totalLoans || 0).toLocaleString()}`} 
           icon={Landmark} 
           color="bg-violet-500" 
+        />
+        <StatCard 
+          title={t('companyAdvance')} 
+          value={`৳${(totalCompanyAdvances || 0).toLocaleString()}`} 
+          icon={Plus} 
+          color="bg-cyan-500" 
         />
         <StatCard 
           title="Customer Due" 
@@ -293,6 +301,14 @@ export const Dashboard: React.FC = () => {
                     <span className="text-emerald-600">৳{finalizedRemainProfit.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>{t('companyAdvancesPlus')}</span>
+                    <span className="text-emerald-600">৳{totalCompanyAdvances.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
+                    <span>{t('totalLoansMinus')}</span>
+                    <span className="text-rose-500">৳{totalLoans.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 border-b border-slate-50 pb-2">
                     <span>Expenses (After Last Sale) (-)</span>
                     <span className="text-rose-500">৳{totalExpensesAfterLastSale.toLocaleString()}</span>
                   </div>
@@ -340,41 +356,51 @@ export const Dashboard: React.FC = () => {
             <span className="text-xs font-black uppercase tracking-widest text-slate-400">Latest Records</span>
           </div>
           <div className="p-8 space-y-6">
-            {[...(state.sales || [])].reverse().slice(0, 3).map(s => (
-              <div key={s.id} className="flex justify-between items-center group">
+            {[
+              ...(state.sales || []).map(s => ({ ...s, activityType: 'sale' })),
+              ...(state.purchases || []).map(p => ({ ...p, activityType: 'purchase' })),
+              ...(state.loans || []).map(l => ({ ...l, activityType: 'loan' })),
+              ...(state.companyAdvances || []).map(a => ({ ...a, activityType: 'advance' }))
+            ]
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 6)
+            .map((item: any) => (
+              <div key={item.id} className="flex justify-between items-center group">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 mr-4 group-hover:scale-110 transition-transform">
-                    <ArrowUpRight size={24} />
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform ${
+                    item.activityType === 'sale' ? 'bg-emerald-100 text-emerald-600' : 
+                    item.activityType === 'purchase' ? 'bg-rose-100 text-rose-600' :
+                    item.activityType === 'loan' ? 'bg-violet-100 text-violet-600' :
+                    'bg-cyan-100 text-cyan-600'
+                  }`}>
+                    {item.activityType === 'sale' ? <ArrowUpRight size={24} /> : 
+                     item.activityType === 'purchase' ? <ArrowDownRight size={24} /> :
+                     item.activityType === 'loan' ? <Landmark size={24} /> : 
+                     <Plus size={24} />}
                   </div>
                   <div>
-                    <p className="font-extrabold text-slate-900">Sale to {s.customerName}</p>
-                    <p className="text-sm text-slate-500 font-bold">{s.date}</p>
+                    <p className="font-extrabold text-slate-900">
+                      {item.activityType === 'sale' ? `Sale to ${item.customerName}` : 
+                       item.activityType === 'purchase' ? `Purchase from ${item.supplierName}` :
+                       item.activityType === 'loan' ? `Loan: ${item.personName}` :
+                       'Company Advance'}
+                    </p>
+                    <p className="text-sm text-slate-500 font-bold">{item.date}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-black text-emerald-600 text-lg">+৳{s.totalRevenue.toLocaleString()}</p>
-                  <p className="text-xs text-slate-400 font-black uppercase tracking-tighter">{s.quantity} kg</p>
+                  <p className={`font-black text-lg ${
+                    (item.activityType === 'sale' || item.activityType === 'advance') ? 'text-emerald-600' : 'text-rose-600'
+                  }`}>
+                    {(item.activityType === 'sale' || item.activityType === 'advance') ? '+' : '-'}৳{item.totalRevenue || item.totalCost || item.amount}
+                  </p>
+                  <p className="text-xs text-slate-400 font-black uppercase tracking-tighter">
+                    {item.activityType === 'sale' || item.activityType === 'purchase' ? `${item.quantity} kg` : (item.description || '')}
+                  </p>
                 </div>
               </div>
             ))}
-            {[...(state.purchases || [])].reverse().slice(0, 3).map(p => (
-              <div key={p.id} className="flex justify-between items-center group">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-600 mr-4 group-hover:scale-110 transition-transform">
-                    <ArrowDownRight size={24} />
-                  </div>
-                  <div>
-                    <p className="font-extrabold text-slate-900">Purchase from {p.supplierName}</p>
-                    <p className="text-sm text-slate-500 font-bold">{p.date}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-black text-rose-600 text-lg">-৳{p.totalCost.toLocaleString()}</p>
-                  <p className="text-xs text-slate-400 font-black uppercase tracking-tighter">{p.quantity} kg</p>
-                </div>
-              </div>
-            ))}
-            {(state.sales || []).length === 0 && (state.purchases || []).length === 0 && (
+            {(state.sales || []).length === 0 && (state.purchases || []).length === 0 && (state.loans || []).length === 0 && (state.companyAdvances || []).length === 0 && (
               <div className="text-center py-12">
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Activity className="text-slate-300" size={40} />
