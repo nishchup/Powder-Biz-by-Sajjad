@@ -5,9 +5,11 @@ import { getTodayDate } from '../utils/dateUtils';
 import { Plus, Trash2, Pencil, X, Receipt, Printer, TrendingUp, Share2, Download, Search, ChevronLeft, ChevronRight, Sun, AlertCircle } from 'lucide-react';
 import { exportToPDF } from '../services/pdfService';
 import { ConfirmModal } from './ConfirmModal';
+import { useTranslation } from '../translations';
 
 export const Sales: React.FC = () => {
   const { state, addSale, editSale, deleteSale, dryStock } = useAppStore();
+  const t = useTranslation(state.language);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<any>(null);
@@ -52,15 +54,26 @@ export const Sales: React.FC = () => {
     const qty = parseFloat(formData.quantity);
     const price = parseFloat(formData.pricePerKg);
     const discount = parseFloat(formData.discount) || 0;
+    
+    if (qty <= 0 || price <= 0) {
+      setError("Quantity and Price must be greater than zero.");
+      return;
+    }
+
     const totalRevenue = (qty * price) - discount;
     const paid = formData.paidAmount === '' ? totalRevenue : parseFloat(formData.paidAmount);
     
+    if (paid < 0) {
+      setError("Paid amount cannot be negative.");
+      return;
+    }
+
     if (qty > 0 && price > 0 && formData.customerName) {
       const oldQty = editingId ? ((state.sales || []).find(s => s.id === editingId)?.quantity || 0) : 0;
-      const availableStock = dryStock + oldQty;
+      const availableStock = (dryStock || 0) + oldQty;
 
       if (qty > availableStock) {
-        setError(`Not enough dry stock! Available: ${availableStock.toFixed(2)} kg`);
+        setError(`${t('notEnoughStock')} ${t('stockAvailable')}: ${availableStock.toFixed(2)} kg`);
         return;
       }
 
@@ -86,7 +99,7 @@ export const Sales: React.FC = () => {
   };
 
   const handleShareWhatsApp = (challan: any) => {
-    const text = `*${state.companyInfo.name}*\n_Sales Challan / Invoice_\n\n*Date:* ${challan.date}\n*Challan #:* ${challan.id.slice(0,8).toUpperCase()}\n*Billed To:* ${challan.customerName}\n\n*Description:* Dry Powder\n*Quantity:* ${challan.quantity.toFixed(2)} kg\n*Rate:* ৳${challan.pricePerKg.toFixed(2)}\n\n*Subtotal:* ৳${challan.totalRevenue.toLocaleString()}\n*Paid Amount:* ৳${(challan.paidAmount !== undefined ? challan.paidAmount : challan.totalRevenue).toLocaleString()}\n*Due Amount:* ৳${(challan.totalRevenue - (challan.paidAmount !== undefined ? challan.paidAmount : challan.totalRevenue)).toLocaleString()}\n\n*Total:* ৳${challan.totalRevenue.toLocaleString()}`;
+    const text = `*${state.companyInfo.name}*\n_${t('challan')}_\n\n*${t('date')}:* ${challan.date}\n*${t('challan')} #:* ${challan.id.slice(0,8).toUpperCase()}\n*${t('billedTo')}:* ${challan.customerName}\n\n*${t('description')}:* ${t('dryPowder')}\n*${t('quantity')}:* ${challan.quantity.toFixed(2)} kg\n*${t('rate')}:* ৳${challan.pricePerKg.toFixed(2)}\n\n*${t('subtotal')}:* ৳${challan.totalRevenue.toLocaleString()}\n*${t('paidAmount')}:* ৳${(challan.paidAmount !== undefined ? challan.paidAmount : challan.totalRevenue).toLocaleString()}\n*${t('dueAmount')}:* ৳${(challan.totalRevenue - (challan.paidAmount !== undefined ? challan.paidAmount : challan.totalRevenue)).toLocaleString()}\n\n*${t('total')}:* ৳${challan.totalRevenue.toLocaleString()}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -99,19 +112,6 @@ export const Sales: React.FC = () => {
   const totalPages = Math.ceil(sortedSales.length / itemsPerPage);
   const paginatedSales = sortedSales.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
   return (
     <div 
       className="space-y-8" 
@@ -119,7 +119,7 @@ export const Sales: React.FC = () => {
     >
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Sales</h2>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('sales')}</h2>
           <p className="text-slate-500 font-medium">Manage your dry powder sales and invoices.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto print:hidden">
@@ -128,14 +128,14 @@ export const Sales: React.FC = () => {
             className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-sm font-bold active:scale-95"
           >
             <Download size={20} className="mr-2" />
-            Download PDF
+            {t('downloadPDF')}
           </button>
           <button 
             onClick={() => setIsFormOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-emerald-200 font-bold active:scale-95"
           >
             <Plus size={24} className="mr-2" />
-            Add Sale
+            {t('addSale')}
           </button>
         </div>
       </div>
@@ -146,7 +146,7 @@ export const Sales: React.FC = () => {
             <Sun size={40} />
           </div>
           <div>
-            <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-1">Available Dry Stock</p>
+            <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-1">{t('availableDryStock')}</p>
             <p className="text-4xl font-black text-amber-900">
               {(dryStock || 0).toFixed(2)} <span className="text-xl font-bold text-amber-400">kg</span>
             </p>
@@ -158,7 +158,7 @@ export const Sales: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input 
               type="text"
-              placeholder="Search by customer name..."
+              placeholder={`${t('search')} by ${t('customerName').toLowerCase()}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-slate-900 shadow-sm"
@@ -175,9 +175,9 @@ export const Sales: React.FC = () => {
             <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
               <div>
                 <h3 className="text-2xl font-black text-slate-900">
-                  {editingId ? 'Edit Sale' : 'New Sale'}
+                  {editingId ? t('editSale') : t('newSale')}
                 </h3>
-                <p className="text-slate-500 font-medium">Stock available: {dryStock.toFixed(2)} kg</p>
+                <p className="text-slate-500 font-medium">{t('stockAvailable')}: {(dryStock || 0).toFixed(2)} kg</p>
               </div>
               <button onClick={handleCancel} className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center active:scale-90">
                 <X size={24} />
@@ -196,7 +196,7 @@ export const Sales: React.FC = () => {
                 
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">{t('date')}</label>
                     <input 
                       type="date" 
                       required
@@ -206,7 +206,7 @@ export const Sales: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Customer</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">{t('customer')}</label>
                     <select 
                       required
                       value={formData.customerName}
@@ -223,7 +223,7 @@ export const Sales: React.FC = () => {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Quantity (kg)</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">{t('quantity')} (kg)</label>
                     <input 
                       type="number" 
                       required
@@ -236,7 +236,7 @@ export const Sales: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Price per kg (৳)</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">{t('pricePerKg')} (৳)</label>
                     <input 
                       type="number" 
                       required
@@ -249,7 +249,7 @@ export const Sales: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Discount (৳)</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">{t('discount')} (৳)</label>
                     <input 
                       type="number" 
                       min="0"
@@ -261,7 +261,7 @@ export const Sales: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Paid Amount (৳)</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">{t('paidAmount')} (৳)</label>
                     <input 
                       type="number" 
                       min="0"
@@ -275,7 +275,7 @@ export const Sales: React.FC = () => {
                   
                   <div className="sm:col-span-2 lg:col-span-1 flex flex-col justify-end">
                     <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Total Revenue</p>
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">{t('revenue')}</p>
                       <p className="text-2xl font-black text-emerald-700">
                         ৳{((parseFloat(formData.quantity) || 0) * (parseFloat(formData.pricePerKg) || 0) - (parseFloat(formData.discount) || 0)).toLocaleString()}
                       </p>
@@ -288,13 +288,13 @@ export const Sales: React.FC = () => {
                       onClick={handleCancel}
                       className="px-8 py-3.5 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all active:scale-95"
                     >
-                      Cancel
+                      {t('cancel')}
                     </button>
                     <button 
                       type="submit" 
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-10 py-3.5 rounded-2xl transition-all shadow-lg shadow-emerald-100 active:scale-95"
                     >
-                      {editingId ? 'Update Sale' : 'Save Sale'}
+                      {editingId ? t('editSale') : t('addSale')}
                     </button>
                   </div>
                 </form>
@@ -308,17 +308,17 @@ export const Sales: React.FC = () => {
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Date</th>
-                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">Customer</th>
-                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Qty (kg)</th>
-                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Revenue</th>
-                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Paid</th>
-                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Due</th>
-                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">{t('date')}</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest">{t('customer')}</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">{t('quantity')} (kg)</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">{t('revenue')}</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">{t('paidAmount')}</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-right">{t('dueAmount')}</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-500 uppercase tracking-widest text-center">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginatedSales.length === 0 ? (
+              {(paginatedSales || []).length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-8 py-24 text-center">
                     <div className="flex flex-col items-center justify-center">
@@ -331,7 +331,7 @@ export const Sales: React.FC = () => {
                         onClick={() => setIsFormOpen(true)}
                         className="mt-6 bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95"
                       >
-                        Add Sale Now
+                        {t('addSale')}
                       </button>
                     </div>
                   </td>
@@ -355,7 +355,7 @@ export const Sales: React.FC = () => {
                         <button 
                           onClick={() => setSelectedChallan(s)}
                           className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all flex items-center justify-center active:scale-90"
-                          title="Print Challan"
+                          title={t('challan')}
                         >
                           <Receipt size={18} />
                         </button>
@@ -422,13 +422,13 @@ export const Sales: React.FC = () => {
                   onClick={() => handleShareWhatsApp(selectedChallan)}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-2xl flex items-center font-bold transition-all shadow-lg shadow-emerald-100 active:scale-95"
                 >
-                  <Share2 size={18} className="mr-2"/> Share
+                  <Share2 size={18} className="mr-2"/> {t('shareOnWhatsapp')}
                 </button>
                 <button 
                   onClick={() => exportToPDF('challan-content', `sales-challan-${selectedChallan.id.substring(0, 8)}.pdf`)} 
                   className="bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-2xl flex items-center font-bold transition-all shadow-lg active:scale-95"
                 >
-                  <Download size={18} className="mr-2"/> PDF
+                  <Download size={18} className="mr-2"/> {t('downloadPDF')}
                 </button>
                 <button 
                   onClick={() => setSelectedChallan(null)} 
@@ -443,18 +443,18 @@ export const Sales: React.FC = () => {
                 <p className="text-slate-500 font-bold">{state.companyInfo.address}</p>
                 <p className="text-slate-500 font-bold">Phone: {state.companyInfo.phone} | Email: {state.companyInfo.email}</p>
                 <div className="mt-6 inline-block bg-slate-900 text-white px-6 py-1.5 rounded-full">
-                  <span className="font-black uppercase tracking-[0.2em] text-xs">Sales Challan / Invoice</span>
+                  <span className="font-black uppercase tracking-[0.2em] text-xs">{t('challan')}</span>
                 </div>
               </div>
               
               <div className="flex justify-between mb-12">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Billed To:</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('billedTo')}:</p>
                   <p className="font-black text-slate-900 text-2xl">{selectedChallan.customerName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Invoice Info</p>
-                  <p className="font-black text-slate-900">Date: {selectedChallan.date}</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('challan')} Info</p>
+                  <p className="font-black text-slate-900">{t('date')}: {selectedChallan.date}</p>
                   <p className="font-black text-emerald-600">#CH-{selectedChallan.id.slice(0,8).toUpperCase()}</p>
                 </div>
               </div>
@@ -462,15 +462,15 @@ export const Sales: React.FC = () => {
               <table className="w-full text-left border-collapse mb-12">
                 <thead>
                   <tr className="border-b-2 border-slate-900">
-                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Description</th>
-                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Quantity</th>
-                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Rate</th>
-                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest">{t('description')}</th>
+                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">{t('quantity')}</th>
+                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">{t('rate')}</th>
+                    <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">{t('amount')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   <tr>
-                    <td className="py-6 font-bold text-slate-900">Dry Powder</td>
+                    <td className="py-6 font-bold text-slate-900">{t('dryPowder')}</td>
                     <td className="py-6 text-right font-bold text-slate-900">{selectedChallan.quantity.toFixed(2)} kg</td>
                     <td className="py-6 text-right font-bold text-slate-900">৳{selectedChallan.pricePerKg.toFixed(2)}</td>
                     <td className="py-6 text-right font-black text-slate-900 text-lg">৳{selectedChallan.totalRevenue.toLocaleString()}</td>
@@ -481,25 +481,25 @@ export const Sales: React.FC = () => {
               <div className="flex justify-end mb-16">
                 <div className="w-72 space-y-4">
                   <div className="flex justify-between text-slate-500 font-bold">
-                    <span>Subtotal:</span>
+                    <span>{t('subtotal')}:</span>
                     <span>৳{(selectedChallan.quantity * selectedChallan.pricePerKg).toLocaleString()}</span>
                   </div>
                   {selectedChallan.discount > 0 && (
                     <div className="flex justify-between text-rose-500 font-bold">
-                      <span>Discount:</span>
+                      <span>{t('discount')}:</span>
                       <span>- ৳{selectedChallan.discount.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-emerald-600 font-black">
-                    <span>Paid Amount:</span>
+                    <span>{t('paidAmount')}:</span>
                     <span>৳{(selectedChallan.paidAmount !== undefined ? selectedChallan.paidAmount : selectedChallan.totalRevenue).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-rose-500 font-black">
-                    <span>Due Amount:</span>
+                    <span>{t('dueAmount')}:</span>
                     <span>৳{(selectedChallan.totalRevenue - (selectedChallan.paidAmount !== undefined ? selectedChallan.paidAmount : selectedChallan.totalRevenue)).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-3xl font-black text-slate-900 border-t-4 border-slate-900 pt-4">
-                    <span>Total:</span>
+                    <span>{t('total')}:</span>
                     <span>৳{selectedChallan.totalRevenue.toLocaleString()}</span>
                   </div>
                 </div>
@@ -508,11 +508,11 @@ export const Sales: React.FC = () => {
               <div className="flex justify-between mt-32">
                 <div className="text-center">
                   <div className="w-48 border-b-2 border-slate-200 mb-3"></div>
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Customer Sign</p>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('customerSignature')}</p>
                 </div>
                 <div className="text-center">
                   <div className="w-48 border-b-2 border-slate-200 mb-3"></div>
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Authorized Sign</p>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('authorizedSignature')}</p>
                 </div>
               </div>
             </div>
@@ -521,8 +521,8 @@ export const Sales: React.FC = () => {
 
       <ConfirmModal
         isOpen={isConfirmOpen}
-        title="Delete Sale"
-        message="Are you sure you want to delete this sales record? This will also revert the stock changes. This action cannot be undone."
+        title={t('deleteSale')}
+        message={t('deleteConfirmMessage')}
         onConfirm={() => itemToDelete && deleteSale(itemToDelete)}
         onCancel={() => {
           setIsConfirmOpen(false);

@@ -6,6 +6,8 @@ import { exportToPDF } from '../services/pdfService';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from './ConfirmModal';
 
+import { useTranslation } from '../translations';
+
 export const Contacts: React.FC = () => {
   const { 
     state, 
@@ -15,6 +17,7 @@ export const Contacts: React.FC = () => {
     setInitialCapital, setCompanyInfo, setAppPin, setLastBackupTime,
     resetState, importState, setShowChatbot, setSalesGoal
   } = useAppStore();
+  const t = useTranslation(state.language);
   
   const [activeTab, setActiveTab] = useState<'suppliers' | 'customers' | 'categories' | 'backup' | 'general'>('general');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -172,7 +175,7 @@ export const Contacts: React.FC = () => {
   const handleReset = () => {
     resetState();
     setIsResetConfirmOpen(false);
-    showMessage("All data has been reset.", 'success');
+    showMessage(t('dataResetSuccess'), 'success');
   };
 
   const handleSaveGeneral = (e: React.FormEvent) => {
@@ -574,15 +577,15 @@ export const Contacts: React.FC = () => {
               <div className="w-20 h-20 bg-rose-100 rounded-[1.5rem] flex items-center justify-center text-rose-600 mb-8">
                 <AlertTriangle size={40} />
               </div>
-              <h4 className="text-xl font-black text-rose-900 mb-4">Danger Zone</h4>
+              <h4 className="text-xl font-black text-rose-900 mb-4">{t('resetAllData')}</h4>
               <p className="text-sm text-rose-700 font-medium mb-10 leading-relaxed">
-                This action will permanently delete all your purchases, sales, expenses, and contacts. This cannot be undone unless you have a backup.
+                {t('resetWarning')}
               </p>
               <button 
                 onClick={() => setIsResetConfirmOpen(true)}
                 className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-4 rounded-2xl font-black transition-all w-full shadow-lg shadow-rose-100 active:scale-95"
               >
-                Reset All Data
+                {t('resetAllData')}
               </button>
             </div>
           </div>
@@ -602,22 +605,22 @@ export const Contacts: React.FC = () => {
               <div className="w-20 h-20 bg-rose-100 rounded-[1.5rem] flex items-center justify-center text-rose-600 mx-auto mb-8">
                 <AlertTriangle size={40} />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-4">Confirm Reset</h3>
+              <h3 className="text-2xl font-black text-slate-900 mb-4">{t('resetConfirmTitle')}</h3>
               <p className="text-slate-500 font-medium mb-10">
-                Are you absolutely sure? This will delete ALL your data permanently. This action cannot be undone.
+                {t('resetConfirmMessage')}
               </p>
               <div className="flex flex-col space-y-4">
                 <button 
                   onClick={handleReset}
                   className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg shadow-rose-100 active:scale-95"
                 >
-                  Yes, Delete Everything
+                  {t('resetButton')}
                 </button>
                 <button 
                   onClick={() => setIsResetConfirmOpen(false)}
                   className="px-8 py-4 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-all"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </motion.div>

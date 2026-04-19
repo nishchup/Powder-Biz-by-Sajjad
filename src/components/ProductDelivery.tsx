@@ -38,13 +38,13 @@ export const ProductDelivery: React.FC = () => {
     if (!formData.startDate || !formData.endDate) return 0;
     
     // Global average of all wet purchases for fallback
-    const allWetPurchases = state.purchases.filter(p => p.type === 'wet' || !p.type);
+    const allWetPurchases = (state.purchases || []).filter(p => p.type === 'wet' || !p.type);
     const globalTotalWetQty = allWetPurchases.reduce((sum, p) => sum + (p.quantity || 0), 0);
     const globalTotalWetCost = allWetPurchases.reduce((sum, p) => sum + (p.totalCost || 0), 0);
     const globalAvgWetPurchasePrice = globalTotalWetQty > 0 ? globalTotalWetCost / globalTotalWetQty : 0;
 
     // 1. Get conversions in period
-    const filteredConversions = state.conversions.filter(c => 
+    const filteredConversions = (state.conversions || []).filter(c => 
       c.date >= formData.startDate && 
       c.date <= formData.endDate
     );
@@ -60,8 +60,8 @@ export const ProductDelivery: React.FC = () => {
     }
     
     // 2. Fallback: Average cost of ALL conversions
-    const totalWetUsedAllTime = state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
-    const totalWetCostAllTime = state.conversions.reduce((sum, c) => {
+    const totalWetUsedAllTime = (state.conversions || []).reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+    const totalWetCostAllTime = (state.conversions || []).reduce((sum, c) => {
         const price = c.purchasePrice || globalAvgWetPurchasePrice;
         return sum + ((c.wetQuantityUsed || 0) * price);
     }, 0);
@@ -77,12 +77,12 @@ export const ProductDelivery: React.FC = () => {
     if (!formData.startDate || !formData.endDate) return null;
 
     // 1. Production in period
-    const filteredConversions = state.conversions.filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
+    const filteredConversions = (state.conversions || []).filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
     const totalWetUsedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
     const totalDryProducedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
 
     // 2. Sales in period
-    const filteredSales = state.sales.filter(s => s.date >= formData.startDate && s.date <= formData.endDate);
+    const filteredSales = (state.sales || []).filter(s => s.date >= formData.startDate && s.date <= formData.endDate);
     const totalSalesQty = filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0);
     const totalSales = filteredSales.reduce((sum, s) => sum + s.totalRevenue, 0);
 
@@ -97,7 +97,7 @@ export const ProductDelivery: React.FC = () => {
     // User Rule: Total Purchases/Cost = Total Wet Used * Average Original Purchase Price of Wet Stock used in Conversions
     const totalPurchases = displayedWetUsed * avgWetPriceUsedInPeriod;
 
-    const filteredExpenses = state.expenses.filter(e => e.date >= formData.startDate && e.date <= formData.endDate);
+    const filteredExpenses = (state.expenses || []).filter(e => e.date >= formData.startDate && e.date <= formData.endDate);
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
     
     const netProfit = totalSales - (totalPurchases + totalExpenses);
@@ -126,7 +126,7 @@ export const ProductDelivery: React.FC = () => {
 
   const productionRatio = useMemo(() => {
     if (!formData.startDate || !formData.endDate) return 1.2;
-    const filteredConversions = state.conversions.filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
+    const filteredConversions = (state.conversions || []).filter(c => c.date >= formData.startDate && c.date <= formData.endDate);
     const totalWetUsedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
     const totalDryProducedInPeriod = filteredConversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0);
     return totalDryProducedInPeriod > 0 ? totalWetUsedInPeriod / totalDryProducedInPeriod : 1.2;
@@ -179,7 +179,7 @@ export const ProductDelivery: React.FC = () => {
       return;
     }
 
-    const totalWithdrawn = state.profitWithdrawals
+    const totalWithdrawn = (state.profitWithdrawals || [])
       .filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== editingWithdrawalId)
       .reduce((sum, pw) => sum + pw.amount, 0);
     const remainingProfit = withdrawDelivery.netProfit - totalWithdrawn;
@@ -229,7 +229,7 @@ export const ProductDelivery: React.FC = () => {
   const openWithdrawModal = (delivery: any) => {
     setWithdrawDelivery(delivery);
     
-    const totalWithdrawn = state.profitWithdrawals
+    const totalWithdrawn = (state.profitWithdrawals || [])
       .filter(pw => pw.deliveryId === delivery.id)
       .reduce((sum, pw) => sum + pw.amount, 0);
     const remainingProfit = delivery.netProfit - totalWithdrawn;
@@ -461,7 +461,7 @@ export const ProductDelivery: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {state.productDeliveries.length === 0 ? (
+              {(state.productDeliveries || []).length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center">
@@ -472,7 +472,7 @@ export const ProductDelivery: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                [...state.productDeliveries].reverse().map((d) => (
+                [...(state.productDeliveries || [])].reverse().map((d) => (
                   <tr key={d.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 text-sm text-slate-700 font-medium">{d.date}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
@@ -487,13 +487,13 @@ export const ProductDelivery: React.FC = () => {
                     <td className={`px-6 py-4 text-sm text-right font-bold ${d.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                       <div className="flex flex-col items-end">
                         <span>৳{d.netProfit.toLocaleString()}</span>
-                        {state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).length > 0 && (
+                        {(state.profitWithdrawals || []).filter(pw => pw.deliveryId === d.id).length > 0 && (
                           <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                            Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
+                            Withdrawn: ৳{(state.profitWithdrawals || []).filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                           </div>
                         )}
                         <div className="text-[10px] text-indigo-600 font-bold mt-0.5 border-t border-slate-100 pt-0.5">
-                          Remain: ৳{(d.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
+                          Remain: ৳{(d.netProfit - (state.profitWithdrawals || []).filter(pw => pw.deliveryId === d.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
                         </div>
                       </div>
                     </td>
@@ -633,13 +633,13 @@ export const ProductDelivery: React.FC = () => {
                     <span className={`text-2xl font-black ${selectedDelivery.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                       ৳{selectedDelivery.netProfit.toLocaleString()}
                     </span>
-                    {state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).length > 0 && (
+                    {(state.profitWithdrawals || []).filter(pw => pw.deliveryId === selectedDelivery.id).length > 0 && (
                       <p className="text-sm text-slate-600 mt-1 font-medium">
-                        Withdrawn: ৳{state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
+                        Withdrawn: ৳{(state.profitWithdrawals || []).filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}
                       </p>
                     )}
                     <p className="text-sm text-indigo-600 mt-1 font-black border-t border-indigo-100 pt-1">
-                      Remain Profit: ৳{(selectedDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
+                      Remain Profit: ৳{(selectedDelivery.netProfit - (state.profitWithdrawals || []).filter(pw => pw.deliveryId === selectedDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -710,19 +710,19 @@ export const ProductDelivery: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center mb-1">
                     <p className="text-sm text-slate-500">Total Withdrawn</p>
-                    <p className="font-semibold text-slate-700">৳{state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}</p>
+                    <p className="font-semibold text-slate-700">৳{(state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0).toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-slate-200 mt-2">
                     <p className="text-sm font-bold text-slate-700">Remaining Profit</p>
-                    <p className="text-lg font-bold text-emerald-600">৳{(withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}</p>
+                    <p className="text-lg font-bold text-emerald-600">৳{(withdrawDelivery.netProfit - (state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)).toLocaleString()}</p>
                   </div>
                 </div>
 
-                {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).length > 0 && (
+                {(state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id).length > 0 && (
                   <div className="mb-4">
                     <h4 className="text-sm font-semibold text-slate-700 mb-2">Previous Withdrawals</h4>
                     <div className="space-y-2">
-                      {state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).map(pw => (
+                      {(state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id).map(pw => (
                         <div key={pw.id} className={`flex justify-between items-center p-3 border rounded-lg transition-colors ${editingWithdrawalId === pw.id ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'}`}>
                           <div>
                             <p className="text-sm font-semibold text-slate-800">৳{pw.amount.toLocaleString()}</p>
@@ -742,7 +742,7 @@ export const ProductDelivery: React.FC = () => {
                   </div>
                 )}
 
-                {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
+                {((withdrawDelivery.netProfit - (state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
                   <div className="space-y-4 border-t border-slate-100 pt-4">
                     <h4 className="text-sm font-semibold text-slate-700">{editingWithdrawalId ? 'Edit Withdrawal' : 'New Withdrawal'}</h4>
                     <div>
@@ -762,7 +762,7 @@ export const ProductDelivery: React.FC = () => {
                         type="number" 
                         required
                         min="1"
-                        max={withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== editingWithdrawalId).reduce((sum, pw) => sum + pw.amount, 0)}
+                        max={withdrawDelivery.netProfit - (state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id && pw.id !== editingWithdrawalId).reduce((sum, pw) => sum + pw.amount, 0)}
                         step="0.01"
                         value={withdrawData.amount}
                         onChange={e => setWithdrawData({...withdrawData, amount: e.target.value})}
@@ -790,9 +790,9 @@ export const ProductDelivery: React.FC = () => {
                   onClick={handleWithdrawCancel}
                   className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) ? 'Cancel' : 'Close'}
+                  {((withdrawDelivery.netProfit - (state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) ? 'Cancel' : 'Close'}
                 </button>
-                {((withdrawDelivery.netProfit - state.profitWithdrawals.filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
+                {((withdrawDelivery.netProfit - (state.profitWithdrawals || []).filter(pw => pw.deliveryId === withdrawDelivery.id).reduce((sum, pw) => sum + pw.amount, 0)) > 0 || editingWithdrawalId) && (
                   <button 
                     type="submit" 
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"

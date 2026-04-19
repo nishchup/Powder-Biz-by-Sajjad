@@ -660,7 +660,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetState = () => {
-    setState(initialState);
+    setState(s => ({
+      ...initialState,
+      suppliers: s.suppliers || [],
+      customers: s.customers || [],
+      expenseCategories: s.expenseCategories || initialState.expenseCategories,
+      companyInfo: s.companyInfo,
+      appPin: s.appPin,
+      language: s.language,
+      weatherLocation: s.weatherLocation,
+      showChatbot: s.showChatbot,
+      salesGoal: s.salesGoal,
+    }));
   };
 
   const importState = (newState: AppState) => {
@@ -679,15 +690,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(s => ({ ...s, showChatbot: show }));
   };
 
-  const wetStock = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.quantity || 0), 0) -
-                   state.conversions.reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
+  const wetStock = (state.purchases || []).filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.quantity || 0), 0) -
+                   (state.conversions || []).reduce((sum, c) => sum + (c.wetQuantityUsed || 0), 0);
 
-  const dryStock = state.conversions.reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0) +
-                   state.purchases.filter(p => p.type === 'dry').reduce((sum, p) => sum + (p.quantity || 0), 0) -
-                   state.sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+  const dryStock = (state.conversions || []).reduce((sum, c) => sum + (c.dryQuantityProduced || 0), 0) +
+                   (state.purchases || []).filter(p => p.type === 'dry').reduce((sum, p) => sum + (p.quantity || 0), 0) -
+                   (state.sales || []).reduce((sum, s) => sum + (s.quantity || 0), 0);
 
-  const wetBagsStock = state.purchases.filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.totalBags || 0), 0) -
-                       state.conversions.reduce((sum, c) => sum + (c.bagsUsed || 0), 0);
+  const wetBagsStock = (state.purchases || []).filter(p => p.type === 'wet' || !p.type).reduce((sum, p) => sum + (p.totalBags || 0), 0) -
+                       (state.conversions || []).reduce((sum, c) => sum + (c.bagsUsed || 0), 0);
 
   return (
     <AppContext.Provider value={{
